@@ -1,10 +1,9 @@
 
-import { useToast } from '@/hooks/use-toast';
-import { useRef, useCallback, useState } from 'react';
-import { useLeaderboard } from '@/hooks/useLeaderboard';
-import { gameBackendService } from '@/services/gameBackendService';
-import { useUserProfile } from '@/hooks/useUserProfile';
-import { useAdSystem } from '@/hooks/useAdSystem';
+import { useCallback, useState, useRef } from 'react';
+import { useCollisionHandler } from '@/hooks/useCollisionHandler';
+import { useGameOverHandler } from '@/hooks/useGameOverHandler';
+import { useAdRewardHandler } from '@/hooks/useAdRewardHandler';
+import { useContinueGame } from '@/hooks/useContinueGame';
 
 interface UseGameEventsProps {
   score: number;
@@ -33,235 +32,118 @@ export const useGameEvents = ({
   setCoins,
   continueGame
 }: UseGameEventsProps) => {
-  const { toast } = useToast();
-  const { submitScore } = useLeaderboard();
-  const { profile, refreshProfile } = useUserProfile();
-  const adSystem = useAdSystem();
   
-  const [showContinueButton, setShowContinueButton] = useState(false);
-  const [isPausedForRevive, setIsPausedForRevive] = useState(false);
-  const [reviveUsed, setReviveUsed] = useState(false);
-  const [adWatched, setAdWatched] = useState(false);
-  const [showMandatoryAd, setShowMandatoryAd] = useState(false);
-  const [showAdFreeModal, setShowAdFreeModal] = useState(false);
+  // Use refs to prevent React state queue issues
+  const stateRef = useRef({
+    showContinueButton: false,
+    isPausedForRevive: false,
+    reviveUsed: false,
+    adWatched: false,
+    showMandatoryAd: false,
+    showAdFreeModal: false
+  });
 
-  const handleCollision = () => {
-    console.log('Collision detected - checking ad system');
-    
-    // Check if user can continue without ad (Premium subscription)
-    if (adSystem.canContinueWithoutAd && !reviveUsed) {
-      console.log('User has Premium - allowing continue without ad');
-      setIsPausedForRevive(true);
-      setGameState('paused');
-      setShowContinueButton(true); // Show continue button immediately for Premium users
-      setAdWatched(false);
-      return;
-    }
-    
-    // Check if this is a mandatory ad game over
-    if (adSystem.shouldShowMandatoryAd) {
-      console.log('Showing mandatory ad');
-      setShowMandatoryAd(true);
-      setGameState('paused');
-      return;
-    }
-    
-    // Normal revive flow (optional ad)
-    if (!reviveUsed) {
-      setIsPausedForRevive(true);
-      setGameState('paused');
-      setAdWatched(false);
-      setShowContinueButton(false);
-    } else {
-      handleGameOver(score);
-    }
-  };
+  // State getters
+  const getState = useCallback(() => stateRef.current, []);
+  const setState = useCallback((updates: Partial<typeof stateRef.current>) => {
+    stateRef.current = { ...stateRef.current, ...updates };
+  }, []);
 
-  const handleGameOver = async (finalScore: number) => {
-    console.log('Game over with final score:', finalScore);
-    
-    // Increment game count for ad system
-    adSystem.incrementGameCount();
-    
-    setGameState('gameOver');
-    setScore(finalScore);
-    setIsPausedForRevive(false);
-    setShowContinueButton(false);
-    setAdWatched(false);
-    setShowMandatoryAd(false);
-    
-    if (!profile) {
-      console.warn('No user profile available for game over handling');
-      return;
-    }
-    
-    try {
-      // Complete game session in backend
-      const sessionResult = await gameBackendService.completeGameSession(
-        profile.pi_user_id,
-        'classic', // Default to classic mode
-        finalScore,
-        level,
-        Math.floor(finalScore / 3) + (level * 2) // Coins earned calculation
-      );
-      
-      if (sessionResult) {
-        // Update local state with backend results
-        setCoins(sessionResult.total_coins);
-        localStorage.setItem('flappypi-coins', sessionResult.total_coins.toString());
-        
-        if (sessionResult.is_high_score) {
-          setHighScore(finalScore);
-          localStorage.setItem('flappypi-highscore', finalScore.toString());
-          toast({
-            title: "🎉 New High Score!",
-            description: `Amazing! You scored ${finalScore} points and earned ${sessionResult.coins_earned} coins!`
-          });
-        } else {
-          toast({
-            title: "Game Over! 🎮",
-            description: `You scored ${finalScore} points and earned ${sessionResult.coins_earned} coins!`
-          });
-        }
-        
-        // Refresh user profile to get updated data
-        await refreshProfile();
-      }
-    } catch (error) {
-      console.error('Error handling game over:', error);
-      // Fallback to local handling
-      const earnedCoins = Math.floor(finalScore / 3) + (level * 2);
-      const newCoins = coins + earnedCoins;
-      setCoins(newCoins);
-      localStorage.setItem('flappypi-coins', newCoins.toString());
-      
-      if (finalScore > highScore) {
-        setHighScore(finalScore);
-        localStorage.setItem('flappypi-highscore', finalScore.toString());
-        toast({
-          title: "🎉 New High Score!",
-          description: `Amazing! You scored ${finalScore} points!`
-        });
-      }
-    }
+  const { handleGameOver } = useGameOverHandler({
+    level,
+    coins,
+    highScore,
+    setGameState,
+    setScore,
+    setIsPausedForRevive: (paused) => setState({ isPausedForRevive: paused }),
+    setShowContinueButton: (show) => setState({ showContinueButton: show }),
+    setAdWatched: (watched) => setState({ adWatched: watched }),
+    setShowMandatoryAd: (show) => setState({ showMandatoryAd: show }),
+    setCoins,
+    setHighScore,
+    setLives,
+    setLevel,
+    setReviveUsed: (used) => setState({ reviveUsed: used })
+  });
 
-    // Submit score to leaderboard if it's a decent score (> 0)
-    if (finalScore > 0 && profile) {
-      try {
-        await submitScore(profile.pi_user_id, profile.username, finalScore);
-      } catch (error) {
-        console.error('Failed to submit score:', error);
-      }
-    }
+  const { handleCollision, resetCollisionLock } = useCollisionHandler({
+    reviveUsed: getState().reviveUsed,
+    score,
+    setGameState,
+    setIsPausedForRevive: (paused) => setState({ isPausedForRevive: paused }),
+    setShowContinueButton: (show) => setState({ showContinueButton: show }),
+    setAdWatched: (watched) => setState({ adWatched: watched }),
+    setShowMandatoryAd: (show) => setState({ showMandatoryAd: show }),
+    onGameOver: handleGameOver
+  });
 
-    // Reset for next game
-    setLives(1);
-    setLevel(1);
-    setReviveUsed(false);
-  };
+  const { handleAdWatch } = useAdRewardHandler({
+    coins,
+    adWatched: getState().adWatched,
+    isPausedForRevive: getState().isPausedForRevive,
+    setShowContinueButton: (show) => setState({ showContinueButton: show }),
+    setAdWatched: (watched) => setState({ adWatched: watched }),
+    setCoins,
+    setLives
+  });
 
-  const handleCoinEarned = (coinAmount: number) => {
+  const { handleContinueClick } = useContinueGame({
+    continueGame,
+    setShowContinueButton: (show) => setState({ showContinueButton: show }),
+    setReviveUsed: (used) => setState({ reviveUsed: used }),
+    setIsPausedForRevive: (paused) => setState({ isPausedForRevive: paused }),
+    setAdWatched: (watched) => setState({ adWatched: watched }),
+    setGameState,
+    resetCollisionLock
+  });
+
+  const handleCoinEarned = useCallback((coinAmount: number) => {
     const newCoins = coins + coinAmount;
     setCoins(newCoins);
     localStorage.setItem('flappypi-coins', newCoins.toString());
-  };
+  }, [coins, setCoins]);
 
-  const handleContinueClick = useCallback(() => {
-    console.log('Continue button clicked - resuming game');
-    setShowContinueButton(false);
-    setReviveUsed(true);
-    setIsPausedForRevive(false);
-    setAdWatched(false);
-    
-    if (continueGame) {
-      continueGame();
-    }
-    
-    setGameState('playing');
-    
-    toast({
-      title: "Welcome Back! 🚀",
-      description: "Continue your flight and reach new heights!",
-      duration: 2000
-    });
-  }, [continueGame, setGameState, toast]);
-
-  const handleMandatoryAdWatch = () => {
-    console.log('Mandatory ad watched - resetting counter and ending game');
-    adSystem.resetAdCounter();
-    setShowMandatoryAd(false);
+  const handleMandatoryAdWatch = useCallback(() => {
+    console.log('Skipping mandatory ad - going straight to game over');
+    resetCollisionLock();
+    setState({ showMandatoryAd: false });
     handleGameOver(score);
-  };
+  }, [handleGameOver, score, resetCollisionLock, setState]);
 
-  const handleAdWatch = async (adType: 'continue' | 'coins' | 'life') => {
-    if (!profile) {
-      console.warn('No user profile available for ad reward');
-      return;
-    }
-
-    try {
-      switch (adType) {
-        case 'continue':
-          if (!adWatched && isPausedForRevive) {
-            console.log('Ad watched - showing continue button');
-            setShowContinueButton(true);
-            setAdWatched(true);
-            
-            // Record ad watch in backend
-            await gameBackendService.watchAdReward(profile.pi_user_id, 'continue', 0);
-          }
-          break;
-          
-        case 'coins':
-          const coinsResult = await gameBackendService.watchAdReward(profile.pi_user_id, 'coins', 25);
-          if (coinsResult) {
-            setCoins(coins + coinsResult.reward_amount);
-            localStorage.setItem('flappypi-coins', (coins + coinsResult.reward_amount).toString());
-            await refreshProfile(); // Refresh to get updated backend data
-            toast({
-              title: "Bonus Pi Coins! 🪙",
-              description: `You earned ${coinsResult.reward_amount} Pi coins!`
-            });
-          }
-          break;
-          
-        case 'life':
-          await gameBackendService.watchAdReward(profile.pi_user_id, 'life', 0);
-          setLives(1);
-          toast({
-            title: "Extra Life! ❤️",
-            description: "You earned an extra life!"
-          });
-          break;
-      }
-    } catch (error) {
-      console.error('Error handling ad watch:', error);
-      // Fallback to local handling for coins
-      if (adType === 'coins') {
-        const bonusCoins = 25;
-        setCoins(coins + bonusCoins);
-        localStorage.setItem('flappypi-coins', (coins + bonusCoins).toString());
-        toast({
-          title: "Bonus Pi Coins! 🪙",
-          description: `You earned ${bonusCoins} Pi coins!`
-        });
-      }
-    }
-  };
+  // Complete reset for new game start
+  const resetGameEventStates = useCallback(() => {
+    console.log('🔄 Complete reset of all game event states for fresh start');
+    resetCollisionLock();
+    stateRef.current = {
+      showContinueButton: false,
+      isPausedForRevive: false,
+      reviveUsed: false,
+      adWatched: false,
+      showMandatoryAd: false,
+      showAdFreeModal: false
+    };
+  }, [resetCollisionLock]);
 
   return {
     handleCollision,
     handleGameOver,
     handleCoinEarned,
     handleAdWatch,
-    showContinueButton,
+    showContinueButton: getState().showContinueButton,
     handleContinueClick,
-    isPausedForRevive,
-    reviveUsed,
-    showMandatoryAd,
-    showAdFreeModal,
-    adSystem,
+    isPausedForRevive: getState().isPausedForRevive,
+    reviveUsed: getState().reviveUsed,
+    showMandatoryAd: false, // Always disabled
+    showAdFreeModal: getState().showAdFreeModal,
+    adSystem: { 
+      isAdFree: true,
+      purchaseAdFree: () => Promise.resolve(true),
+      adFreeTimeRemaining: null,
+      resetAdCounter: () => {},
+      incrementGameCount: () => {}
+    },
     handleMandatoryAdWatch,
-    setShowAdFreeModal
+    setShowAdFreeModal: (show: boolean) => setState({ showAdFreeModal: show }),
+    resetGameEventStates
   };
 };

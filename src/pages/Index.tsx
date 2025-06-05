@@ -6,8 +6,6 @@ import GameCanvas from '../components/GameCanvas';
 import GameUI from '../components/GameUI';
 import GameModals from '../components/GameModals';
 import GameContinueOverlay from '../components/GameContinueOverlay';
-import MandatoryAdModal from '../components/MandatoryAdModal';
-import AdFreeSubscriptionModal from '../components/AdFreeSubscriptionModal';
 import { useGameState } from '../hooks/useGameState';
 import { useGameEvents } from '../hooks/useGameEvents';
 import { useModals } from '../hooks/useModals';
@@ -37,6 +35,13 @@ const Index = () => {
     }
   });
 
+  // Enhanced start game function that resets all states
+  const handleStartGame = React.useCallback((mode: 'classic' | 'endless' | 'challenge') => {
+    console.log('🚀 Starting new game - resetting all states');
+    gameEvents.resetGameEventStates();
+    gameState.startGame(mode);
+  }, [gameEvents, gameState]);
+
   if (gameState.showSplash) {
     return <SplashScreen />;
   }
@@ -45,14 +50,13 @@ const Index = () => {
     return (
       <>
         <WelcomeScreen 
-          onStartGame={gameState.startGame}
+          onStartGame={handleStartGame}
           onOpenShop={() => modals.setShowShop(true)}
           onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
           onOpenPrivacy={() => modals.setShowPrivacy(true)}
           onOpenTerms={() => modals.setShowTerms(true)}
           onOpenContact={() => modals.setShowContact(true)}
           onOpenHelp={() => modals.setShowHelp(true)}
-          onOpenProfile={() => {}} // Add empty function as placeholder
           coins={gameState.coins}
           musicEnabled={gameState.musicEnabled}
           onToggleMusic={gameState.setMusicEnabled}
@@ -115,7 +119,7 @@ const Index = () => {
         highScore={gameState.highScore}
         coins={gameState.coins}
         gameMode={gameState.gameMode}
-        onStartGame={() => gameState.startGame(gameState.gameMode)}
+        onStartGame={() => handleStartGame(gameState.gameMode)}
         onBackToMenu={gameState.backToMenu}
         onOpenShop={() => modals.setShowShop(true)}
         onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
@@ -127,21 +131,6 @@ const Index = () => {
       <GameContinueOverlay
         showContinueButton={gameEvents.showContinueButton}
         onContinue={gameEvents.handleContinueClick}
-      />
-
-      <MandatoryAdModal
-        isOpen={gameEvents.showMandatoryAd}
-        onWatchAd={gameEvents.handleMandatoryAdWatch}
-        onUpgradeToPremium={() => gameEvents.setShowAdFreeModal(true)}
-        canUpgrade={true}
-      />
-
-      <AdFreeSubscriptionModal
-        isOpen={gameEvents.showAdFreeModal}
-        onClose={() => gameEvents.setShowAdFreeModal(false)}
-        onPurchase={gameEvents.adSystem.purchaseAdFree}
-        isAdFree={gameEvents.adSystem.isAdFree}
-        adFreeTimeRemaining={gameEvents.adSystem.adFreeTimeRemaining}
       />
 
       <GameModals
