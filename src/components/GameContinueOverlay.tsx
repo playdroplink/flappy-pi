@@ -4,19 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Play } from 'lucide-react';
 
 interface GameContinueOverlayProps {
-  isVisible: boolean;
+  isOpen: boolean;
   countdown: number;
   showContinueButton: boolean;
   onContinue: () => void;
 }
 
 const GameContinueOverlay: React.FC<GameContinueOverlayProps> = ({
-  isVisible,
+  isOpen,
   countdown,
   showContinueButton,
   onContinue
 }) => {
-  if (!isVisible) return null;
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

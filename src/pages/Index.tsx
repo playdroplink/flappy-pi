@@ -79,6 +79,7 @@ const Index = () => {
           highScore={gameState.highScore}
           selectedBirdSkin={gameState.selectedBirdSkin}
           gameState={gameState.gameState}
+          adType="continue"
           setShowShop={modals.setShowShop}
           setShowLeaderboard={modals.setShowLeaderboard}
           setShowAdPopup={modals.setShowAdPopup}
@@ -129,7 +130,7 @@ const Index = () => {
       />
 
       <GameContinueOverlay
-        isVisible={gameEvents.showContinueOverlay}
+        isOpen={gameEvents.showContinueOverlay}
         countdown={gameEvents.countdown}
         showContinueButton={gameEvents.showContinueButton}
         onContinue={gameEvents.handleContinueClick}
@@ -150,6 +151,7 @@ const Index = () => {
         highScore={gameState.highScore}
         selectedBirdSkin={gameState.selectedBirdSkin}
         gameState={gameState.gameState}
+        adType="continue"
         setShowShop={modals.setShowShop}
         setShowLeaderboard={modals.setShowLeaderboard}
         setShowAdPopup={modals.setShowAdPopup}
