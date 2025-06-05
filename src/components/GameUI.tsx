@@ -50,21 +50,21 @@ const GameUI: React.FC<GameUIProps> = ({
 
         {/* Level and Time of Day - top left */}
         <div className="absolute top-4 left-4">
-          <Card className="px-4 py-3 pointer-events-auto shadow-2xl bg-white/90 backdrop-blur-sm border-blue-200">
+          <Card className="px-3 py-2 pointer-events-auto shadow-2xl bg-white/90 backdrop-blur-sm border-blue-200">
             <div className="text-center">
-              <div className="text-lg font-bold text-blue-600">Level {currentLevel}</div>
-              <div className="text-sm text-blue-500 capitalize">{difficulty.timeOfDay}</div>
-              <div className="text-xs text-gray-600 uppercase">{gameMode}</div>
+              <div className="text-sm font-bold text-blue-600">Level {currentLevel}</div>
+              <div className="text-xs text-blue-500 capitalize">{difficulty.timeOfDay}</div>
+              <div className="text-xs text-gray-600 uppercase font-medium">{gameMode}</div>
             </div>
           </Card>
         </div>
 
         {/* Coins display - top right */}
         <div className="absolute top-4 right-4">
-          <Card className="px-4 py-3 pointer-events-auto shadow-2xl bg-white/90 backdrop-blur-sm border-yellow-200">
+          <Card className="px-3 py-2 pointer-events-auto shadow-2xl bg-white/90 backdrop-blur-sm border-yellow-200">
             <div className="flex items-center space-x-2">
-              <Coins className="h-5 w-5 text-yellow-500" />
-              <span className="text-lg font-bold text-gray-800">{coins}</span>
+              <Coins className="h-4 w-4 text-yellow-500" />
+              <span className="text-sm font-bold text-gray-800">{coins}</span>
             </div>
           </Card>
         </div>

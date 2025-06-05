@@ -67,28 +67,26 @@ export const useGameEvents = ({
   };
 
   const handleAdWatch = (adType: 'continue' | 'coins' | 'life') => {
-    // Simulate watching ad
-    setTimeout(() => {
-      switch (adType) {
-        case 'continue':
-          setLives(1);
-          setGameState('playing');
-          toast({
-            title: "Continue! 🚀",
-            description: "Thanks for watching the Pi Ad! Keep flying!"
-          });
-          break;
-        case 'coins':
-          const bonusCoins = 25;
-          setCoins(coins + bonusCoins);
-          localStorage.setItem('flappypi-coins', (coins + bonusCoins).toString());
-          toast({
-            title: "Bonus Pi Coins! 🪙",
-            description: `You earned ${bonusCoins} Pi coins!`
-          });
-          break;
-      }
-    }, 3000); // 3 second ad
+    switch (adType) {
+      case 'continue':
+        // Continue the game with current score preserved
+        setLives(1);
+        setGameState('playing');
+        toast({
+          title: "Continue! 🚀",
+          description: "Thanks for watching the Pi Ad! Keep flying!"
+        });
+        break;
+      case 'coins':
+        const bonusCoins = 25;
+        setCoins(coins + bonusCoins);
+        localStorage.setItem('flappypi-coins', (coins + bonusCoins).toString());
+        toast({
+          title: "Bonus Pi Coins! 🪙",
+          description: `You earned ${bonusCoins} Pi coins!`
+        });
+        break;
+    }
   };
 
   return {

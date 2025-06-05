@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Play, ShoppingCart, Trophy, Coins, Volume2, VolumeX, Shield, FileText, HelpCircle, Mail } from 'lucide-react';
+import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 
 type GameMode = 'classic' | 'endless' | 'challenge';
 
@@ -31,6 +32,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   musicEnabled,
   onToggleMusic
 }) => {
+  // Add background music
+  useBackgroundMusic({ musicEnabled, gameState: 'menu' });
+
   return (
     <div className="fixed inset-0 w-full h-full bg-gradient-to-b from-sky-400 via-sky-500 to-sky-600 flex flex-col relative overflow-hidden">
       {/* Animated background elements */}
@@ -55,7 +59,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       {/* Main content */}
       <div className="flex-1 flex items-center justify-center relative z-10 p-4">
         <div className="w-full max-w-md space-y-6">
-          {/* Header */}
+          {/* Header - Better organized */}
           <Card className="p-6 text-center animate-fade-in bg-white/90 backdrop-blur-sm">
             <div className="mb-4 flex justify-center">
               <img 
@@ -67,31 +71,33 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             <h1 className="text-4xl font-bold text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text mb-2">
               Flappy Pi
             </h1>
-            <p className="text-gray-700">Ready for takeoff?</p>
+            <p className="text-gray-700 text-base">Ready for takeoff?</p>
           </Card>
 
-          {/* User stats */}
+          {/* User stats - Better organized */}
           <Card className="p-4 animate-fade-in bg-white/90 backdrop-blur-sm" style={{ animationDelay: '0.2s' }}>
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 <Coins className="h-5 w-5 text-yellow-500" />
-                <span className="text-gray-800 font-bold">{coins}</span>
-                <span className="text-gray-600 text-sm">Pi Coins</span>
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold text-gray-800">{coins}</span>
+                  <span className="text-gray-600 text-xs">Pi Coins</span>
+                </div>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onToggleMusic(!musicEnabled)}
-                className="text-gray-700 hover:bg-gray-100"
+                className="text-gray-700 hover:bg-gray-100 p-2"
               >
-                {musicEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                {musicEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
               </Button>
             </div>
           </Card>
 
           {/* Game modes */}
           <Card className="p-6 space-y-4 animate-fade-in bg-white/90 backdrop-blur-sm" style={{ animationDelay: '0.4s' }}>
-            <h3 className="text-gray-800 font-bold text-lg mb-4">Choose Your Adventure</h3>
+            <h3 className="text-gray-800 font-bold text-lg mb-4 text-center">Choose Your Adventure</h3>
             
             <Button 
               onClick={() => onStartGame('classic')}
@@ -111,7 +117,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             
             <Button 
               onClick={() => onStartGame('challenge')}
-              className="w-full bg-gradient-to-r from-white to-gray-100 hover:from-gray-100 hover:to-gray-200 text-gray-800 shadow-lg transform hover:scale-105 transition-all duration-200 border border-gray-300"
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
             >
               <Play className="mr-2 h-5 w-5" />
               Challenge Mode
@@ -141,7 +147,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer - Fixed text size */}
       <div className="relative z-10 p-4 animate-fade-in" style={{ animationDelay: '0.8s' }}>
         <Card className="p-4 bg-white/80 backdrop-blur-sm border-white/50">
           <div className="grid grid-cols-4 gap-2 text-center">
@@ -183,7 +189,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             </Button>
           </div>
           <div className="text-center mt-3 pt-3 border-t border-gray-200">
-            <p className="text-gray-800 text-lg font-bold">
+            <p className="text-gray-800 text-sm font-semibold">
               Powered by Pi Network • MRWAIN ORGANIZATION
             </p>
           </div>

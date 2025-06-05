@@ -3,6 +3,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
 import { useGameRenderer } from '../hooks/useGameRenderer';
+import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 
 interface GameCanvasProps {
   gameState: 'menu' | 'playing' | 'gameOver' | 'paused';
@@ -31,6 +32,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const gameLoopRef = useRef<number>();
   const [score, setScore] = useState(0);
   const gameStartedRef = useRef(false);
+
+  // Add background music
+  useBackgroundMusic({ musicEnabled, gameState });
 
   const { gameStateRef, resetGame, jump, checkCollisions } = useGameLoop({
     gameState,
