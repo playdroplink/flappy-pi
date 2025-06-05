@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ShopModal from './ShopModal';
 import LeaderboardModal from './LeaderboardModal';
@@ -95,6 +94,7 @@ const GameModals: React.FC<GameModalsProps> = ({
         score={score}
         level={level}
         highScore={highScore}
+        selectedBirdSkin={selectedBirdSkin}
       />
 
       <PrivacyModal
