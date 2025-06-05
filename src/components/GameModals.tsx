@@ -103,6 +103,7 @@ const GameModals: React.FC<GameModalsProps> = ({
         onClose={() => setShowShareScore(false)}
         score={score}
         level={level}
+        highScore={highScore}
       />
 
       <PrivacyModal
