@@ -58,13 +58,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const AD_INTERVAL = 8000; // 8 seconds
   const PIPE_SPAWN_DELAY = 2000; // 2 seconds before first pipe
 
-  // Load bird character image
+  // Load new bird character image
   useEffect(() => {
     const img = new Image();
     img.onload = () => {
       birdImageRef.current = img;
     };
-    img.src = '/lovable-uploads/5a55528e-3d0c-4cd3-91d9-6b8cff953b06.png';
+    img.src = '/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png';
   }, []);
 
   // Dynamic difficulty based on game mode and level
@@ -304,20 +304,24 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const drawBouncyBird = (ctx: CanvasRenderingContext2D) => {
     ctx.save();
     
-    // Update bouncy motion when not playing or when steady
-    if (gameState !== 'playing' || birdRef.current.velocity === 0) {
-      birdRef.current.bounceOffset += birdRef.current.bounceSpeed;
-      if (birdRef.current.bounceOffset > 1 || birdRef.current.bounceOffset < -1) {
-        birdRef.current.bounceSpeed *= -1;
-      }
+    // Enhanced bouncy motion - always active
+    birdRef.current.bounceOffset += birdRef.current.bounceSpeed;
+    if (birdRef.current.bounceOffset > 1 || birdRef.current.bounceOffset < -1) {
+      birdRef.current.bounceSpeed *= -1;
     }
     
-    const bounceY = gameState === 'playing' ? 0 : Math.sin(Date.now() * 0.003) * 8;
+    // More pronounced bouncy effect
+    const bounceY = Math.sin(Date.now() * 0.004) * 12;
     const centerX = birdRef.current.x + BIRD_SIZE / 2;
     const centerY = birdRef.current.y + BIRD_SIZE / 2 + bounceY;
     
     ctx.translate(centerX, centerY);
-    ctx.rotate(birdRef.current.rotation);
+    
+    // Gentle rotation for flying effect
+    const flyRotation = gameState === 'playing' ? 
+      birdRef.current.rotation : 
+      Math.sin(Date.now() * 0.003) * 0.1;
+    ctx.rotate(flyRotation);
     
     // Bird shadow
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
@@ -326,10 +330,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     ctx.fill();
     
     // Wing flap animation
-    const wingFlap = Math.sin(Date.now() * 0.02) * 0.3;
+    const wingFlap = Math.sin(Date.now() * 0.015) * 0.2;
     
     if (birdImageRef.current) {
-      ctx.scale(1 + wingFlap * 0.1, 1);
+      // Scale effect for wing flapping
+      ctx.scale(1 + wingFlap * 0.1, 1 + wingFlap * 0.05);
       ctx.drawImage(
         birdImageRef.current,
         -BIRD_SIZE / 2,
@@ -338,41 +343,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         BIRD_SIZE
       );
     } else {
-      // Fallback enhanced bird
+      // Fallback bird if image doesn't load
       const birdGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, BIRD_SIZE / 2);
-      birdGradient.addColorStop(0, '#FFD700');
-      birdGradient.addColorStop(0.7, '#FFA500');
-      birdGradient.addColorStop(1, '#FF8C00');
+      birdGradient.addColorStop(0, '#4DD0E1');
+      birdGradient.addColorStop(0.7, '#26C6DA');
+      birdGradient.addColorStop(1, '#00BCD4');
       
-      // Body
       ctx.fillStyle = birdGradient;
       ctx.beginPath();
       ctx.ellipse(0, 0, BIRD_SIZE / 2, BIRD_SIZE / 2.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Wing
-      ctx.fillStyle = '#FF6347';
-      ctx.beginPath();
-      ctx.ellipse(-8, -2, 12, 8, wingFlap, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Eye
-      ctx.fillStyle = 'white';
-      ctx.beginPath();
-      ctx.arc(5, -5, 4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = 'black';
-      ctx.beginPath();
-      ctx.arc(6, -5, 2, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Beak
-      ctx.fillStyle = '#FFA500';
-      ctx.beginPath();
-      ctx.moveTo(15, 0);
-      ctx.lineTo(8, -3);
-      ctx.lineTo(8, 3);
-      ctx.closePath();
       ctx.fill();
     }
     

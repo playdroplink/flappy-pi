@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Play, ShoppingCart, Trophy, Settings, Coins, Volume2, VolumeX } from 'lucide-react';
+import { Play, ShoppingCart, Trophy, Coins, Volume2, VolumeX } from 'lucide-react';
 
 type GameMode = 'classic' | 'endless' | 'challenge';
 
@@ -24,7 +24,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onToggleMusic
 }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-400 via-sky-500 to-sky-600 flex items-center justify-center relative overflow-hidden p-4">
+    <div className="fixed inset-0 bg-gradient-to-b from-sky-400 via-sky-500 to-sky-600 flex items-center justify-center relative overflow-hidden p-4">
       {/* Animated background elements */}
       <div className="absolute inset-0">
         {/* Floating clouds */}
@@ -42,38 +42,37 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             }}
           />
         ))}
-        
-        {/* Flying birds */}
-        <div className="absolute top-20 left-0 w-full">
-          <div className="text-2xl animate-pulse" style={{ animationDuration: '2s' }}>
-            🐦
-          </div>
-        </div>
       </div>
 
       <div className="relative z-10 w-full max-w-md">
         {/* Header */}
-        <Card className="p-6 text-center mb-6 animate-fade-in">
-          <div className="text-6xl mb-4 animate-bounce">🐦</div>
-          <h1 className="text-4xl font-bold text-white mb-2 bg-gradient-to-r from-yellow-300 to-orange-400 bg-clip-text text-transparent">
+        <Card className="p-6 text-center mb-6 animate-fade-in bg-white/90 backdrop-blur-sm">
+          <div className="mb-4 flex justify-center">
+            <img 
+              src="/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png" 
+              alt="Flappy Pi Character" 
+              className="w-16 h-16 animate-bounce"
+            />
+          </div>
+          <h1 className="text-4xl font-bold text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text mb-2">
             Flappy Pi
           </h1>
-          <p className="text-white/90">Ready for takeoff?</p>
+          <p className="text-gray-700">Ready for takeoff?</p>
         </Card>
 
         {/* User stats */}
-        <Card className="p-4 mb-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+        <Card className="p-4 mb-6 animate-fade-in bg-white/90 backdrop-blur-sm" style={{ animationDelay: '0.2s' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Coins className="h-5 w-5 text-yellow-400" />
-              <span className="text-white font-bold">{coins}</span>
-              <span className="text-white/80 text-sm">Pi Coins</span>
+              <Coins className="h-5 w-5 text-yellow-500" />
+              <span className="text-gray-800 font-bold">{coins}</span>
+              <span className="text-gray-600 text-sm">Pi Coins</span>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onToggleMusic(!musicEnabled)}
-              className="text-white hover:bg-white/20"
+              className="text-gray-700 hover:bg-gray-100"
             >
               {musicEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
             </Button>
@@ -81,8 +80,8 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </Card>
 
         {/* Game modes */}
-        <Card className="p-6 mb-6 space-y-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-          <h3 className="text-white font-bold text-lg mb-4">Choose Your Adventure</h3>
+        <Card className="p-6 mb-6 space-y-4 animate-fade-in bg-white/90 backdrop-blur-sm" style={{ animationDelay: '0.4s' }}>
+          <h3 className="text-gray-800 font-bold text-lg mb-4">Choose Your Adventure</h3>
           
           <Button 
             onClick={() => onStartGame('classic')}
@@ -114,7 +113,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           <Button 
             onClick={onOpenShop}
             variant="outline"
-            className="bg-white/10 border-white/30 text-white hover:bg-white/20 transform hover:scale-105 transition-all duration-200"
+            className="bg-white/80 border-white/50 text-gray-700 hover:bg-white/90 transform hover:scale-105 transition-all duration-200 backdrop-blur-sm"
           >
             <ShoppingCart className="mr-2 h-4 w-4" />
             Shop
@@ -123,7 +122,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           <Button 
             onClick={onOpenLeaderboard}
             variant="outline"
-            className="bg-white/10 border-white/30 text-white hover:bg-white/20 transform hover:scale-105 transition-all duration-200"
+            className="bg-white/80 border-white/50 text-gray-700 hover:bg-white/90 transform hover:scale-105 transition-all duration-200 backdrop-blur-sm"
           >
             <Trophy className="mr-2 h-4 w-4" />
             Leaderboard
@@ -132,7 +131,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
         {/* Footer */}
         <div className="text-center mt-6 animate-fade-in" style={{ animationDelay: '0.8s' }}>
-          <p className="text-white/60 text-sm">
+          <p className="text-white/80 text-sm">
             Powered by Pi Network
           </p>
         </div>

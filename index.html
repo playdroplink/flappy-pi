@@ -3,7 +3,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>Flappy Pi - Powered by mrwain organization</title>
     <meta name="description" content="Flappy Pi - The ultimate Flappy Bird experience with Pi Network integration. Play, earn, and compete!" />
     <meta name="author" content="mrwain organization" />
@@ -13,25 +13,48 @@
     <meta property="og:title" content="Flappy Pi - Play & Earn Pi Coins" />
     <meta property="og:description" content="The ultimate Flappy Bird experience with Pi Network integration. Play, earn, and compete!" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/lovable-uploads/5a55528e-3d0c-4cd3-91d9-6b8cff953b06.png" />
+    <meta property="og:image" content="/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png" />
 
     <!-- Twitter Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@mrwain_org" />
-    <meta name="twitter:image" content="/lovable-uploads/5a55528e-3d0c-4cd3-91d9-6b8cff953b06.png" />
+    <meta name="twitter:image" content="/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png" />
 
-    <!-- Favicon using your uploaded character -->
-    <link rel="icon" href="/lovable-uploads/5a55528e-3d0c-4cd3-91d9-6b8cff953b06.png" type="image/png" />
+    <!-- Favicon using your new logo -->
+    <link rel="icon" href="/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png" type="image/png" />
 
-    <!-- PWA Meta Tags -->
+    <!-- PWA Meta Tags for mobile fullscreen -->
     <meta name="theme-color" content="#0ea5e9" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen" />
     <meta name="apple-mobile-web-app-title" content="Flappy Pi" />
+    <meta name="mobile-web-app-capable" content="yes" />
 
     <!-- Preload critical resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <style>
+      /* Prevent zoom and ensure fullscreen mobile experience */
+      html, body {
+        height: 100vh;
+        overflow: hidden;
+        touch-action: manipulation;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      
+      /* Hide address bar on mobile */
+      @media screen and (max-width: 768px) {
+        html {
+          height: -webkit-fill-available;
+        }
+        body {
+          height: -webkit-fill-available;
+        }
+      }
+    </style>
   </head>
 
   <body>

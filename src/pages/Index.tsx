@@ -18,7 +18,7 @@ const Index = () => {
   const [gameMode, setGameMode] = useState<GameMode>('classic');
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
-  const [lives, setLives] = useState(3);
+  const [lives, setLives] = useState(1);
   const [highScore, setHighScore] = useState(0);
   const [showShop, setShowShop] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
@@ -40,29 +40,19 @@ const Index = () => {
     if (savedSkin) setSelectedBirdSkin(savedSkin);
     if (savedMusic) setMusicEnabled(savedMusic === 'true');
 
-    // Hide splash screen after 2.5 seconds and show welcome
+    // Hide splash screen after 3 seconds and show welcome
     const timer = setTimeout(() => {
       setShowSplash(false);
       setShowWelcome(true);
-    }, 2500);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, []);
 
   const handleCollision = () => {
-    if (lives > 1) {
-      // Lose a life but continue playing
-      setLives(lives - 1);
-      toast({
-        title: "Life Lost!",
-        description: `${lives - 1} lives remaining`,
-        variant: "destructive"
-      });
-    } else {
-      // Game over - show ad popup for continue option
-      setGameState('paused');
-      setShowAdPopup(true);
-    }
+    // Game over immediately on collision (no multiple lives)
+    setGameState('gameOver');
+    handleGameOver(score);
   };
 
   const handleGameOver = (finalScore: number) => {
@@ -85,8 +75,8 @@ const Index = () => {
       });
     }
 
-    // Reset lives for next game
-    setLives(3);
+    // Reset for next game
+    setLives(1);
     setLevel(1);
   };
 
@@ -95,7 +85,7 @@ const Index = () => {
     setGameState('playing');
     setScore(0);
     setLevel(1);
-    setLives(3);
+    setLives(1);
     setShowWelcome(false);
   };
 
@@ -113,7 +103,7 @@ const Index = () => {
           setGameState('playing');
           toast({
             title: "Continue!",
-            description: "You earned a life by watching an ad!"
+            description: "You got a second chance!"
           });
           break;
         case 'coins':
@@ -125,18 +115,9 @@ const Index = () => {
             description: `You earned ${bonusCoins} coins!`
           });
           break;
-        case 'life':
-          if (lives < 5) {
-            setLives(lives + 1);
-            toast({
-              title: "Extra Life!",
-              description: "You earned an extra life!"
-            });
-          }
-          break;
       }
       setShowAdPopup(false);
-    }, 3000); // Simulate 3 second ad
+    }, 2000); // Reduced ad time to 2 seconds
   };
 
   const handleScoreUpdate = (newScore: number) => {
@@ -145,10 +126,6 @@ const Index = () => {
     const newLevel = Math.floor(newScore / 50) + 1;
     if (newLevel > level) {
       setLevel(newLevel);
-      toast({
-        title: `Level ${newLevel}!`,
-        description: "Difficulty increased!"
-      });
     }
   };
 
