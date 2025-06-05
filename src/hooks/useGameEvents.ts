@@ -48,46 +48,7 @@ export const useGameEvents = ({
   // Add collision handling lock to prevent multiple collision events
   const collisionHandledRef = useRef(false);
 
-  const handleCollision = useCallback(() => {
-    // Prevent multiple collision handling
-    if (collisionHandledRef.current) {
-      console.log('Collision already handled, ignoring...');
-      return;
-    }
-    
-    collisionHandledRef.current = true;
-    console.log('Collision detected - checking ad system');
-    
-    // Check if user can continue without ad (Premium subscription)
-    if (adSystem.canContinueWithoutAd && !reviveUsed) {
-      console.log('User has Premium - allowing continue without ad');
-      setIsPausedForRevive(true);
-      setGameState('paused');
-      setShowContinueButton(true);
-      setAdWatched(false);
-      return;
-    }
-    
-    // Check if this is a mandatory ad game over
-    if (adSystem.shouldShowMandatoryAd) {
-      console.log('Showing mandatory ad');
-      setShowMandatoryAd(true);
-      setGameState('paused');
-      return;
-    }
-    
-    // Normal revive flow (optional ad)
-    if (!reviveUsed) {
-      setIsPausedForRevive(true);
-      setGameState('paused');
-      setAdWatched(false);
-      setShowContinueButton(false);
-    } else {
-      handleGameOver(score);
-    }
-  }, [adSystem.canContinueWithoutAd, adSystem.shouldShowMandatoryAd, reviveUsed, score, setGameState]);
-
-  const handleGameOver = async (finalScore: number) => {
+  const handleGameOver = useCallback(async (finalScore: number) => {
     console.log('Game over with final score:', finalScore);
     
     // Reset collision lock for next game
@@ -171,13 +132,52 @@ export const useGameEvents = ({
     setLives(1);
     setLevel(1);
     setReviveUsed(false);
-  };
+  }, [adSystem, setGameState, setScore, setIsPausedForRevive, setShowContinueButton, setAdWatched, setShowMandatoryAd, profile, level, setCoins, setHighScore, toast, refreshProfile, coins, highScore, submitScore, setLives, setLevel, setReviveUsed]);
 
-  const handleCoinEarned = (coinAmount: number) => {
+  const handleCollision = useCallback(() => {
+    // Prevent multiple collision handling
+    if (collisionHandledRef.current) {
+      console.log('Collision already handled, ignoring...');
+      return;
+    }
+    
+    collisionHandledRef.current = true;
+    console.log('Collision detected - checking ad system');
+    
+    // Check if user can continue without ad (Premium subscription)
+    if (adSystem.canContinueWithoutAd && !reviveUsed) {
+      console.log('User has Premium - allowing continue without ad');
+      setIsPausedForRevive(true);
+      setGameState('paused');
+      setShowContinueButton(true);
+      setAdWatched(false);
+      return;
+    }
+    
+    // Check if this is a mandatory ad game over
+    if (adSystem.shouldShowMandatoryAd) {
+      console.log('Showing mandatory ad');
+      setShowMandatoryAd(true);
+      setGameState('paused');
+      return;
+    }
+    
+    // Normal revive flow (optional ad)
+    if (!reviveUsed) {
+      setIsPausedForRevive(true);
+      setGameState('paused');
+      setAdWatched(false);
+      setShowContinueButton(false);
+    } else {
+      handleGameOver(score);
+    }
+  }, [adSystem.canContinueWithoutAd, adSystem.shouldShowMandatoryAd, reviveUsed, score, setGameState, setIsPausedForRevive, setShowContinueButton, setAdWatched, setShowMandatoryAd, handleGameOver]);
+
+  const handleCoinEarned = useCallback((coinAmount: number) => {
     const newCoins = coins + coinAmount;
     setCoins(newCoins);
     localStorage.setItem('flappypi-coins', newCoins.toString());
-  };
+  }, [coins, setCoins]);
 
   const handleContinueClick = useCallback(() => {
     console.log('Continue button clicked - resuming game');
@@ -201,17 +201,17 @@ export const useGameEvents = ({
       description: "Continue your flight and reach new heights!",
       duration: 2000
     });
-  }, [continueGame, setGameState, toast]);
+  }, [continueGame, setGameState, toast, setShowContinueButton, setReviveUsed, setIsPausedForRevive, setAdWatched]);
 
-  const handleMandatoryAdWatch = () => {
+  const handleMandatoryAdWatch = useCallback(() => {
     console.log('Mandatory ad watched - resetting counter and ending game');
     collisionHandledRef.current = false;
     adSystem.resetAdCounter();
     setShowMandatoryAd(false);
     handleGameOver(score);
-  };
+  }, [adSystem, setShowMandatoryAd, handleGameOver, score]);
 
-  const handleAdWatch = async (adType: 'continue' | 'coins' | 'life') => {
+  const handleAdWatch = useCallback(async (adType: 'continue' | 'coins' | 'life') => {
     if (!profile) {
       console.warn('No user profile available for ad reward');
       return;
@@ -265,7 +265,7 @@ export const useGameEvents = ({
         });
       }
     }
-  };
+  }, [profile, adWatched, isPausedForRevive, setShowContinueButton, setAdWatched, coins, setCoins, refreshProfile, toast, setLives]);
 
   return {
     handleCollision,
