@@ -56,7 +56,6 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     console.log('Resetting game with canvas height:', canvasHeight);
     const safeY = Math.max(100, canvasHeight / 2);
     
-    // Only reset if we're actually starting a new game
     gameStateRef.current = {
       bird: { x: 100, y: safeY, velocity: 0, rotation: 0 },
       pipes: [],
@@ -75,7 +74,6 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     const canvas = document.querySelector('canvas');
     const safeY = canvas ? Math.max(150, canvas.height / 2) : 300;
     
-    // Reset bird to safe position only
     gameStateRef.current.bird = {
       x: 80,
       y: safeY,
@@ -83,15 +81,12 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       rotation: 0
     };
     
-    // Clear game over flag
     gameStateRef.current.gameOver = false;
     
-    // Remove nearby pipes for breathing room
     gameStateRef.current.pipes = gameStateRef.current.pipes.filter(pipe => 
       pipe.x > gameStateRef.current.bird.x + 300
     );
     
-    // Reset spawn timer
     gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 120;
     
     console.log('Revive complete - Bird at safe position, score preserved:', gameStateRef.current.score);
@@ -107,32 +102,17 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   const checkCollisions = useCallback((canvas: HTMLCanvasElement) => {
     const { bird, pipes, gameOver } = gameStateRef.current;
     
-    // Don't check collisions if game is already over or not playing
     if (gameOver || gameState !== 'playing') return false;
     
     const BIRD_SIZE = 25;
     const PIPE_WIDTH = 120;
     
-    // More forgiving ground collision - leave more space
-    if (bird.y + BIRD_SIZE >= canvas.height - 50) {
-      console.log('Bird hit ground! Bird Y:', bird.y, 'Canvas height:', canvas.height);
-      return true;
-    }
-
-    // More forgiving ceiling collision
-    if (bird.y <= 20) {
-      console.log('Bird hit ceiling! Bird Y:', bird.y);
-      return true;
-    }
-    
-    // Much more forgiving pipe collisions - smaller collision box
+    // ONLY check pipe collisions - removed ground and ceiling collision checks
     for (const pipe of pipes) {
-      // Only check collision if bird is actually near the pipe
       if (
         bird.x + BIRD_SIZE - 12 > pipe.x &&
         bird.x + 12 < pipe.x + PIPE_WIDTH
       ) {
-        // More forgiving vertical collision - smaller bird collision box
         if (bird.y + 12 < pipe.topHeight || bird.y + BIRD_SIZE - 12 > pipe.bottomY) {
           console.log('Bird hit pipe! Bird Y:', bird.y, 'Top height:', pipe.topHeight, 'Bottom Y:', pipe.bottomY);
           return true;
@@ -144,7 +124,6 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   }, [gameState]);
 
   const forceReset = useCallback(() => {
-    // Only reset if we're not already playing
     if (gameState !== 'playing') {
       console.log('Force resetting game state');
       const canvas = document.querySelector('canvas');
