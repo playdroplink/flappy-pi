@@ -3,7 +3,7 @@ import React from 'react';
 
 const SplashScreen = () => {
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-violet-600 via-purple-700 to-indigo-800 flex flex-col items-center justify-center text-white z-50 overflow-hidden">
+    <div className="fixed inset-0 bg-gradient-to-br from-sky-400 via-sky-500 to-sky-600 flex flex-col items-center justify-center text-white z-50 overflow-hidden">
       {/* Animated clouds in background */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-16 h-10 bg-white/20 rounded-full animate-pulse"></div>
@@ -12,23 +12,27 @@ const SplashScreen = () => {
       </div>
 
       <div className="animate-scale-in relative z-10">
-        {/* Enhanced Bird Logo */}
+        {/* Enhanced Bird Logo using your character */}
         <div className="relative mb-6">
           <div className="text-8xl animate-bounce">
             <div className="relative inline-block">
-              <div className="absolute -inset-2 bg-yellow-400 rounded-full blur-xl opacity-50 animate-pulse"></div>
-              <div className="relative bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full p-4 shadow-2xl">
-                <span className="text-6xl">🐦</span>
+              <div className="absolute -inset-2 bg-sky-400 rounded-full blur-xl opacity-50 animate-pulse"></div>
+              <div className="relative bg-gradient-to-br from-sky-400 to-sky-500 rounded-full p-4 shadow-2xl">
+                <img 
+                  src="/lovable-uploads/5a55528e-3d0c-4cd3-91d9-6b8cff953b06.png" 
+                  alt="Flappy Pi Bird" 
+                  className="w-16 h-16 object-contain"
+                />
               </div>
             </div>
           </div>
           {/* Wing flap effect */}
-          <div className="absolute top-8 left-12 w-6 h-3 bg-yellow-300 rounded-full animate-ping"></div>
-          <div className="absolute top-6 right-12 w-4 h-2 bg-orange-400 rounded-full animate-ping delay-150"></div>
+          <div className="absolute top-8 left-12 w-6 h-3 bg-sky-300 rounded-full animate-ping"></div>
+          <div className="absolute top-6 right-12 w-4 h-2 bg-sky-400 rounded-full animate-ping delay-150"></div>
         </div>
         
         <div className="text-center">
-          <h1 className="text-7xl font-bold mb-4 text-center animate-fade-in bg-gradient-to-r from-yellow-300 via-orange-400 to-pink-400 bg-clip-text text-transparent">
+          <h1 className="text-7xl font-bold mb-4 text-center animate-fade-in bg-gradient-to-r from-sky-200 via-sky-300 to-sky-100 bg-clip-text text-transparent">
             Flappy Pi
           </h1>
           
@@ -40,9 +44,9 @@ const SplashScreen = () => {
         </div>
         
         <div className="flex items-center justify-center space-x-3 mb-8">
-          <div className="w-3 h-3 bg-yellow-400 rounded-full animate-bounce"></div>
-          <div className="w-3 h-3 bg-orange-400 rounded-full animate-bounce delay-100"></div>
-          <div className="w-3 h-3 bg-pink-400 rounded-full animate-bounce delay-200"></div>
+          <div className="w-3 h-3 bg-sky-200 rounded-full animate-bounce"></div>
+          <div className="w-3 h-3 bg-sky-300 rounded-full animate-bounce delay-100"></div>
+          <div className="w-3 h-3 bg-sky-100 rounded-full animate-bounce delay-200"></div>
         </div>
       </div>
       

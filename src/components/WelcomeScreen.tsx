@@ -29,7 +29,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       title: 'Classic Flight',
       description: '3 lives to reach the sky!',
       icon: <Play className="h-8 w-8" />,
-      color: 'bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700',
+      color: 'bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700',
       reward: '🏆 Best for beginners'
     },
     {
@@ -51,7 +51,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-700 flex flex-col items-center justify-center text-white p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-sky-400 via-sky-500 to-sky-600 flex flex-col items-center justify-center text-white p-4 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Floating pipes in background */}
@@ -65,13 +65,17 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         <div className="absolute top-1/2 left-8 text-lg animate-bounce delay-700">⭐</div>
       </div>
 
-      {/* Header with animated bird */}
+      {/* Header with your character */}
       <div className="text-center mb-8 relative z-10">
         <div className="relative">
           <div className="text-7xl mb-4 animate-bounce">
             <div className="relative inline-block">
-              <div className="absolute -inset-1 bg-yellow-400 rounded-full blur-lg opacity-60 animate-pulse"></div>
-              <span className="relative">🐦</span>
+              <div className="absolute -inset-1 bg-sky-300 rounded-full blur-lg opacity-60 animate-pulse"></div>
+              <img 
+                src="/lovable-uploads/5a55528e-3d0c-4cd3-91d9-6b8cff953b06.png" 
+                alt="Flappy Pi Bird" 
+                className="relative w-24 h-24 object-contain"
+              />
             </div>
           </div>
           {/* Tap indicators */}
@@ -79,7 +83,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             TAP!
           </div>
         </div>
-        <h1 className="text-6xl font-bold mb-2 animate-fade-in bg-gradient-to-r from-yellow-300 via-orange-400 to-pink-400 bg-clip-text text-transparent">
+        <h1 className="text-6xl font-bold mb-2 animate-fade-in bg-gradient-to-r from-sky-100 via-sky-200 to-sky-100 bg-clip-text text-transparent">
           Flappy Pi
         </h1>
         <p className="text-xl opacity-90 font-semibold">🚀 Choose your sky adventure!</p>
@@ -93,8 +97,8 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <Coins className="h-4 w-4 text-yellow-400" />
               <span className="font-bold">{coins}</span>
             </div>
-            <div className="flex items-center space-x-1 bg-purple-500/20 rounded-full px-3 py-1">
-              <Star className="h-4 w-4 text-purple-400" />
+            <div className="flex items-center space-x-1 bg-sky-500/20 rounded-full px-3 py-1">
+              <Star className="h-4 w-4 text-sky-300" />
               <span className="font-bold">Level 1</span>
             </div>
           </div>
@@ -146,7 +150,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         
         <Button
           onClick={onOpenLeaderboard}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 shadow-lg px-6 py-3 rounded-full transform hover:scale-105 transition-all duration-200"
+          className="bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white border-0 shadow-lg px-6 py-3 rounded-full transform hover:scale-105 transition-all duration-200"
         >
           <Trophy className="mr-2 h-5 w-5" />
           Champions

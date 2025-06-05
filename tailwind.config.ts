@@ -26,7 +26,7 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
+					DEFAULT: '#0ea5e9', // Sky blue primary color
 					foreground: 'hsl(var(--primary-foreground))'
 				},
 				secondary: {
@@ -134,10 +134,10 @@ export default {
 				},
 				'glow': {
 					'0%, 100%': {
-						boxShadow: '0 0 5px rgba(139, 92, 246, 0.5)'
+						boxShadow: '0 0 5px rgba(14, 165, 233, 0.5)'
 					},
 					'50%': {
-						boxShadow: '0 0 20px rgba(139, 92, 246, 0.8)'
+						boxShadow: '0 0 20px rgba(14, 165, 233, 0.8)'
 					}
 				}
 			},

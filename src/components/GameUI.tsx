@@ -36,7 +36,7 @@ const GameUI: React.FC<GameUIProps> = ({
       {/* Enhanced Top HUD */}
       <div className="absolute top-4 left-4 right-4 flex justify-between items-center pointer-events-auto">
         <div className="flex items-center space-x-2">
-          <Card className="px-4 py-2 bg-gradient-to-r from-violet-500/90 to-purple-600/90 backdrop-blur-sm border-violet-300/50 shadow-lg">
+          <Card className="px-4 py-2 bg-gradient-to-r from-sky-500/90 to-sky-600/90 backdrop-blur-sm border-sky-300/50 shadow-lg">
             <div className="flex items-center space-x-2">
               <Star className="h-4 w-4 text-yellow-300" />
               <p className="text-sm font-bold text-white">{score}</p>
@@ -81,24 +81,24 @@ const GameUI: React.FC<GameUIProps> = ({
       {gameState === 'gameOver' && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-          <Card className="relative p-8 max-w-md w-full mx-4 bg-gradient-to-br from-violet-600/95 to-purple-700/95 backdrop-blur-sm border-violet-300/50 shadow-2xl rounded-2xl">
+          <Card className="relative p-8 max-w-md w-full mx-4 bg-gradient-to-br from-sky-600/95 to-sky-700/95 backdrop-blur-sm border-sky-300/50 shadow-2xl rounded-2xl">
             <div className="text-center space-y-6 text-white">
               <div>
                 <div className="text-6xl mb-4">😵</div>
-                <h2 className="text-3xl font-bold text-yellow-300 mb-3 animate-pulse">Game Over!</h2>
+                <h2 className="text-3xl font-bold text-sky-100 mb-3 animate-pulse">Game Over!</h2>
                 
                 <div className="bg-white/10 rounded-xl p-4 mb-4 space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-lg">Final Score:</span>
-                    <span className="text-2xl font-bold text-yellow-300">{score}</span>
+                    <span className="text-2xl font-bold text-sky-200">{score}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-lg">Level Reached:</span>
-                    <span className="text-xl font-bold text-blue-300">{level}</span>
+                    <span className="text-xl font-bold text-sky-300">{level}</span>
                   </div>
                   {score === highScore && score > 0 && (
-                    <div className="bg-yellow-500/20 rounded-lg p-2 animate-pulse">
-                      <p className="text-yellow-300 font-bold">🎉 NEW HIGH SCORE! 🎉</p>
+                    <div className="bg-sky-400/20 rounded-lg p-2 animate-pulse">
+                      <p className="text-sky-200 font-bold">🎉 NEW HIGH SCORE! 🎉</p>
                     </div>
                   )}
                 </div>
@@ -113,7 +113,7 @@ const GameUI: React.FC<GameUIProps> = ({
               <div className="space-y-3">
                 <Button 
                   onClick={onStartGame}
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-4 text-lg font-bold border-0 shadow-lg rounded-xl transform hover:scale-105 transition-all duration-200"
+                  className="w-full bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white py-4 text-lg font-bold border-0 shadow-lg rounded-xl transform hover:scale-105 transition-all duration-200"
                   size="lg"
                 >
                   <Play className="mr-2 h-6 w-6" />
@@ -155,8 +155,8 @@ const GameUI: React.FC<GameUIProps> = ({
       {/* Enhanced Playing State Instructions */}
       {gameState === 'playing' && score === 0 && (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-          <Card className="px-6 py-3 bg-white/90 backdrop-blur-sm rounded-full border-violet-300/50 shadow-lg animate-bounce">
-            <p className="text-lg font-bold text-violet-600 animate-pulse">
+          <Card className="px-6 py-3 bg-white/90 backdrop-blur-sm rounded-full border-sky-300/50 shadow-lg animate-bounce">
+            <p className="text-lg font-bold text-sky-600 animate-pulse">
               👆 TAP TO FLY! 🐦
             </p>
           </Card>
@@ -166,7 +166,7 @@ const GameUI: React.FC<GameUIProps> = ({
       {/* Score milestone celebrations */}
       {gameState === 'playing' && score > 0 && score % 10 === 0 && (
         <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 pointer-events-none">
-          <div className="text-4xl font-bold text-yellow-300 animate-bounce">
+          <div className="text-4xl font-bold text-sky-200 animate-bounce">
             🌟 AMAZING! 🌟
           </div>
         </div>

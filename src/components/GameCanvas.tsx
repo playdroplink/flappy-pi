@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useCallback } from 'react';
 
 interface Pipe {
@@ -42,6 +43,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const backgroundMusicRef = useRef<HTMLAudioElement | null>(null);
   const tapIndicatorsRef = useRef<Array<{x: number, y: number, time: number}>>([]);
   const coinAnimationsRef = useRef<Array<{x: number, y: number, time: number}>>([]);
+  const birdImageRef = useRef<HTMLImageElement | null>(null);
 
   const BIRD_SIZE = 35;
   const PIPE_WIDTH = 65;
@@ -49,6 +51,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const GRAVITY = 0.6;
   const FLAP_STRENGTH = -10;
   const BASE_PIPE_SPEED = 2.5;
+
+  // Load bird character image
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      birdImageRef.current = img;
+    };
+    img.src = '/lovable-uploads/5a55528e-3d0c-4cd3-91d9-6b8cff953b06.png';
+  }, []);
 
   // Dynamic difficulty based on game mode and level
   const getDifficulty = useCallback(() => {
@@ -73,16 +84,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
   }, [gameMode, level]);
 
-  const getBirdColor = useCallback(() => {
-    switch (birdSkin) {
-      case 'red': return '#ef4444';
-      case 'blue': return '#3b82f6';
-      case 'gold': return '#f59e0b';
-      case 'purple': return '#8b5cf6';
-      default: return '#fbbf24';
-    }
-  }, [birdSkin]);
-
   const resetGame = useCallback(() => {
     birdRef.current = { x: 100, y: 200, velocity: 0, rotation: 0 };
     pipesRef.current = [];
@@ -92,15 +93,35 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     onScoreUpdate(0);
   }, [onScoreUpdate]);
 
-  // Initialize background music
+  // Initialize and manage background music
   useEffect(() => {
     if (musicEnabled && !backgroundMusicRef.current) {
-      // Create audio context for background music (placeholder)
-      console.log('Background music would start here');
-    } else if (!musicEnabled && backgroundMusicRef.current) {
-      backgroundMusicRef.current.pause();
+      const audio = new Audio('/public/sounds/background/Flappy Pi Main Theme Song.mp3');
+      audio.loop = true;
+      audio.volume = 0.3;
+      backgroundMusicRef.current = audio;
+      
+      // Play music when game starts
+      if (gameState === 'playing') {
+        audio.play().catch(console.log);
+      }
     }
-  }, [musicEnabled]);
+    
+    if (backgroundMusicRef.current) {
+      if (musicEnabled && gameState === 'playing') {
+        backgroundMusicRef.current.play().catch(console.log);
+      } else {
+        backgroundMusicRef.current.pause();
+      }
+    }
+
+    return () => {
+      if (backgroundMusicRef.current) {
+        backgroundMusicRef.current.pause();
+        backgroundMusicRef.current = null;
+      }
+    };
+  }, [musicEnabled, gameState]);
 
   const createPipe = (x: number) => {
     const { pipeGap } = getDifficulty();
@@ -212,10 +233,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
     // Draw sky gradient background
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, '#8B5CF6');
-    gradient.addColorStop(0.3, '#A855F7');
-    gradient.addColorStop(0.7, '#7C3AED');
-    gradient.addColorStop(1, '#6D28D9');
+    gradient.addColorStop(0, '#0ea5e9');  // Sky blue
+    gradient.addColorStop(0.3, '#0284c7');
+    gradient.addColorStop(0.7, '#0369a1');
+    gradient.addColorStop(1, '#075985');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -269,7 +290,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       ctx.strokeRect(pipe.x - 6, pipe.y + pipeGap, PIPE_WIDTH + 12, 25);
     });
 
-    // Draw enhanced bird with more detail
+    // Draw your custom bird character
     ctx.save();
     ctx.translate(birdRef.current.x + BIRD_SIZE / 2, birdRef.current.y + BIRD_SIZE / 2);
     ctx.rotate(birdRef.current.rotation);
@@ -280,49 +301,27 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     ctx.ellipse(2, 2, BIRD_SIZE / 2, BIRD_SIZE / 2.5, 0, 0, Math.PI * 2);
     ctx.fill();
     
-    // Bird body gradient
-    const birdGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, BIRD_SIZE / 2);
-    birdGradient.addColorStop(0, getBirdColor());
-    birdGradient.addColorStop(0.7, getBirdColor());
-    birdGradient.addColorStop(1, '#d97706');
-    
-    ctx.fillStyle = birdGradient;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, BIRD_SIZE / 2, BIRD_SIZE / 2.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Bird wing (animated)
-    const wingOffset = Math.sin(Date.now() * 0.02) * 3;
-    ctx.fillStyle = '#f97316';
-    ctx.beginPath();
-    ctx.ellipse(-8, wingOffset, 8, 12, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Bird eye with shine
-    ctx.fillStyle = 'white';
-    ctx.beginPath();
-    ctx.arc(-6, -6, 7, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.fillStyle = 'black';
-    ctx.beginPath();
-    ctx.arc(-4, -6, 4, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Eye shine
-    ctx.fillStyle = 'white';
-    ctx.beginPath();
-    ctx.arc(-3, -7, 1.5, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Enhanced beak
-    ctx.fillStyle = '#ea580c';
-    ctx.beginPath();
-    ctx.moveTo(BIRD_SIZE / 2 - 6, -2);
-    ctx.lineTo(BIRD_SIZE / 2 + 8, 0);
-    ctx.lineTo(BIRD_SIZE / 2 - 2, 6);
-    ctx.closePath();
-    ctx.fill();
+    // Draw your custom bird image if loaded
+    if (birdImageRef.current) {
+      ctx.drawImage(
+        birdImageRef.current,
+        -BIRD_SIZE / 2,
+        -BIRD_SIZE / 2,
+        BIRD_SIZE,
+        BIRD_SIZE
+      );
+    } else {
+      // Fallback bird drawing
+      const birdGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, BIRD_SIZE / 2);
+      birdGradient.addColorStop(0, '#0ea5e9');
+      birdGradient.addColorStop(0.7, '#0284c7');
+      birdGradient.addColorStop(1, '#0369a1');
+      
+      ctx.fillStyle = birdGradient;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, BIRD_SIZE / 2, BIRD_SIZE / 2.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
     
     ctx.restore();
 
@@ -406,7 +405,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
 
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [gameState, gameMode, level, onCollision, onGameOver, onScoreUpdate, getBirdColor, getDifficulty]);
+  }, [gameState, gameMode, level, onCollision, onGameOver, onScoreUpdate, getDifficulty]);
 
   useEffect(() => {
     if (gameState === 'playing') {
