@@ -96,8 +96,10 @@ export const useLeaderboard = () => {
   useEffect(() => {
     fetchLeaderboard();
 
+    // Create a unique channel name to avoid conflicts
+    const channelName = `leaderboard-changes-${Date.now()}`;
     const channel = supabase
-      .channel('leaderboard-changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
