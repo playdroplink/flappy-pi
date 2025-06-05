@@ -4,7 +4,6 @@ import ShopHeader from './shop/ShopHeader';
 import BirdSkinCard from './shop/BirdSkinCard';
 import ShopInfoSection from './shop/ShopInfoSection';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Crown, Zap, Infinity, Calendar, Sparkles, Star, Shield } from 'lucide-react';
 import { gameBackendService } from '@/services/gameBackendService';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -397,9 +396,9 @@ const ShopModal: React.FC<ShopModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-sm max-h-[95vh] overflow-hidden bg-white border-gray-300 mx-2">
-        <DialogHeader className="pb-3">
-          <DialogTitle className="text-center text-xl text-gray-800 flex items-center justify-center space-x-2">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border-gray-300">
+        <DialogHeader>
+          <DialogTitle className="text-center text-2xl text-gray-800 flex items-center justify-center space-x-2">
             <span>🛍️ Pi Shop</span>
             {eliteSubscription.isActive && (
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center">
@@ -411,208 +410,318 @@ const ShopModal: React.FC<ShopModalProps> = ({
           <ShopHeader coins={coins} />
         </DialogHeader>
 
-        <div className="overflow-y-auto max-h-[calc(95vh-140px)] space-y-4 px-1">
+        <div className="space-y-6">
           {/* Elite Pack Subscription Section */}
-          <Card className="p-4 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-2">
-                <Crown className="h-5 w-5 text-yellow-600" />
-                <h3 className="font-bold text-gray-800 text-sm">Elite Pack</h3>
-                <span className="text-xs bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded">
-                  Premium
-                </span>
-              </div>
-              <div className="text-right">
-                <div className="text-lg font-bold text-yellow-600">20 Pi</div>
-                <div className="text-xs text-gray-500">monthly</div>
-              </div>
-            </div>
+          <div>
+            <h3 className="text-lg font-bold mb-4 text-gray-800 flex items-center">
+              <Crown className="mr-2 h-5 w-5 text-yellow-600" />
+              Elite Pack Subscription
+              <span className="ml-2 text-sm bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded">
+                Premium
+              </span>
+            </h3>
             
-            {eliteSubscription.isActive ? (
-              <div className="text-center">
-                <div className="text-2xl mb-2">👑</div>
-                <h4 className="font-bold text-yellow-700 mb-1">Elite Active!</h4>
-                <p className="text-xs text-gray-600 mb-2">
-                  {eliteSubscription.daysRemaining} days remaining
-                </p>
-                <div className="text-xs space-y-1">
-                  <div className="flex items-center justify-center space-x-1 text-green-600">
-                    <Crown className="h-3 w-3" />
-                    <span>Elite badge & status</span>
+            <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-6 border-2 border-yellow-300">
+              {eliteSubscription.isActive ? (
+                <div className="text-center">
+                  <div className="text-4xl mb-3">👑</div>
+                  <h4 className="text-xl font-bold text-yellow-700 mb-2">Elite Member Active!</h4>
+                  <p className="text-gray-600 text-sm mb-4">
+                    You're enjoying elite privileges right now!
+                  </p>
+                  
+                  <div className="bg-white rounded-lg p-3 border border-yellow-300 mb-4">
+                    <div className="flex items-center justify-center space-x-2 mb-1">
+                      <Calendar className="h-4 w-4 text-yellow-600" />
+                      <span className="font-semibold text-sm">Time Remaining</span>
+                    </div>
+                    <p className="text-yellow-700 text-lg font-bold">
+                      {eliteSubscription.daysRemaining} days
+                    </p>
                   </div>
-                  <div className="flex items-center justify-center space-x-1 text-green-600">
-                    <Sparkles className="h-3 w-3" />
-                    <span>All skins + exclusive</span>
+                  
+                  <div className="text-sm text-left space-y-2">
+                    <div className="flex items-center space-x-2 text-green-600">
+                      <Crown className="h-4 w-4" />
+                      <span>Elite badge and status</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-green-600">
+                      <Sparkles className="h-4 w-4" />
+                      <span>All skins including exclusive elite characters</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-green-600">
+                      <Star className="h-4 w-4" />
+                      <span>Priority support and early features</span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 p-3 bg-orange-100 rounded-lg">
+                    <p className="text-xs text-orange-700">
+                      <Shield className="h-3 w-3 inline mr-1" />
+                      No refunds after payment. Subscription auto-renews monthly.
+                    </p>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div>
-                <div className="text-xs space-y-1 mb-3">
-                  <div className="flex items-center space-x-2">
-                    <Crown className="h-3 w-3 text-yellow-500" />
-                    <span>Elite badge and special status</span>
+              ) : (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="text-xl font-bold text-gray-800">Elite Pack</h4>
+                      <p className="text-gray-600 text-sm">
+                        Premium membership with exclusive content and elite status
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-yellow-600">20 Pi</div>
+                      <div className="text-sm text-gray-500">per month</div>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Sparkles className="h-3 w-3 text-yellow-500" />
-                    <span>All skins including exclusive</span>
+                  
+                  <div className="grid grid-cols-1 gap-3 mb-4 text-sm">
+                    <div className="flex items-center space-x-3">
+                      <Crown className="h-5 w-5 text-yellow-500" />
+                      <span>Elite badge and special status recognition</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Sparkles className="h-5 w-5 text-yellow-500" />
+                      <span>All bird skins including exclusive elite characters</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Star className="h-5 w-5 text-yellow-500" />
+                      <span>Priority support and early access to new features</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Infinity className="h-5 w-5 text-yellow-500" />
+                      <span>All features from standard subscriptions included</span>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Star className="h-3 w-3 text-yellow-500" />
-                    <span>Priority support & early features</span>
+                  
+                  <div className="mb-4 p-3 bg-yellow-100 rounded-lg">
+                    <p className="text-xs text-yellow-700">
+                      <Shield className="h-3 w-3 inline mr-1" />
+                      No refunds after payment. Subscription renews monthly. Cancel anytime.
+                    </p>
                   </div>
+                  
+                  <Button
+                    onClick={handleEliteSubscription}
+                    className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white border-0 rounded-lg py-3 font-bold"
+                  >
+                    <Crown className="mr-2 h-5 w-5" />
+                    👑 Subscribe Elite Pack (20 Pi/month)
+                  </Button>
                 </div>
-                
-                <Button
-                  onClick={handleEliteSubscription}
-                  className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white border-0 rounded-lg py-2 font-bold text-sm"
-                >
-                  <Crown className="mr-1 h-4 w-4" />
-                  Subscribe Elite (20 Pi/month)
-                </Button>
-              </div>
-            )}
-          </Card>
+              )}
+            </div>
+          </div>
 
           {/* All Skins Subscription Section */}
-          <Card className="p-4 bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-200">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-2">
-                <Sparkles className="h-5 w-5 text-pink-600" />
-                <h3 className="font-bold text-gray-800 text-sm">All Skins</h3>
-                <span className="text-xs bg-pink-100 px-2 py-1 rounded text-pink-700">
-                  30 Days
-                </span>
-              </div>
-              <div className="text-right">
-                <div className="text-lg font-bold text-pink-600">15 Pi</div>
-                <div className="text-xs text-gray-500">one-time</div>
-              </div>
-            </div>
+          <div>
+            <h3 className="text-lg font-bold mb-4 text-gray-800 flex items-center">
+              <Sparkles className="mr-2 h-5 w-5 text-pink-600" />
+              All Skins Subscription
+              <span className="ml-2 text-sm bg-pink-100 px-2 py-1 rounded text-pink-700">
+                30 Days Access
+              </span>
+            </h3>
             
-            {allSkinsSubscription.isActive && !eliteSubscription.isActive ? (
-              <div className="text-center">
-                <div className="text-2xl mb-2">✨</div>
-                <h4 className="font-bold text-pink-700 mb-1">All Skins Active!</h4>
-                <p className="text-xs text-gray-600 mb-2">
-                  {allSkinsSubscription.daysRemaining} days remaining
-                </p>
-                <div className="text-xs">
-                  <div className="flex items-center justify-center space-x-1 text-green-600">
-                    <Sparkles className="h-3 w-3" />
-                    <span>All standard skins unlocked</span>
+            <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-6 border border-pink-200">
+              {allSkinsSubscription.isActive && !eliteSubscription.isActive ? (
+                <div className="text-center">
+                  <div className="text-4xl mb-3">✨</div>
+                  <h4 className="text-xl font-bold text-pink-700 mb-2">All Skins Unlocked!</h4>
+                  <p className="text-gray-600 text-sm mb-4">
+                    You have access to all standard bird skins right now!
+                  </p>
+                  
+                  <div className="bg-white rounded-lg p-3 border border-pink-200 mb-4">
+                    <div className="flex items-center justify-center space-x-2 mb-1">
+                      <Calendar className="h-4 w-4 text-pink-600" />
+                      <span className="font-semibold text-sm">Time Remaining</span>
+                    </div>
+                    <p className="text-pink-700 text-lg font-bold">
+                      {allSkinsSubscription.daysRemaining} days
+                    </p>
+                  </div>
+                  
+                  <div className="text-sm text-left space-y-2">
+                    <div className="flex items-center space-x-2 text-green-600">
+                      <Sparkles className="h-4 w-4" />
+                      <span>All standard skins unlocked</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-green-600">
+                      <Infinity className="h-4 w-4" />
+                      <span>Switch between any standard skin anytime</span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 p-3 bg-pink-100 rounded-lg">
+                    <p className="text-xs text-pink-700">
+                      <Shield className="h-3 w-3 inline mr-1" />
+                      No refunds after payment. One-time 30-day access.
+                    </p>
                   </div>
                 </div>
-              </div>
-            ) : eliteSubscription.isActive ? (
-              <div className="text-center">
-                <div className="text-2xl mb-2">👑</div>
-                <h4 className="font-bold text-yellow-700 mb-1">Included in Elite!</h4>
-                <p className="text-xs text-gray-600">
-                  All skins included in your Elite subscription
-                </p>
-              </div>
-            ) : (
-              <div>
-                <div className="text-xs space-y-1 mb-3">
-                  <div className="flex items-center space-x-2">
-                    <Sparkles className="h-3 w-3 text-pink-500" />
-                    <span>Access to all standard skins</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="h-3 w-3 text-pink-500" />
-                    <span>30 days unlimited access</span>
-                  </div>
+              ) : eliteSubscription.isActive ? (
+                <div className="text-center">
+                  <div className="text-4xl mb-3">👑</div>
+                  <h4 className="text-xl font-bold text-yellow-700 mb-2">Included in Elite Pack!</h4>
+                  <p className="text-gray-600 text-sm">
+                    All skins are included in your Elite subscription
+                  </p>
                 </div>
-                
-                <Button
-                  onClick={handleAllSkinsSubscription}
-                  className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white border-0 rounded-lg py-2 font-bold text-sm"
-                >
-                  <Sparkles className="mr-1 h-4 w-4" />
-                  Subscribe (15 Pi/30 days)
-                </Button>
-              </div>
-            )}
-          </Card>
+              ) : (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="text-xl font-bold text-gray-800">Unlock All Standard Skins</h4>
+                      <p className="text-gray-600 text-sm">
+                        Get instant access to all standard bird skins for 30 days
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-pink-600">15 Pi</div>
+                      <div className="text-sm text-gray-500">for 30 days</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-3 mb-4 text-sm">
+                    <div className="flex items-center space-x-3">
+                      <Sparkles className="h-5 w-5 text-pink-500" />
+                      <span>Access to all standard bird skins immediately</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Infinity className="h-5 w-5 text-pink-500" />
+                      <span>Switch between any standard skin anytime during subscription</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Calendar className="h-5 w-5 text-pink-500" />
+                      <span>30 days of unlimited standard skin access</span>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-4 p-3 bg-pink-100 rounded-lg">
+                    <p className="text-xs text-pink-700">
+                      <Shield className="h-3 w-3 inline mr-1" />
+                      No refunds after payment. One-time purchase for 30-day access.
+                    </p>
+                  </div>
+                  
+                  <Button
+                    onClick={handleAllSkinsSubscription}
+                    className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white border-0 rounded-lg py-3 font-bold"
+                  >
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    🎨 Subscribe with Pi (15 Pi/30 days)
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Pi Premium Subscription Section */}
-          <Card className="p-4 bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-2">
-                <Crown className="h-5 w-5 text-purple-600" />
-                <h3 className="font-bold text-gray-800 text-sm">Pi Premium</h3>
-                <span className="text-xs bg-purple-100 px-2 py-1 rounded text-purple-700">
-                  No Ads
-                </span>
-              </div>
-              <div className="text-right">
-                <div className="text-lg font-bold text-purple-600">10 Pi</div>
-                <div className="text-xs text-gray-500">monthly</div>
-              </div>
-            </div>
+          <div>
+            <h3 className="text-lg font-bold mb-4 text-gray-800 flex items-center">
+              <Crown className="mr-2 h-5 w-5 text-purple-600" />
+              Pi Premium Subscription
+              <span className="ml-2 text-sm bg-purple-100 px-2 py-1 rounded text-purple-700">
+                Remove Ads
+              </span>
+            </h3>
             
-            {adSystem.isAdFree ? (
-              <div className="text-center">
-                <div className="text-2xl mb-2">✨</div>
-                <h4 className="font-bold text-purple-700 mb-1">Premium Active!</h4>
-                {adSystem.adFreeTimeRemaining && (
-                  <p className="text-xs text-gray-600 mb-2">
-                    {adSystem.adFreeTimeRemaining.days}d {adSystem.adFreeTimeRemaining.hours}h remaining
+            <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-6 border border-purple-200">
+              {adSystem.isAdFree ? (
+                <div className="text-center">
+                  <div className="text-4xl mb-3">✨</div>
+                  <h4 className="text-xl font-bold text-purple-700 mb-2">Premium Active!</h4>
+                  <p className="text-gray-600 text-sm mb-4">
+                    You're enjoying ad-free gaming right now!
                   </p>
-                )}
-                <div className="text-xs">
-                  <div className="flex items-center justify-center space-x-1 text-green-600">
-                    <Zap className="h-3 w-3" />
-                    <span>Ad-free gaming experience</span>
+                  
+                  {adSystem.adFreeTimeRemaining && (
+                    <div className="bg-white rounded-lg p-3 border border-purple-200 mb-4">
+                      <div className="flex items-center justify-center space-x-2 mb-1">
+                        <Calendar className="h-4 w-4 text-purple-600" />
+                        <span className="font-semibold text-sm">Time Remaining</span>
+                      </div>
+                      <p className="text-purple-700 text-lg font-bold">
+                        {adSystem.adFreeTimeRemaining.days}d {adSystem.adFreeTimeRemaining.hours}h
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-1 gap-2 text-sm text-left">
+                    <div className="flex items-center space-x-2 text-green-600">
+                      <Infinity className="h-4 w-4" />
+                      <span>Continue games unlimited</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-green-600">
+                      <Zap className="h-4 w-4" />
+                      <span>No mandatory ads</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div>
-                <div className="text-xs space-y-1 mb-3">
-                  <div className="flex items-center space-x-2">
-                    <Infinity className="h-3 w-3 text-green-500" />
-                    <span>Continue games unlimited</span>
+              ) : (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="text-xl font-bold text-gray-800">Remove Pi Ads</h4>
+                      <p className="text-gray-600 text-sm">
+                        Skip all mandatory ads and continue unlimited
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-purple-600">10 Pi</div>
+                      <div className="text-sm text-gray-500">per month</div>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Zap className="h-3 w-3 text-green-500" />
-                    <span>No mandatory ads</span>
+                  
+                  <div className="grid grid-cols-1 gap-3 mb-4 text-sm">
+                    <div className="flex items-center space-x-3">
+                      <Infinity className="h-5 w-5 text-green-500" />
+                      <span>Continue games unlimited without watching ads</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Zap className="h-5 w-5 text-green-500" />
+                      <span>No mandatory ads every 2 games</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Calendar className="h-5 w-5 text-green-500" />
+                      <span>30 days of ad-free gaming</span>
+                    </div>
                   </div>
+                  
+                  <Button
+                    onClick={adSystem.purchaseAdFree}
+                    className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white border-0 rounded-lg py-3 font-bold"
+                  >
+                    <Crown className="mr-2 h-5 w-5" />
+                    💎 Subscribe with Pi (10 Pi/month)
+                  </Button>
                 </div>
-                
-                <Button
-                  onClick={adSystem.purchaseAdFree}
-                  className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white border-0 rounded-lg py-2 font-bold text-sm"
-                >
-                  <Crown className="mr-1 h-4 w-4" />
-                  Subscribe (10 Pi/month)
-                </Button>
-              </div>
-            )}
-          </Card>
+              )}
+            </div>
+          </div>
 
           {/* Bird Characters Section */}
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-gray-800 flex items-center text-sm">
-                🐦 Bird Characters
-              </h3>
+            <h3 className="text-lg font-bold mb-4 text-gray-800 flex items-center">
+              🐦 Bird Characters
               {eliteSubscription.isActive ? (
-                <span className="text-xs bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded">
+                <span className="ml-2 text-sm bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded">
                   Elite Access
                 </span>
               ) : hasAnySubscription ? (
-                <span className="text-xs bg-green-100 px-2 py-1 rounded text-green-700">
+                <span className="ml-2 text-sm bg-green-100 px-2 py-1 rounded text-green-700">
                   All Unlocked
                 </span>
               ) : (
-                <span className="text-xs bg-purple-100 px-2 py-1 rounded text-purple-700">
+                <span className="ml-2 text-sm bg-purple-100 px-2 py-1 rounded text-purple-700">
                   Premium Skins
                 </span>
               )}
-            </div>
-            <div className="space-y-3">
+            </h3>
+            <div className="grid grid-cols-1 gap-4">
               {birdSkins.map((skin) => (
                 <BirdSkinCard
                   key={skin.id}

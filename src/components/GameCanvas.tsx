@@ -32,10 +32,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number>();
-  const [canvasReady, setCanvasReady] = useState(false);
-  const previousGameStateRef = useRef(gameState);
-  const inputHandlersAttachedRef = useRef(false);
+  const [score, setScore] = useState(0);
+  const gameStartedRef = useRef(false);
 
+  // Add background music
   useBackgroundMusic({ musicEnabled, gameState });
 
   const { gameStateRef, resetGame, continueGame, jump, checkCollisions } = useGameLoop({
@@ -60,168 +60,102 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     gameMode 
   });
 
-  // IMPROVED GAME LOOP - Better performance and error handling
   const gameLoop = useCallback(() => {
-    try {
-      // Always render to prevent blank screen
-      draw();
-      
-      // Run physics only when playing and ready
-      if (gameState === 'playing' && 
-          canvasReady && 
-          gameStateRef.current?.canvasReady && 
-          gameStateRef.current?.isInitialized &&
-          !gameStateRef.current?.gameOver) {
-        updateGame();
-      }
-      
-      // Continue loop if playing
-      if (gameState === 'playing') {
-        gameLoopRef.current = requestAnimationFrame(gameLoop);
-      }
-      
-    } catch (error) {
-      console.error('❌ Game loop error:', error);
-      // Stop loop on critical error
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-        gameLoopRef.current = undefined;
-      }
+    // Only update game if actually playing and not in game over state
+    if (gameState === 'playing' && !gameStateRef.current.gameOver) {
+      updateGame();
     }
-  }, [updateGame, draw, gameState, canvasReady, gameStateRef]);
+    draw();
+    
+    if (gameState === 'playing') {
+      gameLoopRef.current = requestAnimationFrame(gameLoop);
+    }
+  }, [updateGame, draw, gameState]);
 
-  // Expose continue function for ads/revive
+  // Expose continueGame function to parent through callback
   useEffect(() => {
     if (onContinueGameRef) {
       onContinueGameRef(continueGame);
     }
   }, [continueGame, onContinueGameRef]);
 
-  // FIXED INPUT HANDLING - Proper cleanup and attachment
+  // Handle input
   useEffect(() => {
-    const handleInput = (e: MouseEvent | TouchEvent | KeyboardEvent) => {
-      e.preventDefault();
-      if (gameState === 'playing' && gameStateRef.current?.isInitialized) {
-        console.log('🎯 Input detected - attempting jump');
+    const handleClick = () => jump();
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
         jump();
       }
     };
-    
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.code === 'Space' || e.key === ' ') {
-        handleInput(e);
-      }
-    };
 
-    // Clean up existing listeners first
-    if (inputHandlersAttachedRef.current) {
-      document.removeEventListener('click', handleInput);
-      document.removeEventListener('touchstart', handleInput);
-      document.removeEventListener('keydown', handleKeyPress);
-      inputHandlersAttachedRef.current = false;
+    if (gameState === 'playing') {
+      window.addEventListener('click', handleClick);
+      window.addEventListener('keydown', handleKeyPress);
     }
 
-    // Add new listeners
-    document.addEventListener('click', handleInput, { passive: false });
-    document.addEventListener('touchstart', handleInput, { passive: false });
-    document.addEventListener('keydown', handleKeyPress);
-    inputHandlersAttachedRef.current = true;
+    return () => {
+      window.removeEventListener('click', handleClick);
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [jump, gameState]);
 
-    console.log('🎮 Input handlers attached for game state:', gameState);
+  // Game loop management - improved reset logic
+  useEffect(() => {
+    if (gameState === 'playing') {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        // Only reset if this is truly a new game (not a resume)
+        if (!gameStartedRef.current || gameStateRef.current.frameCount === 0) {
+          console.log('Starting new game, resetting state');
+          resetGame(canvas.height);
+          gameStartedRef.current = true;
+        }
+      }
+      gameLoopRef.current = requestAnimationFrame(gameLoop);
+    } else {
+      if (gameState === 'gameOver' || gameState === 'menu') {
+        gameStartedRef.current = false; // Allow reset on next game
+      }
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+      }
+    }
 
     return () => {
-      // CRITICAL: Always cleanup listeners
-      document.removeEventListener('click', handleInput);
-      document.removeEventListener('touchstart', handleInput);
-      document.removeEventListener('keydown', handleKeyPress);
-      inputHandlersAttachedRef.current = false;
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+      }
     };
-  }, [jump, gameState, gameStateRef]);
+  }, [gameState, gameLoop, resetGame]);
 
-  // CANVAS INITIALIZATION - Improved reliability
+  // Canvas resize
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const initializeCanvas = () => {
-      try {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        console.log('🖥️ Canvas initialized:', canvas.width, 'x', canvas.height);
-        setCanvasReady(true);
-      } catch (error) {
-        console.error('❌ Canvas init error:', error);
-        setTimeout(initializeCanvas, 100);
-      }
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      console.log('Canvas resized to:', canvas.width, 'x', canvas.height);
     };
 
-    initializeCanvas();
-    window.addEventListener('resize', initializeCanvas);
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
     return () => {
-      window.removeEventListener('resize', initializeCanvas);
+      window.removeEventListener('resize', resizeCanvas);
     };
   }, []);
-
-  // MASTER STATE MANAGEMENT - Fixed for all modes
-  useEffect(() => {
-    const prevState = previousGameStateRef.current;
-    previousGameStateRef.current = gameState;
-
-    const handleStateChange = async () => {
-      // Stop any existing game loop
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-        gameLoopRef.current = undefined;
-      }
-
-      if (gameState === 'playing' && canvasReady) {
-        if (prevState !== 'playing') {
-          // FRESH START - Complete reset
-          console.log('🎮 FRESH START - Resetting everything');
-          
-          try {
-            await resetGame();
-            
-            // Start game loop after reset with delay
-            setTimeout(() => {
-              if (gameState === 'playing' && canvasReady) {
-                console.log('🚀 Starting game loop after reset');
-                gameLoopRef.current = requestAnimationFrame(gameLoop);
-              }
-            }, 150);
-            
-          } catch (error) {
-            console.error('❌ Game start error:', error);
-          }
-          
-        } else {
-          // RESUME - Just restart loop
-          console.log('▶️ Resuming game loop');
-          gameLoopRef.current = requestAnimationFrame(gameLoop);
-        }
-      }
-    };
-
-    handleStateChange();
-
-    return () => {
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-        gameLoopRef.current = undefined;
-      }
-    };
-  }, [gameState, canvasReady, gameLoop, resetGame]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 w-full h-full bg-gradient-to-b from-sky-400 to-sky-600 touch-none cursor-pointer"
+      className="fixed inset-0 w-full h-full bg-gradient-to-b from-sky-400 to-sky-600 touch-none"
       style={{ 
         touchAction: 'none',
         userSelect: 'none',
-        WebkitUserSelect: 'none',
-        zIndex: 10
+        WebkitUserSelect: 'none'
       }}
     />
   );

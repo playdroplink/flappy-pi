@@ -29,7 +29,7 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
     const state = gameStateRef.current;
     const difficulty = getDifficulty(state.score, gameMode);
     const backgroundColors = getBackgroundGradient(difficulty.timeOfDay);
-    const BIRD_SIZE = 25;
+    const BIRD_SIZE = 25; // Updated to match collision detection
     const PIPE_WIDTH = 120;
 
     // Clear canvas with time-of-day gradient background
@@ -133,10 +133,21 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
     if (difficulty.timeOfDay === 'night') groundColor = '#2F1B14';
     
     ctx.fillStyle = groundColor;
-    ctx.fillRect(0, canvas.height - 25, canvas.width, 25);
+    ctx.fillRect(0, canvas.height - 25, canvas.width, 25); // Increased ground height
 
-    // REMOVED: Time of day indicator and game mode indicator text
-    // This removes the black "Morning Level 1" text that was appearing behind the game
+    // Draw time of day indicator
+    ctx.fillStyle = difficulty.timeOfDay === 'night' ? '#FFFFFF' : '#000000';
+    ctx.font = 'bold 16px Arial';
+    ctx.globalAlpha = 0.7;
+    ctx.fillText(`${difficulty.timeOfDay.charAt(0).toUpperCase() + difficulty.timeOfDay.slice(1)} - Level ${Math.floor(state.score / 5) + 1}`, 10, 30);
+    ctx.globalAlpha = 1;
+
+    // Show game mode indicator - smaller font size
+    ctx.fillStyle = difficulty.timeOfDay === 'night' ? '#FFFFFF' : '#000000';
+    ctx.font = 'bold 8px Arial'; // Even smaller font
+    ctx.globalAlpha = 0.5;
+    ctx.fillText(`${gameMode.toUpperCase()} MODE`, 10, canvas.height - 35);
+    ctx.globalAlpha = 1;
   }, [getBirdImage, canvasRef, gameStateRef, gameMode]);
 
   return { draw };
