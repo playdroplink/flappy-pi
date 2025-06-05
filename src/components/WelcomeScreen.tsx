@@ -64,12 +64,37 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-white rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
+      {/* Floating bird animation */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-20 left-10 animate-float">
+          <img 
+            src="/lovable-uploads/5a55528e-3d0c-4cd3-91d9-6b8cff953b06.png" 
+            alt="Flying Bird" 
+            className="w-8 h-8 object-contain opacity-30"
+          />
+        </div>
+        <div className="absolute top-32 right-16 animate-float" style={{ animationDelay: '2s' }}>
+          <img 
+            src="/lovable-uploads/5a55528e-3d0c-4cd3-91d9-6b8cff953b06.png" 
+            alt="Flying Bird" 
+            className="w-6 h-6 object-contain opacity-25"
+          />
+        </div>
+        <div className="absolute bottom-40 left-20 animate-float" style={{ animationDelay: '4s' }}>
+          <img 
+            src="/lovable-uploads/5a55528e-3d0c-4cd3-91d9-6b8cff953b06.png" 
+            alt="Flying Bird" 
+            className="w-7 h-7 object-contain opacity-20"
+          />
+        </div>
+      </div>
+
       {/* Header */}
       <div className="relative z-10 w-full max-w-md">
         {/* Top navigation */}
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center space-x-3">
-            <div className="bg-white/10 backdrop-blur-md rounded-full p-3 border border-white/20">
+            <div className="bg-white/20 backdrop-blur-md rounded-full p-3 border border-white/30 shadow-lg">
               <div className="relative">
                 <img 
                   src="/lovable-uploads/5a55528e-3d0c-4cd3-91d9-6b8cff953b06.png" 
@@ -79,10 +104,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               </div>
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-sky-100 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold text-white drop-shadow-lg">
                 Flappy Pi
               </h1>
-              <p className="text-xs text-sky-200">Ready to fly?</p>
+              <p className="text-xs text-white/90 drop-shadow">Ready to fly?</p>
             </div>
           </div>
           
@@ -91,14 +116,14 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               onClick={() => onToggleMusic(!musicEnabled)}
               variant="ghost"
               size="sm"
-              className="text-white hover:bg-white/20 rounded-full h-10 w-10 p-0 border border-white/20"
+              className="text-white hover:bg-white/20 rounded-full h-10 w-10 p-0 border border-white/30 bg-white/10 backdrop-blur-sm"
             >
               {musicEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="text-white hover:bg-white/20 rounded-full h-10 w-10 p-0 border border-white/20"
+              className="text-white hover:bg-white/20 rounded-full h-10 w-10 p-0 border border-white/30 bg-white/10 backdrop-blur-sm"
             >
               <Settings className="h-4 w-4" />
             </Button>
@@ -106,20 +131,20 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </div>
 
         {/* Player stats */}
-        <Card className="bg-white/10 backdrop-blur-md border-white/20 p-4 mb-8 rounded-2xl">
+        <Card className="p-4 mb-8 rounded-2xl shadow-2xl">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 bg-yellow-500/20 rounded-full px-3 py-2">
-                <Coins className="h-5 w-5 text-yellow-400" />
+              <div className="flex items-center space-x-2 bg-yellow-500/30 backdrop-blur-sm rounded-full px-3 py-2 border border-yellow-400/30">
+                <Coins className="h-5 w-5 text-yellow-300" />
                 <span className="font-bold text-white">{coins.toLocaleString()}</span>
               </div>
-              <div className="flex items-center space-x-2 bg-sky-500/20 rounded-full px-3 py-2">
+              <div className="flex items-center space-x-2 bg-sky-500/30 backdrop-blur-sm rounded-full px-3 py-2 border border-sky-400/30">
                 <Award className="h-5 w-5 text-sky-300" />
                 <span className="font-bold text-white">Level 1</span>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-xs text-sky-200">Today's Best</p>
+              <p className="text-xs text-white/80">Today's Best</p>
               <p className="text-lg font-bold text-white">0</p>
             </div>
           </div>
@@ -127,9 +152,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
         {/* Game Modes */}
         <div className="space-y-4 mb-8">
-          <h2 className="text-xl font-bold text-center mb-4 text-white">Choose Your Adventure</h2>
+          <h2 className="text-xl font-bold text-center mb-4 text-white drop-shadow-lg">Choose Your Adventure</h2>
           {gameModes.map((mode, index) => (
-            <Card key={mode.id} className="bg-white/10 backdrop-blur-md border-white/20 overflow-hidden rounded-2xl">
+            <Card key={mode.id} className="overflow-hidden rounded-2xl shadow-2xl">
               <Button
                 onClick={() => onStartGame(mode.id)}
                 className={`w-full h-auto p-0 bg-gradient-to-r ${mode.gradient} ${mode.hoverGradient} text-white border-0 rounded-2xl shadow-lg transform hover:scale-[1.02] transition-all duration-300`}
@@ -141,22 +166,22 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         {mode.icon}
                       </div>
                       <div className="text-left">
-                        <h3 className="text-lg font-bold">{mode.title}</h3>
-                        <p className="text-sm opacity-90">{mode.description}</p>
+                        <h3 className="text-lg font-bold text-white">{mode.title}</h3>
+                        <p className="text-sm text-white/90">{mode.description}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className={`text-xs px-2 py-1 rounded-full ${
-                        mode.difficulty === 'Easy' ? 'bg-green-500/30 text-green-100' :
-                        mode.difficulty === 'Medium' ? 'bg-yellow-500/30 text-yellow-100' :
-                        'bg-red-500/30 text-red-100'
+                        mode.difficulty === 'Easy' ? 'bg-green-500/30 text-green-100 border border-green-400/30' :
+                        mode.difficulty === 'Medium' ? 'bg-yellow-500/30 text-yellow-100 border border-yellow-400/30' :
+                        'bg-red-500/30 text-red-100 border border-red-400/30'
                       }`}>
                         {mode.difficulty}
                       </div>
                     </div>
                   </div>
-                  <div className="bg-white/20 rounded-lg px-3 py-2">
-                    <p className="text-sm font-medium">{mode.reward}</p>
+                  <div className="bg-white/20 rounded-lg px-3 py-2 border border-white/30">
+                    <p className="text-sm font-medium text-white">{mode.reward}</p>
                   </div>
                 </div>
               </Button>
@@ -184,26 +209,26 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </div>
 
         {/* Daily bonus */}
-        <Card className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-400/30 p-4 mb-6 rounded-2xl">
+        <Card className="bg-gradient-to-r from-green-500/30 to-emerald-500/30 border-green-400/40 p-4 mb-6 rounded-2xl shadow-2xl">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-2">
               <Star className="h-5 w-5 text-green-300 animate-pulse" />
-              <span className="text-sm font-semibold text-green-200">Daily Bonus Ready!</span>
+              <span className="text-sm font-semibold text-white">Daily Bonus Ready!</span>
             </div>
-            <p className="text-xs text-green-100">
+            <p className="text-xs text-white/90">
               🎁 Collect your daily Pi coins & unlock exclusive rewards
             </p>
           </div>
         </Card>
 
         {/* Ad network banner */}
-        <Card className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border-indigo-400/30 p-3 mb-4 rounded-xl">
+        <Card className="bg-gradient-to-r from-indigo-500/30 to-purple-500/30 border-indigo-400/40 p-3 mb-4 rounded-xl shadow-2xl">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-1">
               <Zap className="h-4 w-4 text-indigo-300 animate-pulse" />
-              <span className="text-xs font-semibold text-indigo-200">Pi Ad Network</span>
+              <span className="text-xs font-semibold text-white">Pi Ad Network</span>
             </div>
-            <p className="text-xs text-indigo-100">
+            <p className="text-xs text-white/90">
               ⚡ Watch ads for bonus lives & power-ups
             </p>
           </div>
@@ -211,9 +236,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="relative z-10 text-center text-xs opacity-75 mt-4">
-        <p className="font-medium text-sky-100">© 2025 mrwain organization</p>
-        <p className="mt-1 text-sky-200">🌟 Powered by Pi Network • Made with ❤️</p>
+      <div className="relative z-10 text-center text-xs mt-4">
+        <p className="font-medium text-white/90 drop-shadow">© 2025 mrwain organization</p>
+        <p className="mt-1 text-white/80 drop-shadow">🌟 Powered by Pi Network • Made with ❤️</p>
       </div>
     </div>
   );
