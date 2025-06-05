@@ -1,5 +1,6 @@
 
 import { useToast } from '@/hooks/use-toast';
+import { useRef } from 'react';
 
 interface UseGameEventsProps {
   score: number;
@@ -29,6 +30,7 @@ export const useGameEvents = ({
   continueGame
 }: UseGameEventsProps) => {
   const { toast } = useToast();
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleCollision = () => {
     console.log('Collision handled, setting game over');
@@ -71,33 +73,46 @@ export const useGameEvents = ({
   const handleAdWatch = (adType: 'continue' | 'coins' | 'life') => {
     switch (adType) {
       case 'continue':
-        // Start 3-second countdown and then continue
+        // Clear any existing countdown
+        if (countdownRef.current) {
+          clearTimeout(countdownRef.current);
+        }
+
+        // Start the countdown with proper state management
         let countdown = 3;
         
-        const showCountdown = () => {
+        const runCountdown = () => {
           if (countdown > 0) {
+            console.log('Countdown:', countdown);
             toast({
               title: `Get Ready! ${countdown}`,
               description: "Prepare to continue flying!"
             });
             countdown--;
-            setTimeout(showCountdown, 1000);
-          } else {
-            // Continue the game with current score preserved
-            setLives(1);
-            if (continueGame) {
-              continueGame(); // Use the continue function instead of resetting
-            }
-            setGameState('playing');
-            toast({
-              title: "Continue! 🚀",
-              description: "Thanks for watching the Pi Ad! Keep flying!"
-            });
+            
+            // Schedule next countdown or continue game
+            countdownRef.current = setTimeout(() => {
+              if (countdown === 0) {
+                // Countdown finished, continue the game
+                setLives(1);
+                if (continueGame) {
+                  console.log('Countdown finished, continuing game');
+                  continueGame();
+                }
+                setGameState('playing');
+                toast({
+                  title: "Continue! 🚀",
+                  description: "Thanks for watching the Pi Ad! Keep flying!"
+                });
+              } else {
+                runCountdown();
+              }
+            }, 1000);
           }
         };
         
-        // Start the countdown immediately
-        showCountdown();
+        // Start the countdown
+        runCountdown();
         break;
         
       case 'coins':
