@@ -33,6 +33,7 @@ interface GameLoopState {
   score: number;
   lastPipeSpawn: number;
   gameOver: boolean;
+  initialized: boolean;
 }
 
 interface UseGameLoopProps {
@@ -49,11 +50,12 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     frameCount: 0,
     score: 0,
     lastPipeSpawn: 0,
-    gameOver: false
+    gameOver: false,
+    initialized: false
   });
 
   const resetGame = useCallback((canvasHeight: number) => {
-    console.log('Resetting game with canvas height:', canvasHeight);
+    console.log('Resetting game completely with canvas height:', canvasHeight);
     const safeY = Math.max(100, canvasHeight / 2);
     
     gameStateRef.current = {
@@ -63,14 +65,15 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       frameCount: 0,
       score: 0,
       lastPipeSpawn: 0,
-      gameOver: false
+      gameOver: false,
+      initialized: true
     };
     
-    console.log('Game reset complete');
+    console.log('Game reset complete - ready to play');
   }, []);
 
   const continueGame = useCallback(() => {
-    console.log('Continuing game after revive - preserving score:', gameStateRef.current.score);
+    console.log('Continuing game after revive');
     const canvas = document.querySelector('canvas');
     const safeY = canvas ? Math.max(150, canvas.height / 2) : 300;
     
@@ -82,14 +85,12 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     };
     
     gameStateRef.current.gameOver = false;
-    
     gameStateRef.current.pipes = gameStateRef.current.pipes.filter(pipe => 
       pipe.x > gameStateRef.current.bird.x + 300
     );
-    
     gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 120;
     
-    console.log('Revive complete - Bird at safe position, score preserved:', gameStateRef.current.score);
+    console.log('Continue complete - score preserved:', gameStateRef.current.score);
   }, []);
 
   const jump = useCallback(() => {
@@ -107,14 +108,14 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     const BIRD_SIZE = 25;
     const PIPE_WIDTH = 120;
     
-    // ONLY check pipe collisions - removed ground and ceiling collision checks
+    // ONLY check pipe collisions
     for (const pipe of pipes) {
       if (
         bird.x + BIRD_SIZE - 12 > pipe.x &&
         bird.x + 12 < pipe.x + PIPE_WIDTH
       ) {
         if (bird.y + 12 < pipe.topHeight || bird.y + BIRD_SIZE - 12 > pipe.bottomY) {
-          console.log('Bird hit pipe! Bird Y:', bird.y, 'Top height:', pipe.topHeight, 'Bottom Y:', pipe.bottomY);
+          console.log('Bird hit pipe! Collision detected');
           return true;
         }
       }
@@ -123,21 +124,11 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     return false;
   }, [gameState]);
 
-  const forceReset = useCallback(() => {
-    if (gameState !== 'playing') {
-      console.log('Force resetting game state');
-      const canvas = document.querySelector('canvas');
-      const canvasHeight = canvas ? canvas.height : 600;
-      resetGame(canvasHeight);
-    }
-  }, [resetGame, gameState]);
-
   return {
     gameStateRef,
     resetGame,
     continueGame,
     jump,
-    checkCollisions,
-    forceReset
+    checkCollisions
   };
 };

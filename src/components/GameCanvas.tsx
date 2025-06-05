@@ -32,13 +32,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number>();
-  const gameInitializedRef = useRef(false);
   const inputHandlersRef = useRef<{
     handleClick?: (e: MouseEvent) => void;
     handleKeyPress?: (e: KeyboardEvent) => void;
   }>({});
 
-  // Add background music
   useBackgroundMusic({ musicEnabled, gameState });
 
   const { gameStateRef, resetGame, continueGame, jump, checkCollisions } = useGameLoop({
@@ -81,7 +79,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   }, [continueGame, onContinueGameRef]);
 
-  // Clean up and set up input handlers
+  // Input handlers
   useEffect(() => {
     // Clean up existing handlers
     if (inputHandlersRef.current.handleClick) {
@@ -104,17 +102,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         }
       };
 
-      // Store handlers in ref for cleanup
       inputHandlersRef.current = { handleClick, handleKeyPress };
-
-      // Add event listeners
       window.addEventListener('click', handleClick);
       window.addEventListener('keydown', handleKeyPress);
     } else {
       inputHandlersRef.current = {};
     }
 
-    // Cleanup function
     return () => {
       if (inputHandlersRef.current.handleClick) {
         window.removeEventListener('click', inputHandlersRef.current.handleClick);
@@ -125,9 +119,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
   }, [jump, gameState]);
 
-  // Game loop management - IMPROVED to prevent multiple resets
+  // Game state management
   useEffect(() => {
-    // Cancel any existing animation frame first
     if (gameLoopRef.current) {
       cancelAnimationFrame(gameLoopRef.current);
       gameLoopRef.current = undefined;
@@ -135,18 +128,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
     if (gameState === 'playing') {
       const canvas = canvasRef.current;
-      if (canvas && !gameInitializedRef.current) {
-        console.log('Initializing new game');
+      if (canvas && !gameStateRef.current.initialized) {
+        console.log('Starting new game');
         resetGame(canvas.height);
-        gameInitializedRef.current = true;
       }
       gameLoopRef.current = requestAnimationFrame(gameLoop);
-    } else {
-      // Reset initialization flag when not playing
-      if (gameState === 'menu') {
-        gameInitializedRef.current = false;
-        console.log('Game returned to menu - ready for new initialization');
-      }
     }
 
     return () => {
