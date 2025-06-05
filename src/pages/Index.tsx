@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import SplashScreen from '../components/SplashScreen';
 import WelcomeScreen from '../components/WelcomeScreen';
 import GameCanvas from '../components/GameCanvas';
@@ -35,14 +35,12 @@ const Index = () => {
     }
   });
 
-  // Cleanup timers when component unmounts
-  useEffect(() => {
-    return () => {
-      if (gameEvents.cleanup) {
-        gameEvents.cleanup();
-      }
-    };
-  }, [gameEvents]);
+  // Enhanced start game function that resets all states
+  const handleStartGame = React.useCallback((mode: 'classic' | 'endless' | 'challenge') => {
+    console.log('🚀 Starting new game - resetting all states');
+    gameEvents.resetGameEventStates();
+    gameState.startGame(mode);
+  }, [gameEvents, gameState]);
 
   if (gameState.showSplash) {
     return <SplashScreen />;
@@ -52,7 +50,7 @@ const Index = () => {
     return (
       <>
         <WelcomeScreen 
-          onStartGame={gameState.startGame}
+          onStartGame={handleStartGame}
           onOpenShop={() => modals.setShowShop(true)}
           onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
           onOpenPrivacy={() => modals.setShowPrivacy(true)}
@@ -73,13 +71,13 @@ const Index = () => {
           showTerms={modals.showTerms}
           showContact={modals.showContact}
           showHelp={modals.showHelp}
+          adType={modals.adType}
           coins={gameState.coins}
           score={gameState.score}
           level={gameState.level}
           highScore={gameState.highScore}
           selectedBirdSkin={gameState.selectedBirdSkin}
           gameState={gameState.gameState}
-          adType="continue"
           setShowShop={modals.setShowShop}
           setShowLeaderboard={modals.setShowLeaderboard}
           setShowAdPopup={modals.setShowAdPopup}
@@ -121,17 +119,16 @@ const Index = () => {
         highScore={gameState.highScore}
         coins={gameState.coins}
         gameMode={gameState.gameMode}
-        onStartGame={() => gameState.startGame(gameState.gameMode)}
+        onStartGame={() => handleStartGame(gameState.gameMode)}
         onBackToMenu={gameState.backToMenu}
         onOpenShop={() => modals.setShowShop(true)}
         onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
-        onShowAd={() => modals.setShowAdPopup(true)}
+        onShowAd={() => modals.handleShowAd('continue')}
         onShareScore={modals.handleShareScore}
+        isPausedForRevive={gameEvents.isPausedForRevive}
       />
 
       <GameContinueOverlay
-        isOpen={gameEvents.showContinueOverlay}
-        countdown={gameEvents.countdown}
         showContinueButton={gameEvents.showContinueButton}
         onContinue={gameEvents.handleContinueClick}
       />
@@ -145,13 +142,13 @@ const Index = () => {
         showTerms={modals.showTerms}
         showContact={modals.showContact}
         showHelp={modals.showHelp}
+        adType={modals.adType}
         coins={gameState.coins}
         score={gameState.score}
         level={gameState.level}
         highScore={gameState.highScore}
         selectedBirdSkin={gameState.selectedBirdSkin}
         gameState={gameState.gameState}
-        adType="continue"
         setShowShop={modals.setShowShop}
         setShowLeaderboard={modals.setShowLeaderboard}
         setShowAdPopup={modals.setShowAdPopup}

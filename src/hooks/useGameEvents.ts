@@ -1,6 +1,9 @@
 
-import { useToast } from '@/hooks/use-toast';
-import { useRef, useCallback, useState } from 'react';
+import { useCallback, useRef } from 'react';
+import { useCollisionHandler } from '@/hooks/useCollisionHandler';
+import { useGameOverHandler } from '@/hooks/useGameOverHandler';
+import { useAdRewardHandler } from '@/hooks/useAdRewardHandler';
+import { useContinueGame } from '@/hooks/useContinueGame';
 
 interface UseGameEventsProps {
   score: number;
@@ -29,40 +32,95 @@ export const useGameEvents = ({
   setCoins,
   continueGame
 }: UseGameEventsProps) => {
-  const { toast } = useToast();
-  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [showContinueOverlay, setShowContinueOverlay] = useState(false);
-  const [countdown, setCountdown] = useState(0);
-  const [showContinueButton, setShowContinueButton] = useState(false);
+  
+  // FIXED: Use refs instead of useState to prevent React queue errors
+  const showContinueButtonRef = useRef(false);
+  const isPausedForReviveRef = useRef(false);
+  const reviveUsedRef = useRef(false);
+  const adWatchedRef = useRef(false);
+  const showMandatoryAdRef = useRef(false);
+  const showAdFreeModalRef = useRef(false);
 
-  const handleCollision = useCallback(() => {
-    console.log('Collision detected, setting game over state');
-    setGameState('gameOver');
-  }, [setGameState]);
+  // Getters for current values
+  const showContinueButton = showContinueButtonRef.current;
+  const isPausedForRevive = isPausedForReviveRef.current;
+  const reviveUsed = reviveUsedRef.current;
+  const adWatched = adWatchedRef.current;
+  const showMandatoryAd = showMandatoryAdRef.current;
+  const showAdFreeModal = showAdFreeModalRef.current;
 
-  const handleGameOver = useCallback((finalScore: number) => {
-    console.log('Game over with final score:', finalScore);
-    
-    // Add coins based on score and level
-    const earnedCoins = Math.floor(finalScore / 3) + (level * 2);
-    const newCoins = coins + earnedCoins;
-    setCoins(newCoins);
-    localStorage.setItem('flappypi-coins', newCoins.toString());
-    
-    // Update high score
-    if (finalScore > highScore) {
-      setHighScore(finalScore);
-      localStorage.setItem('flappypi-highscore', finalScore.toString());
-      toast({
-        title: "🎉 New High Score!",
-        description: `Amazing! You scored ${finalScore} points!`
-      });
-    }
+  // Setters that update refs
+  const setShowContinueButton = useCallback((show: boolean) => {
+    showContinueButtonRef.current = show;
+  }, []);
 
-    // Reset for next game
-    setLives(1);
-    setLevel(1);
-  }, [coins, level, highScore, setCoins, setHighScore, setLives, setLevel, toast]);
+  const setIsPausedForRevive = useCallback((paused: boolean) => {
+    isPausedForReviveRef.current = paused;
+  }, []);
+
+  const setReviveUsed = useCallback((used: boolean) => {
+    reviveUsedRef.current = used;
+  }, []);
+
+  const setAdWatched = useCallback((watched: boolean) => {
+    adWatchedRef.current = watched;
+  }, []);
+
+  const setShowMandatoryAd = useCallback((show: boolean) => {
+    showMandatoryAdRef.current = show;
+  }, []);
+
+  const setShowAdFreeModal = useCallback((show: boolean) => {
+    showAdFreeModalRef.current = show;
+  }, []);
+
+  const { handleGameOver } = useGameOverHandler({
+    level,
+    coins,
+    highScore,
+    setGameState,
+    setScore,
+    setIsPausedForRevive,
+    setShowContinueButton,
+    setAdWatched,
+    setShowMandatoryAd,
+    setCoins,
+    setHighScore,
+    setLives,
+    setLevel,
+    setReviveUsed
+  });
+
+  const { handleCollision, resetCollisionLock } = useCollisionHandler({
+    reviveUsed,
+    score,
+    setGameState,
+    setIsPausedForRevive,
+    setShowContinueButton,
+    setAdWatched,
+    setShowMandatoryAd,
+    onGameOver: handleGameOver
+  });
+
+  const { handleAdWatch } = useAdRewardHandler({
+    coins,
+    adWatched,
+    isPausedForRevive,
+    setShowContinueButton,
+    setAdWatched,
+    setCoins,
+    setLives
+  });
+
+  const { handleContinueClick } = useContinueGame({
+    continueGame,
+    setShowContinueButton,
+    setReviveUsed,
+    setIsPausedForRevive,
+    setAdWatched,
+    setGameState,
+    resetCollisionLock
+  });
 
   const handleCoinEarned = useCallback((coinAmount: number) => {
     const newCoins = coins + coinAmount;
@@ -70,120 +128,51 @@ export const useGameEvents = ({
     localStorage.setItem('flappypi-coins', newCoins.toString());
   }, [coins, setCoins]);
 
-  const startContinueCountdown = useCallback(() => {
-    console.log('Starting continue countdown');
-    
-    // Clear any existing timer
-    if (countdownTimerRef.current) {
-      clearTimeout(countdownTimerRef.current);
-    }
-    
-    setShowContinueOverlay(true);
-    setShowContinueButton(false);
-    setCountdown(3);
+  const handleMandatoryAdWatch = useCallback(() => {
+    console.log('Skipping mandatory ad - direct to game over');
+    resetCollisionLock();
+    setShowMandatoryAd(false);
+    handleGameOver(score);
+  }, [handleGameOver, score, resetCollisionLock, setShowMandatoryAd]);
 
-    const doCountdown = () => {
-      setCountdown(prev => {
-        const newCount = prev - 1;
-        if (newCount > 0) {
-          countdownTimerRef.current = setTimeout(doCountdown, 1000);
-          return newCount;
-        } else {
-          // Countdown finished - show continue button
-          setShowContinueButton(true);
-          return 0;
-        }
-      });
-    };
-
-    countdownTimerRef.current = setTimeout(doCountdown, 1000);
-  }, []);
-
-  const handleContinueClick = useCallback(() => {
-    console.log('Continue button clicked, resuming game');
+  // MASTER RESET - Fixes all restart issues
+  const resetGameEventStates = useCallback(() => {
+    console.log('🔄 MASTER RESET - Clearing all game event states');
     
-    // Clear any timers
-    if (countdownTimerRef.current) {
-      clearTimeout(countdownTimerRef.current);
-      countdownTimerRef.current = null;
-    }
+    // Reset collision system
+    resetCollisionLock();
     
-    // Hide overlay
-    setShowContinueOverlay(false);
-    setShowContinueButton(false);
-    setCountdown(0);
+    // Reset ALL UI states using refs
+    showContinueButtonRef.current = false;
+    isPausedForReviveRef.current = false;
+    reviveUsedRef.current = false;
+    adWatchedRef.current = false;
+    showMandatoryAdRef.current = false;
+    showAdFreeModalRef.current = false;
     
-    // Reset bird and continue with current score
-    setLives(1);
-    
-    // Continue the game with preserved score
-    if (continueGame) {
-      continueGame();
-    }
-    
-    // Set game state to playing
-    setGameState('playing');
-    
-    toast({
-      title: "Continue! 🚀",
-      description: "Keep flying and reach new heights!",
-      duration: 2000
-    });
-  }, [continueGame, setLives, setGameState, toast]);
-
-  const handleAdWatch = useCallback((adType: 'continue' | 'coins' | 'life') => {
-    console.log('Ad watch completed for:', adType);
-    
-    // Clear any existing countdown
-    if (countdownTimerRef.current) {
-      clearTimeout(countdownTimerRef.current);
-      countdownTimerRef.current = null;
-    }
-
-    switch (adType) {
-      case 'continue':
-        console.log('Starting continue game process after ad watch');
-        startContinueCountdown();
-        break;
-        
-      case 'coins':
-        const bonusCoins = 25;
-        const newCoins = coins + bonusCoins;
-        setCoins(newCoins);
-        localStorage.setItem('flappypi-coins', newCoins.toString());
-        toast({
-          title: "Bonus Pi Coins! 🪙",
-          description: `You earned ${bonusCoins} Pi coins!`
-        });
-        break;
-        
-      case 'life':
-        setLives(1);
-        toast({
-          title: "Extra Life! ❤️",
-          description: "You earned an extra life!"
-        });
-        break;
-    }
-  }, [coins, setCoins, setLives, startContinueCountdown, toast]);
-
-  // Cleanup on unmount
-  const cleanup = useCallback(() => {
-    if (countdownTimerRef.current) {
-      clearTimeout(countdownTimerRef.current);
-      countdownTimerRef.current = null;
-    }
-  }, []);
+    console.log('✅ All game event states cleared for fresh start');
+  }, [resetCollisionLock]);
 
   return {
     handleCollision,
     handleGameOver,
     handleCoinEarned,
     handleAdWatch,
-    showContinueOverlay,
-    countdown,
     showContinueButton,
     handleContinueClick,
-    cleanup
+    isPausedForRevive,
+    reviveUsed,
+    showMandatoryAd: false, // Always disabled
+    showAdFreeModal,
+    adSystem: { 
+      isAdFree: true,
+      purchaseAdFree: () => Promise.resolve(true),
+      adFreeTimeRemaining: null,
+      resetAdCounter: () => {},
+      incrementGameCount: () => {}
+    },
+    handleMandatoryAdWatch,
+    setShowAdFreeModal,
+    resetGameEventStates
   };
 };

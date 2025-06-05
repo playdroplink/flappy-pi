@@ -18,6 +18,7 @@ interface GameUIProps {
   onOpenLeaderboard: () => void;
   onShowAd: () => void;
   onShareScore?: () => void;
+  isPausedForRevive?: boolean;
 }
 
 const GameUI: React.FC<GameUIProps> = ({
@@ -32,7 +33,8 @@ const GameUI: React.FC<GameUIProps> = ({
   onOpenShop,
   onOpenLeaderboard,
   onShowAd,
-  onShareScore
+  onShareScore,
+  isPausedForRevive = false
 }) => {
   if (gameState === 'playing') {
     const difficulty = getDifficulty(score, gameMode);
@@ -40,48 +42,103 @@ const GameUI: React.FC<GameUIProps> = ({
     
     return (
       <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
-        {/* Score at top center like Flappy Bird */}
-        <div className="flex justify-center pt-8">
-          <div className="text-6xl font-bold text-white drop-shadow-2xl pointer-events-auto" 
-               style={{ textShadow: '3px 3px 0px rgba(0,0,0,0.8), -1px -1px 0px rgba(0,0,0,0.8), 1px -1px 0px rgba(0,0,0,0.8), -1px 1px 0px rgba(0,0,0,0.8)' }}>
-            {score}
+        {/* Enhanced Header Container */}
+        <div className="flex justify-between items-start p-3">
+          {/* Left Side - Level Info with enhanced design */}
+          <Card className="px-4 py-3 pointer-events-auto shadow-xl bg-gradient-to-r from-blue-500/95 to-cyan-500/95 backdrop-blur-sm border-0 rounded-2xl">
+            <div className="text-center">
+              <div className="text-lg font-bold text-white">Level {currentLevel}</div>
+              <div className="text-sm text-blue-100 capitalize">{difficulty.timeOfDay}</div>
+              <div className="text-xs text-white/80 uppercase font-medium tracking-wide bg-white/20 px-2 py-1 rounded-full mt-1">
+                {gameMode}
+              </div>
+            </div>
+          </Card>
+
+          {/* Right Side - Enhanced Coins Display */}
+          <Card className="px-4 py-3 pointer-events-auto shadow-xl bg-gradient-to-r from-amber-400/95 to-yellow-500/95 backdrop-blur-sm border-0 rounded-2xl">
+            <div className="flex items-center space-x-2">
+              <div className="w-6 h-6 bg-white/30 rounded-full flex items-center justify-center">
+                <Coins className="h-4 w-4 text-white" />
+              </div>
+              <span className="text-lg font-bold text-white">{coins}</span>
+            </div>
+          </Card>
+        </div>
+
+        {/* Enhanced Center Score */}
+        <div className="flex justify-center mt-6">
+          <div className="relative">
+            <div className="text-7xl font-bold text-white drop-shadow-2xl pointer-events-auto animate-pulse" 
+                 style={{ textShadow: '4px 4px 0px rgba(0,0,0,0.8), -2px -2px 0px rgba(0,0,0,0.8), 2px -2px 0px rgba(0,0,0,0.8), -2px 2px 0px rgba(0,0,0,0.8)' }}>
+              {score}
+            </div>
+            <div className="absolute -inset-2 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-2xl blur-xl -z-10"></div>
           </div>
         </div>
 
-        {/* Level and Time of Day - top left */}
-        <div className="absolute top-4 left-4">
-          <Card className="px-3 py-2 pointer-events-auto shadow-2xl bg-white/90 backdrop-blur-sm border-blue-200">
-            <div className="text-center">
-              <div className="text-sm font-bold text-blue-600">Level {currentLevel}</div>
-              <div className="text-xs text-blue-500 capitalize">{difficulty.timeOfDay}</div>
-              <div className="text-xs text-gray-600 uppercase font-medium">{gameMode}</div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Coins display - top right */}
-        <div className="absolute top-4 right-4">
-          <Card className="px-3 py-2 pointer-events-auto shadow-2xl bg-white/90 backdrop-blur-sm border-yellow-200">
-            <div className="flex items-center space-x-2">
-              <Coins className="h-4 w-4 text-yellow-500" />
-              <span className="text-sm font-bold text-gray-800">{coins}</span>
-            </div>
-          </Card>
-        </div>
-
-        {/* Difficulty indicators - bottom left if obstacles are active */}
+        {/* Enhanced Bottom Indicators */}
         {(difficulty.hasMovingPipes || difficulty.hasClouds || difficulty.hasWind) && (
-          <div className="absolute bottom-4 left-4">
-            <Card className="px-3 py-2 pointer-events-auto shadow-2xl bg-red-100/90 backdrop-blur-sm border-red-300">
-              <div className="flex items-center space-x-2 text-red-700">
-                <div className="text-xs font-bold">OBSTACLES:</div>
-                {difficulty.hasMovingPipes && <span className="text-xs">Moving Pipes</span>}
-                {difficulty.hasClouds && <span className="text-xs">Clouds</span>}
-                {difficulty.hasWind && <span className="text-xs">Wind</span>}
+          <div className="absolute bottom-6 left-3">
+            <Card className="px-3 py-2 pointer-events-auto shadow-xl bg-gradient-to-r from-red-500/95 to-pink-500/95 backdrop-blur-sm border-0 rounded-xl">
+              <div className="flex items-center space-x-2 text-white">
+                <div className="text-xs font-bold">⚠️ OBSTACLES:</div>
+                <div className="flex space-x-1 text-xs">
+                  {difficulty.hasMovingPipes && <span className="bg-white/30 px-2 py-1 rounded-full">Moving Pipes</span>}
+                  {difficulty.hasClouds && <span className="bg-white/30 px-2 py-1 rounded-full">Clouds</span>}
+                  {difficulty.hasWind && <span className="bg-white/30 px-2 py-1 rounded-full">Wind</span>}
+                </div>
               </div>
             </Card>
           </div>
         )}
+      </div>
+    );
+  }
+
+  // Show crash/continue prompt when paused for revive
+  if (gameState === 'paused' && isPausedForRevive) {
+    return (
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-lg flex items-center justify-center z-50 p-4">
+        <Card className="p-8 max-w-sm w-full text-center shadow-2xl bg-white border-gray-200">
+          <div className="text-6xl mb-4">💥</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            Oops! You Crashed!
+          </h2>
+          
+          <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg p-4 border border-blue-200 mb-6">
+            <div className="text-3xl font-bold text-blue-600 mb-1">{score}</div>
+            <div className="text-sm text-blue-500">Current Score</div>
+          </div>
+          
+          <div className="space-y-4">
+            <Button 
+              onClick={onShowAd}
+              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
+            >
+              <PlayCircle className="mr-2 h-5 w-5" />
+              Watch Pi Ad to Continue
+            </Button>
+
+            <Button 
+              onClick={onStartGame}
+              variant="outline"
+              className="w-full bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100 transform hover:scale-105 transition-all duration-200"
+            >
+              <Play className="mr-2 h-4 w-4" />
+              Start New Game
+            </Button>
+            
+            <Button 
+              onClick={onBackToMenu}
+              variant="ghost"
+              className="w-full text-gray-600 hover:text-gray-800 hover:bg-gray-100 transform hover:scale-105 transition-all duration-200"
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Back to Menu
+            </Button>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -120,15 +177,6 @@ const GameUI: React.FC<GameUIProps> = ({
           </div>
           
           <div className="space-y-4">
-            {/* Continue with Ad button */}
-            <Button 
-              onClick={onShowAd}
-              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
-            >
-              <PlayCircle className="mr-2 h-5 w-5" />
-              Continue (Watch Pi Ad)
-            </Button>
-
             <Button 
               onClick={onStartGame}
               className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
@@ -137,7 +185,6 @@ const GameUI: React.FC<GameUIProps> = ({
               Try Again
             </Button>
             
-            {/* Share Score button */}
             {onShareScore && (
               <Button 
                 onClick={onShareScore}

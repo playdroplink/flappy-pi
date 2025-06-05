@@ -32,10 +32,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number>();
-  const gameStartedRef = useRef(false);
-  const lastGameStateRef = useRef(gameState);
+  const [canvasReady, setCanvasReady] = useState(false);
+  const previousGameStateRef = useRef(gameState);
+  const inputHandlersAttachedRef = useRef(false);
 
-  // Add background music
   useBackgroundMusic({ musicEnabled, gameState });
 
   const { gameStateRef, resetGame, continueGame, jump, checkCollisions } = useGameLoop({
@@ -60,134 +60,168 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     gameMode 
   });
 
+  // IMPROVED GAME LOOP - Better performance and error handling
   const gameLoop = useCallback(() => {
-    if (!gameStateRef.current) return;
-    
-    // Only update game if actually playing and not in game over state
-    if (gameState === 'playing' && !gameStateRef.current.gameOver) {
-      updateGame();
+    try {
+      // Always render to prevent blank screen
+      draw();
+      
+      // Run physics only when playing and ready
+      if (gameState === 'playing' && 
+          canvasReady && 
+          gameStateRef.current?.canvasReady && 
+          gameStateRef.current?.isInitialized &&
+          !gameStateRef.current?.gameOver) {
+        updateGame();
+      }
+      
+      // Continue loop if playing
+      if (gameState === 'playing') {
+        gameLoopRef.current = requestAnimationFrame(gameLoop);
+      }
+      
+    } catch (error) {
+      console.error('❌ Game loop error:', error);
+      // Stop loop on critical error
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+        gameLoopRef.current = undefined;
+      }
     }
-    
-    // Always draw the current state
-    draw();
-    
-    // Continue loop if playing
-    if (gameState === 'playing') {
-      gameLoopRef.current = requestAnimationFrame(gameLoop);
-    }
-  }, [updateGame, draw, gameState, gameStateRef]);
+  }, [updateGame, draw, gameState, canvasReady, gameStateRef]);
 
-  // Expose continueGame function to parent through callback
+  // Expose continue function for ads/revive
   useEffect(() => {
     if (onContinueGameRef) {
       onContinueGameRef(continueGame);
     }
   }, [continueGame, onContinueGameRef]);
 
-  // Handle input
+  // FIXED INPUT HANDLING - Proper cleanup and attachment
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
+    const handleInput = (e: MouseEvent | TouchEvent | KeyboardEvent) => {
       e.preventDefault();
-      jump();
-    };
-    
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        e.preventDefault();
+      if (gameState === 'playing' && gameStateRef.current?.isInitialized) {
+        console.log('🎯 Input detected - attempting jump');
         jump();
       }
     };
-
-    if (gameState === 'playing') {
-      window.addEventListener('click', handleClick);
-      window.addEventListener('keydown', handleKeyPress);
-    }
-
-    return () => {
-      window.removeEventListener('click', handleClick);
-      window.removeEventListener('keydown', handleKeyPress);
-    };
-  }, [jump, gameState]);
-
-  // Game loop management
-  useEffect(() => {
-    console.log('GameCanvas effect: gameState changed to:', gameState);
     
-    if (gameState === 'playing') {
-      const canvas = canvasRef.current;
-      if (canvas) {
-        // Only reset if this is a new game (not continue)
-        if (!gameStartedRef.current || lastGameStateRef.current === 'menu') {
-          console.log('Starting new game, resetting state');
-          resetGame(canvas.height);
-          gameStartedRef.current = true;
-        } else if (lastGameStateRef.current === 'gameOver') {
-          console.log('Continuing from game over - not resetting');
-        }
-      }
-      
-      // Start the game loop
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-      }
-      gameLoopRef.current = requestAnimationFrame(gameLoop);
-    } else {
-      // Stop the game loop
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-        gameLoopRef.current = undefined;
-      }
-      
-      if (gameState === 'menu') {
-        gameStartedRef.current = false;
-      }
-    }
-    
-    lastGameStateRef.current = gameState;
-
-    return () => {
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.code === 'Space' || e.key === ' ') {
+        handleInput(e);
       }
     };
-  }, [gameState, gameLoop, resetGame]);
 
-  // Canvas resize
+    // Clean up existing listeners first
+    if (inputHandlersAttachedRef.current) {
+      document.removeEventListener('click', handleInput);
+      document.removeEventListener('touchstart', handleInput);
+      document.removeEventListener('keydown', handleKeyPress);
+      inputHandlersAttachedRef.current = false;
+    }
+
+    // Add new listeners
+    document.addEventListener('click', handleInput, { passive: false });
+    document.addEventListener('touchstart', handleInput, { passive: false });
+    document.addEventListener('keydown', handleKeyPress);
+    inputHandlersAttachedRef.current = true;
+
+    console.log('🎮 Input handlers attached for game state:', gameState);
+
+    return () => {
+      // CRITICAL: Always cleanup listeners
+      document.removeEventListener('click', handleInput);
+      document.removeEventListener('touchstart', handleInput);
+      document.removeEventListener('keydown', handleKeyPress);
+      inputHandlersAttachedRef.current = false;
+    };
+  }, [jump, gameState, gameStateRef]);
+
+  // CANVAS INITIALIZATION - Improved reliability
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const resizeCanvas = () => {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      canvas.style.width = window.innerWidth + 'px';
-      canvas.style.height = window.innerHeight + 'px';
-      
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.scale(dpr, dpr);
+    const initializeCanvas = () => {
+      try {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        console.log('🖥️ Canvas initialized:', canvas.width, 'x', canvas.height);
+        setCanvasReady(true);
+      } catch (error) {
+        console.error('❌ Canvas init error:', error);
+        setTimeout(initializeCanvas, 100);
       }
-      
-      console.log('Canvas resized to:', canvas.width, 'x', canvas.height);
     };
 
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    initializeCanvas();
+    window.addEventListener('resize', initializeCanvas);
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('resize', initializeCanvas);
     };
   }, []);
+
+  // MASTER STATE MANAGEMENT - Fixed for all modes
+  useEffect(() => {
+    const prevState = previousGameStateRef.current;
+    previousGameStateRef.current = gameState;
+
+    const handleStateChange = async () => {
+      // Stop any existing game loop
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+        gameLoopRef.current = undefined;
+      }
+
+      if (gameState === 'playing' && canvasReady) {
+        if (prevState !== 'playing') {
+          // FRESH START - Complete reset
+          console.log('🎮 FRESH START - Resetting everything');
+          
+          try {
+            await resetGame();
+            
+            // Start game loop after reset with delay
+            setTimeout(() => {
+              if (gameState === 'playing' && canvasReady) {
+                console.log('🚀 Starting game loop after reset');
+                gameLoopRef.current = requestAnimationFrame(gameLoop);
+              }
+            }, 150);
+            
+          } catch (error) {
+            console.error('❌ Game start error:', error);
+          }
+          
+        } else {
+          // RESUME - Just restart loop
+          console.log('▶️ Resuming game loop');
+          gameLoopRef.current = requestAnimationFrame(gameLoop);
+        }
+      }
+    };
+
+    handleStateChange();
+
+    return () => {
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+        gameLoopRef.current = undefined;
+      }
+    };
+  }, [gameState, canvasReady, gameLoop, resetGame]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 w-full h-full bg-gradient-to-b from-sky-400 to-sky-600 touch-none"
+      className="fixed inset-0 w-full h-full bg-gradient-to-b from-sky-400 to-sky-600 touch-none cursor-pointer"
       style={{ 
         touchAction: 'none',
         userSelect: 'none',
-        WebkitUserSelect: 'none'
+        WebkitUserSelect: 'none',
+        zIndex: 10
       }}
     />
   );
