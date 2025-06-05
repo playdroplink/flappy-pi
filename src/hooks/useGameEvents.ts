@@ -35,6 +35,7 @@ export const useGameEvents = ({
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [isPausedForRevive, setIsPausedForRevive] = useState(false);
   const [reviveUsed, setReviveUsed] = useState(false);
+  const [adWatched, setAdWatched] = useState(false); // Prevent multiple ad triggers
 
   // Generate a mock Pi user ID and username for demo purposes
   // In a real app, this would come from Pi Network authentication
@@ -55,6 +56,8 @@ export const useGameEvents = ({
     if (!reviveUsed) {
       setIsPausedForRevive(true);
       setGameState('paused');
+      setAdWatched(false); // Reset ad watched state for new collision
+      setShowContinueButton(false); // Reset continue button
     } else {
       // Go directly to game over if revive already used
       handleGameOver(score);
@@ -66,6 +69,8 @@ export const useGameEvents = ({
     setGameState('gameOver');
     setScore(finalScore);
     setIsPausedForRevive(false);
+    setShowContinueButton(false); // Reset continue button
+    setAdWatched(false); // Reset ad state
     
     // Submit score to leaderboard if it's a decent score (> 0)
     if (finalScore > 0) {
@@ -110,6 +115,7 @@ export const useGameEvents = ({
     setShowContinueButton(false);
     setReviveUsed(true); // Mark revive as used
     setIsPausedForRevive(false);
+    setAdWatched(false); // Reset ad watched state
     
     // Continue the game at current position with preserved score
     if (continueGame) {
@@ -129,8 +135,12 @@ export const useGameEvents = ({
   const handleAdWatch = (adType: 'continue' | 'coins' | 'life') => {
     switch (adType) {
       case 'continue':
-        console.log('Ad watched - showing continue button');
-        setShowContinueButton(true);
+        // Only show continue button if ad hasn't been watched yet for this collision
+        if (!adWatched && isPausedForRevive) {
+          console.log('Ad watched - showing continue button');
+          setShowContinueButton(true);
+          setAdWatched(true); // Mark ad as watched to prevent multiple triggers
+        }
         break;
         
       case 'coins':
