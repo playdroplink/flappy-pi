@@ -8,6 +8,7 @@ import PrivacyModal from './PrivacyModal';
 import TermsModal from './TermsModal';
 import ContactModal from './ContactModal';
 import HelpModal from './HelpModal';
+import UserProfileModal from './UserProfileModal';
 
 interface GameModalsProps {
   showShop: boolean;
@@ -18,12 +19,14 @@ interface GameModalsProps {
   showTerms: boolean;
   showContact: boolean;
   showHelp: boolean;
+  showProfile: boolean;
   coins: number;
   score: number;
   level: number;
   highScore: number;
   selectedBirdSkin: string;
   gameState: 'menu' | 'playing' | 'gameOver' | 'paused';
+  musicEnabled: boolean;
   setShowShop: (show: boolean) => void;
   setShowLeaderboard: (show: boolean) => void;
   setShowAdPopup: (show: boolean) => void;
@@ -32,8 +35,10 @@ interface GameModalsProps {
   setShowTerms: (show: boolean) => void;
   setShowContact: (show: boolean) => void;
   setShowHelp: (show: boolean) => void;
+  setShowProfile: (show: boolean) => void;
   setCoins: (coins: number) => void;
   setSelectedBirdSkin: (skin: string) => void;
+  setMusicEnabled: (enabled: boolean) => void;
   onWatchAd: (adType: 'continue' | 'coins' | 'life') => void;
 }
 
@@ -46,12 +51,14 @@ const GameModals: React.FC<GameModalsProps> = ({
   showTerms,
   showContact,
   showHelp,
+  showProfile,
   coins,
   score,
   level,
   highScore,
   selectedBirdSkin,
   gameState,
+  musicEnabled,
   setShowShop,
   setShowLeaderboard,
   setShowAdPopup,
@@ -60,13 +67,15 @@ const GameModals: React.FC<GameModalsProps> = ({
   setShowTerms,
   setShowContact,
   setShowHelp,
+  setShowProfile,
   setCoins,
   setSelectedBirdSkin,
+  setMusicEnabled,
   onWatchAd
 }) => {
   return (
     <>
-      <ShopModal 
+      <ShopModal
         isOpen={showShop}
         onClose={() => setShowShop(false)}
         coins={coins}
@@ -75,7 +84,7 @@ const GameModals: React.FC<GameModalsProps> = ({
         setSelectedBirdSkin={setSelectedBirdSkin}
       />
 
-      <LeaderboardModal 
+      <LeaderboardModal
         isOpen={showLeaderboard}
         onClose={() => setShowLeaderboard(false)}
       />
@@ -84,7 +93,6 @@ const GameModals: React.FC<GameModalsProps> = ({
         isOpen={showAdPopup}
         onClose={() => setShowAdPopup(false)}
         onWatchAd={onWatchAd}
-        adType="continue"
       />
 
       <ShareScoreModal
@@ -92,7 +100,7 @@ const GameModals: React.FC<GameModalsProps> = ({
         onClose={() => setShowShareScore(false)}
         score={score}
         level={level}
-        highScore={highScore}
+        gameState={gameState}
       />
 
       <PrivacyModal
@@ -113,6 +121,15 @@ const GameModals: React.FC<GameModalsProps> = ({
       <HelpModal
         isOpen={showHelp}
         onClose={() => setShowHelp(false)}
+      />
+
+      <UserProfileModal
+        isOpen={showProfile}
+        onClose={() => setShowProfile(false)}
+        coins={coins}
+        highScore={highScore}
+        musicEnabled={musicEnabled}
+        onToggleMusic={setMusicEnabled}
       />
     </>
   );

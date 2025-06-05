@@ -52,6 +52,7 @@ const Index = () => {
           onOpenTerms={() => modals.setShowTerms(true)}
           onOpenContact={() => modals.setShowContact(true)}
           onOpenHelp={() => modals.setShowHelp(true)}
+          onOpenProfile={() => modals.setShowProfile(true)}
           coins={gameState.coins}
           musicEnabled={gameState.musicEnabled}
           onToggleMusic={gameState.setMusicEnabled}
@@ -66,12 +67,14 @@ const Index = () => {
           showTerms={modals.showTerms}
           showContact={modals.showContact}
           showHelp={modals.showHelp}
+          showProfile={modals.showProfile}
           coins={gameState.coins}
           score={gameState.score}
           level={gameState.level}
           highScore={gameState.highScore}
           selectedBirdSkin={gameState.selectedBirdSkin}
           gameState={gameState.gameState}
+          musicEnabled={gameState.musicEnabled}
           setShowShop={modals.setShowShop}
           setShowLeaderboard={modals.setShowLeaderboard}
           setShowAdPopup={modals.setShowAdPopup}
@@ -80,8 +83,10 @@ const Index = () => {
           setShowTerms={modals.setShowTerms}
           setShowContact={modals.setShowContact}
           setShowHelp={modals.setShowHelp}
+          setShowProfile={modals.setShowProfile}
           setCoins={gameState.setCoins}
           setSelectedBirdSkin={gameState.setSelectedBirdSkin}
+          setMusicEnabled={gameState.setMusicEnabled}
           onWatchAd={gameEvents.handleAdWatch}
         />
       </>
@@ -151,12 +156,14 @@ const Index = () => {
         showTerms={modals.showTerms}
         showContact={modals.showContact}
         showHelp={modals.showHelp}
+        showProfile={modals.showProfile}
         coins={gameState.coins}
         score={gameState.score}
         level={gameState.level}
         highScore={gameState.highScore}
         selectedBirdSkin={gameState.selectedBirdSkin}
         gameState={gameState.gameState}
+        musicEnabled={gameState.musicEnabled}
         setShowShop={modals.setShowShop}
         setShowLeaderboard={modals.setShowLeaderboard}
         setShowAdPopup={modals.setShowAdPopup}
@@ -165,8 +172,10 @@ const Index = () => {
         setShowTerms={modals.setShowTerms}
         setShowContact={modals.setShowContact}
         setShowHelp={modals.setShowHelp}
+        setShowProfile={modals.setShowProfile}
         setCoins={gameState.setCoins}
         setSelectedBirdSkin={gameState.setSelectedBirdSkin}
+        setMusicEnabled={gameState.setMusicEnabled}
         onWatchAd={gameEvents.handleAdWatch}
       />
     </div>
