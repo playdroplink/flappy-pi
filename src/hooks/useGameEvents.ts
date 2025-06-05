@@ -30,9 +30,6 @@ export const useGameEvents = ({
   continueGame
 }: UseGameEventsProps) => {
   const { toast } = useToast();
-  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [showContinueOverlay, setShowContinueOverlay] = useState(false);
-  const [countdown, setCountdown] = useState(0);
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [isPausedForRevive, setIsPausedForRevive] = useState(false);
   const [reviveUsed, setReviveUsed] = useState(false);
@@ -84,41 +81,11 @@ export const useGameEvents = ({
     localStorage.setItem('flappypi-coins', newCoins.toString());
   };
 
-  const startContinueCountdown = useCallback(() => {
-    console.log('Starting continue countdown after ad');
-    setIsPausedForRevive(false); // Hide the crash prompt
-    setShowContinueOverlay(true);
-    setShowContinueButton(false);
-    setCountdown(3);
-
-    const doCountdown = () => {
-      setCountdown(prev => {
-        if (prev > 1) {
-          countdownTimerRef.current = setTimeout(doCountdown, 1000);
-          return prev - 1;
-        } else {
-          // Countdown finished - show continue button
-          setShowContinueButton(true);
-          return 0;
-        }
-      });
-    };
-
-    countdownTimerRef.current = setTimeout(doCountdown, 1000);
-  }, []);
-
   const handleContinueClick = useCallback(() => {
     console.log('Continue button clicked - resuming game');
-    setShowContinueOverlay(false);
     setShowContinueButton(false);
-    setCountdown(0);
     setReviveUsed(true); // Mark revive as used
-    
-    // Clear any existing countdown
-    if (countdownTimerRef.current) {
-      clearTimeout(countdownTimerRef.current);
-      countdownTimerRef.current = null;
-    }
+    setIsPausedForRevive(false);
     
     // Continue the game at current position with preserved score
     if (continueGame) {
@@ -136,16 +103,10 @@ export const useGameEvents = ({
   }, [continueGame, setGameState, toast]);
 
   const handleAdWatch = (adType: 'continue' | 'coins' | 'life') => {
-    // Clear any existing countdown
-    if (countdownTimerRef.current) {
-      clearTimeout(countdownTimerRef.current);
-      countdownTimerRef.current = null;
-    }
-
     switch (adType) {
       case 'continue':
-        console.log('Starting continue game process after ad watch');
-        startContinueCountdown();
+        console.log('Ad watched - showing continue button');
+        setShowContinueButton(true);
         break;
         
       case 'coins':
@@ -173,8 +134,6 @@ export const useGameEvents = ({
     handleGameOver,
     handleCoinEarned,
     handleAdWatch,
-    showContinueOverlay,
-    countdown,
     showContinueButton,
     handleContinueClick,
     isPausedForRevive,

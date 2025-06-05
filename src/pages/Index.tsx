@@ -1,3 +1,4 @@
+
 import React from 'react';
 import SplashScreen from '../components/SplashScreen';
 import WelcomeScreen from '../components/WelcomeScreen';
@@ -120,8 +121,6 @@ const Index = () => {
       />
 
       <GameContinueOverlay
-        isVisible={gameEvents.showContinueOverlay}
-        countdown={gameEvents.countdown}
         showContinueButton={gameEvents.showContinueButton}
         onContinue={gameEvents.handleContinueClick}
       />

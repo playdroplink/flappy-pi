@@ -42,44 +42,45 @@ const GameUI: React.FC<GameUIProps> = ({
     
     return (
       <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
-        {/* Score at top center like Flappy Bird */}
-        <div className="flex justify-center pt-8">
-          <div className="text-6xl font-bold text-white drop-shadow-2xl pointer-events-auto" 
-               style={{ textShadow: '3px 3px 0px rgba(0,0,0,0.8), -1px -1px 0px rgba(0,0,0,0.8), 1px -1px 0px rgba(0,0,0,0.8), -1px 1px 0px rgba(0,0,0,0.8)' }}>
+        {/* Header Container */}
+        <div className="flex justify-between items-start p-4">
+          {/* Left Side - Level Info */}
+          <Card className="px-4 py-3 pointer-events-auto shadow-lg bg-white/95 backdrop-blur-sm border-blue-200 rounded-xl">
+            <div className="text-center">
+              <div className="text-lg font-bold text-blue-600">Level {currentLevel}</div>
+              <div className="text-sm text-blue-500 capitalize">{difficulty.timeOfDay}</div>
+              <div className="text-xs text-gray-600 uppercase font-medium tracking-wide">{gameMode}</div>
+            </div>
+          </Card>
+
+          {/* Right Side - Coins */}
+          <Card className="px-4 py-3 pointer-events-auto shadow-lg bg-white/95 backdrop-blur-sm border-yellow-200 rounded-xl">
+            <div className="flex items-center space-x-2">
+              <Coins className="h-5 w-5 text-yellow-500" />
+              <span className="text-lg font-bold text-gray-800">{coins}</span>
+            </div>
+          </Card>
+        </div>
+
+        {/* Center Score */}
+        <div className="flex justify-center mt-8">
+          <div className="text-7xl font-bold text-white drop-shadow-2xl pointer-events-auto" 
+               style={{ textShadow: '4px 4px 0px rgba(0,0,0,0.8), -2px -2px 0px rgba(0,0,0,0.8), 2px -2px 0px rgba(0,0,0,0.8), -2px 2px 0px rgba(0,0,0,0.8)' }}>
             {score}
           </div>
         </div>
 
-        {/* Level and Time of Day - top left */}
-        <div className="absolute top-4 left-4">
-          <Card className="px-3 py-2 pointer-events-auto shadow-2xl bg-white/90 backdrop-blur-sm border-blue-200">
-            <div className="text-center">
-              <div className="text-sm font-bold text-blue-600">Level {currentLevel}</div>
-              <div className="text-xs text-blue-500 capitalize">{difficulty.timeOfDay}</div>
-              <div className="text-xs text-gray-600 uppercase font-medium">{gameMode}</div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Coins display - top right */}
-        <div className="absolute top-4 right-4">
-          <Card className="px-3 py-2 pointer-events-auto shadow-2xl bg-white/90 backdrop-blur-sm border-yellow-200">
-            <div className="flex items-center space-x-2">
-              <Coins className="h-4 w-4 text-yellow-500" />
-              <span className="text-sm font-bold text-gray-800">{coins}</span>
-            </div>
-          </Card>
-        </div>
-
-        {/* Difficulty indicators - bottom left if obstacles are active */}
+        {/* Bottom Indicators - if obstacles are active */}
         {(difficulty.hasMovingPipes || difficulty.hasClouds || difficulty.hasWind) && (
-          <div className="absolute bottom-4 left-4">
-            <Card className="px-3 py-2 pointer-events-auto shadow-2xl bg-red-100/90 backdrop-blur-sm border-red-300">
+          <div className="absolute bottom-6 left-4">
+            <Card className="px-3 py-2 pointer-events-auto shadow-lg bg-red-50/95 backdrop-blur-sm border-red-300 rounded-lg">
               <div className="flex items-center space-x-2 text-red-700">
                 <div className="text-xs font-bold">OBSTACLES:</div>
-                {difficulty.hasMovingPipes && <span className="text-xs">Moving Pipes</span>}
-                {difficulty.hasClouds && <span className="text-xs">Clouds</span>}
-                {difficulty.hasWind && <span className="text-xs">Wind</span>}
+                <div className="flex space-x-1 text-xs">
+                  {difficulty.hasMovingPipes && <span className="bg-red-200 px-2 py-1 rounded">Moving Pipes</span>}
+                  {difficulty.hasClouds && <span className="bg-red-200 px-2 py-1 rounded">Clouds</span>}
+                  {difficulty.hasWind && <span className="bg-red-200 px-2 py-1 rounded">Wind</span>}
+                </div>
               </div>
             </Card>
           </div>
@@ -169,15 +170,6 @@ const GameUI: React.FC<GameUIProps> = ({
           </div>
           
           <div className="space-y-4">
-            {/* Continue with Ad button */}
-            <Button 
-              onClick={onShowAd}
-              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
-            >
-              <PlayCircle className="mr-2 h-5 w-5" />
-              Continue (Watch Pi Ad)
-            </Button>
-
             <Button 
               onClick={onStartGame}
               className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
@@ -186,7 +178,6 @@ const GameUI: React.FC<GameUIProps> = ({
               Try Again
             </Button>
             
-            {/* Share Score button */}
             {onShareScore && (
               <Button 
                 onClick={onShareScore}
