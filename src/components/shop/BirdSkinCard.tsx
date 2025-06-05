@@ -1,17 +1,19 @@
 
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Coins, Check, Zap, Sparkles } from 'lucide-react';
+import { Coins, Check, Zap, Sparkles, Crown } from 'lucide-react';
 
 interface BirdSkin {
   id: string;
   name: string;
   piPrice: number;
   coinPrice: number;
-  priceType: 'free' | 'premium';
+  priceType: 'free' | 'premium' | 'elite';
   image: string;
   owned: boolean;
+  eliteOnly?: boolean;
 }
 
 interface BirdSkinCardProps {
@@ -20,6 +22,7 @@ interface BirdSkinCardProps {
   coins: number;
   isOwned: boolean;
   hasAllSkinsSubscription?: boolean;
+  hasEliteSubscription?: boolean;
   onSelectSkin: (skinId: string) => void;
   onPiPayment: (skin: BirdSkin) => void;
   onCoinPurchase: (skin: BirdSkin) => void;
@@ -31,6 +34,7 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
   coins,
   isOwned,
   hasAllSkinsSubscription = false,
+  hasEliteSubscription = false,
   onSelectSkin,
   onPiPayment,
   onCoinPurchase
@@ -45,14 +49,29 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
       );
     }
 
-    // If user has all skins subscription, they can select any skin
-    if (hasAllSkinsSubscription || isOwned) {
+    // Elite skins require elite subscription
+    if (skin.eliteOnly && !hasEliteSubscription) {
+      return (
+        <Button className="bg-gray-400 cursor-not-allowed text-white w-full" disabled>
+          <Crown className="mr-1 h-4 w-4" />
+          Elite Only
+        </Button>
+      );
+    }
+
+    // If user has subscriptions or owns the skin, they can select it
+    if (isOwned) {
       return (
         <Button 
           onClick={() => onSelectSkin(skin.id)}
           className="bg-blue-600 hover:bg-blue-700 text-white w-full"
         >
-          {hasAllSkinsSubscription && !isOwned ? (
+          {hasEliteSubscription && skin.eliteOnly ? (
+            <>
+              <Crown className="mr-1 h-4 w-4" />
+              Select (Elite)
+            </>
+          ) : hasAllSkinsSubscription && !skin.owned ? (
             <>
               <Sparkles className="mr-1 h-4 w-4" />
               Select (Subscription)
@@ -89,6 +108,15 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
       );
     }
 
+    if (skin.priceType === 'elite') {
+      return (
+        <Button className="bg-gray-400 cursor-not-allowed text-white w-full" disabled>
+          <Crown className="mr-1 h-4 w-4" />
+          Elite Required
+        </Button>
+      );
+    }
+
     return (
       <Button 
         onClick={() => onSelectSkin(skin.id)}
@@ -109,7 +137,12 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
             alt={skin.name}
             className="w-12 h-12 object-contain"
           />
-          {hasAllSkinsSubscription && !isOwned && (
+          {hasEliteSubscription && skin.eliteOnly && (
+            <div className="absolute -top-1 -right-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-1">
+              <Crown className="h-3 w-3 text-white" />
+            </div>
+          )}
+          {hasAllSkinsSubscription && !skin.owned && !skin.eliteOnly && (
             <div className="absolute -top-1 -right-1 bg-pink-500 rounded-full p-1">
               <Sparkles className="h-3 w-3 text-white" />
             </div>
@@ -117,9 +150,24 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
         </div>
         
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-gray-800 text-lg truncate">{skin.name}</h4>
+          <h4 className="font-semibold text-gray-800 text-lg truncate flex items-center">
+            {skin.name}
+            {skin.eliteOnly && (
+              <Crown className="h-4 w-4 ml-2 text-yellow-600" />
+            )}
+          </h4>
           <div className="mb-2">
-            {hasAllSkinsSubscription && !isOwned ? (
+            {skin.eliteOnly && hasEliteSubscription ? (
+              <span className="text-yellow-600 text-sm font-medium flex items-center">
+                <Crown className="h-4 w-4 mr-1" />
+                Elite Access
+              </span>
+            ) : skin.eliteOnly ? (
+              <span className="text-gray-500 text-sm font-medium flex items-center">
+                <Crown className="h-4 w-4 mr-1" />
+                Elite Only
+              </span>
+            ) : hasAllSkinsSubscription && !skin.owned ? (
               <span className="text-pink-600 text-sm font-medium flex items-center">
                 <Sparkles className="h-4 w-4 mr-1" />
                 Subscription Access
@@ -150,3 +198,4 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
 };
 
 export default BirdSkinCard;
+
