@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Coins, Check, Zap, Star } from 'lucide-react';
+import { Coins, Check, Zap } from 'lucide-react';
 
 interface BirdSkin {
   id: string;
@@ -33,26 +33,6 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
   onPiPayment,
   onCoinPurchase
 }) => {
-  // Check if user has active subscription
-  const hasActiveSubscription = () => {
-    const subscriptionData = localStorage.getItem('flappypi-subscription');
-    if (!subscriptionData) return false;
-    
-    try {
-      const subscription = JSON.parse(subscriptionData);
-      return new Date() < new Date(subscription.expiresAt);
-    } catch {
-      return false;
-    }
-  };
-
-  const isUnlockedBySubscription = hasActiveSubscription() && skin.priceType === 'premium';
-  const isActuallyOwned = () => {
-    if (hasActiveSubscription()) return true;
-    const ownedSkins = JSON.parse(localStorage.getItem('flappypi-owned-skins') || '["default"]');
-    return ownedSkins.includes(skin.id);
-  };
-
   const renderActionButtons = () => {
     if (selectedBirdSkin === skin.id) {
       return (
@@ -63,22 +43,13 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
       );
     }
 
-    if (isOwned || isUnlockedBySubscription) {
+    if (isOwned) {
       return (
         <Button 
           onClick={() => onSelectSkin(skin.id)}
           className="bg-blue-600 hover:bg-blue-700 text-white w-full"
         >
-          {isUnlockedBySubscription ? (
-            <>
-              <Star className="mr-1 h-4 w-4" />
-              Select (Subscription)
-            </>
-          ) : (
-            <>
-              Select
-            </>
-          )}
+          Select
         </Button>
       );
     }
@@ -119,33 +90,19 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
   return (
     <Card className="p-4 bg-gray-50 border-gray-200">
       <div className="flex items-center space-x-4">
-        <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg border border-gray-200 relative">
+        <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg border border-gray-200">
           <img 
             src={skin.image} 
             alt={skin.name}
             className="w-12 h-12 object-contain"
           />
-          {isUnlockedBySubscription && (
-            <div className="absolute -top-1 -right-1 bg-yellow-500 rounded-full p-1">
-              <Star className="h-3 w-3 text-white" />
-            </div>
-          )}
         </div>
         
         <div className="flex-1">
-          <h4 className="font-semibold text-gray-800 text-lg flex items-center">
-            {skin.name}
-            {isUnlockedBySubscription && (
-              <span className="ml-2 text-xs bg-yellow-100 px-2 py-1 rounded text-yellow-700">
-                Subscription
-              </span>
-            )}
-          </h4>
+          <h4 className="font-semibold text-gray-800 text-lg">{skin.name}</h4>
           <div className="mb-2">
             {skin.priceType === 'free' ? (
               <span className="text-green-600 text-sm font-medium">Free</span>
-            ) : isUnlockedBySubscription ? (
-              <span className="text-yellow-600 text-sm font-medium">Unlocked by Subscription</span>
             ) : (
               <div className="space-y-1">
                 <div className="flex items-center space-x-1">

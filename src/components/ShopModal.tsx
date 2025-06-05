@@ -5,7 +5,7 @@ import ShopHeader from './shop/ShopHeader';
 import BirdSkinCard from './shop/BirdSkinCard';
 import ShopInfoSection from './shop/ShopInfoSection';
 import { Button } from '@/components/ui/button';
-import { Crown, Zap, Infinity, Calendar, Star } from 'lucide-react';
+import { Crown, Zap, Infinity, Calendar } from 'lucide-react';
 import { gameBackendService } from '@/services/gameBackendService';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useAdSystem } from '@/hooks/useAdSystem';
@@ -62,110 +62,6 @@ const ShopModal: React.FC<ShopModalProps> = ({
     },
   ];
 
-  // Check if user has active subscription
-  const hasActiveSubscription = () => {
-    const subscriptionData = localStorage.getItem('flappypi-subscription');
-    if (!subscriptionData) return false;
-    
-    try {
-      const subscription = JSON.parse(subscriptionData);
-      return new Date() < new Date(subscription.expiresAt);
-    } catch {
-      return false;
-    }
-  };
-
-  const getSubscriptionTimeRemaining = () => {
-    const subscriptionData = localStorage.getItem('flappypi-subscription');
-    if (!subscriptionData) return null;
-    
-    try {
-      const subscription = JSON.parse(subscriptionData);
-      const expiresAt = new Date(subscription.expiresAt);
-      const now = new Date();
-      
-      if (now >= expiresAt) return null;
-      
-      const remaining = expiresAt.getTime() - now.getTime();
-      const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      
-      return { days, hours };
-    } catch {
-      return null;
-    }
-  };
-
-  const handleSubscriptionPurchase = async () => {
-    if (!profile) {
-      toast({
-        title: "Error",
-        description: "User profile not available",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      console.log('Initiating Pi payment for All Skins Subscription - 25 Pi');
-      
-      setTimeout(async () => {
-        try {
-          const result = await gameBackendService.makePurchase(
-            profile.pi_user_id,
-            'power_up',
-            'all_skins_subscription',
-            0,
-            `pi_tx_subscription_${Date.now()}`
-          );
-
-          if (result.success) {
-            // Set subscription for 30 days
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + 30);
-            
-            const subscriptionData = {
-              type: 'all_skins',
-              purchasedAt: new Date().toISOString(),
-              expiresAt: expiresAt.toISOString(),
-              piTransactionId: `pi_tx_subscription_${Date.now()}`
-            };
-            
-            localStorage.setItem('flappypi-subscription', JSON.stringify(subscriptionData));
-            
-            await refreshProfile();
-            
-            toast({
-              title: "Subscription Activated! 🎉",
-              description: "All skins unlocked for 30 days!"
-            });
-          } else {
-            toast({
-              title: "Purchase Failed",
-              description: result.error || "Failed to purchase subscription",
-              variant: "destructive"
-            });
-          }
-        } catch (error) {
-          console.error('Error processing subscription payment:', error);
-          toast({
-            title: "Payment Error",
-            description: "Failed to process Pi payment",
-            variant: "destructive"
-          });
-        }
-      }, 1500);
-      
-    } catch (error) {
-      console.error('Subscription payment failed:', error);
-      toast({
-        title: "Payment Failed",
-        description: "Pi payment could not be processed",
-        variant: "destructive"
-      });
-    }
-  };
-
   const handlePiPayment = async (skin: any) => {
     if (!profile) {
       toast({
@@ -179,14 +75,16 @@ const ShopModal: React.FC<ShopModalProps> = ({
     try {
       console.log(`Initiating Pi payment for ${skin.name} - ${skin.piPrice} Pi`);
       
+      // Simulate Pi payment process
       setTimeout(async () => {
         try {
+          // Record purchase in backend
           const result = await gameBackendService.makePurchase(
             profile.pi_user_id,
             'bird_skin',
             skin.id,
-            0,
-            `pi_tx_${Date.now()}`
+            0, // Pi payments don't deduct coins
+            `pi_tx_${Date.now()}` // Mock Pi transaction ID
           );
 
           if (result.success) {
@@ -199,7 +97,7 @@ const ShopModal: React.FC<ShopModalProps> = ({
               localStorage.setItem('flappypi-owned-skins', JSON.stringify(ownedSkins));
             }
             
-            await refreshProfile();
+            await refreshProfile(); // Refresh profile data
             
             toast({
               title: "Purchase Successful! 🎉",
@@ -244,6 +142,7 @@ const ShopModal: React.FC<ShopModalProps> = ({
 
     if (coins >= skin.coinPrice) {
       try {
+        // Make purchase through backend
         const result = await gameBackendService.makePurchase(
           profile.pi_user_id,
           'bird_skin',
@@ -252,6 +151,7 @@ const ShopModal: React.FC<ShopModalProps> = ({
         );
 
         if (result.success) {
+          // Update local state
           setCoins(result.remaining_coins || 0);
           localStorage.setItem('flappypi-coins', (result.remaining_coins || 0).toString());
           
@@ -264,7 +164,7 @@ const ShopModal: React.FC<ShopModalProps> = ({
             localStorage.setItem('flappypi-owned-skins', JSON.stringify(ownedSkins));
           }
           
-          await refreshProfile();
+          await refreshProfile(); // Refresh profile data
           
           toast({
             title: "Purchase Successful! 🎉",
@@ -295,15 +195,9 @@ const ShopModal: React.FC<ShopModalProps> = ({
   };
 
   const isOwned = (skinId: string) => {
-    // If user has active subscription, all skins are available
-    if (hasActiveSubscription()) return true;
-    
     const ownedSkins = JSON.parse(localStorage.getItem('flappypi-owned-skins') || '["default"]');
     return ownedSkins.includes(skinId);
   };
-
-  const subscriptionTimeRemaining = getSubscriptionTimeRemaining();
-  const hasSubscription = hasActiveSubscription();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -316,90 +210,6 @@ const ShopModal: React.FC<ShopModalProps> = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* All Skins Subscription Section */}
-          <div>
-            <h3 className="text-lg font-bold mb-4 text-gray-800 flex items-center">
-              <Star className="mr-2 h-5 w-5 text-yellow-500" />
-              All Skins Subscription
-              <span className="ml-2 text-sm bg-yellow-100 px-2 py-1 rounded text-yellow-700">
-                Unlock All
-              </span>
-            </h3>
-            
-            <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-4 border border-yellow-200">
-              {hasSubscription ? (
-                <div className="text-center">
-                  <div className="text-4xl mb-3">⭐</div>
-                  <h4 className="text-xl font-bold text-yellow-700 mb-2">All Skins Unlocked!</h4>
-                  <p className="text-gray-600 text-sm mb-4">
-                    You can use any bird skin right now!
-                  </p>
-                  
-                  {subscriptionTimeRemaining && (
-                    <div className="bg-white rounded-lg p-3 border border-yellow-200 mb-4">
-                      <div className="flex items-center justify-center space-x-2 mb-1">
-                        <Calendar className="h-4 w-4 text-yellow-600" />
-                        <span className="font-semibold text-sm">Time Remaining</span>
-                      </div>
-                      <p className="text-yellow-700 text-lg font-bold">
-                        {subscriptionTimeRemaining.days}d {subscriptionTimeRemaining.hours}h
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div className="grid grid-cols-1 gap-2 text-sm text-left">
-                    <div className="flex items-center space-x-2 text-green-600">
-                      <Star className="h-4 w-4" />
-                      <span>All premium skins unlocked</span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-green-600">
-                      <Infinity className="h-4 w-4" />
-                      <span>Switch between any skin anytime</span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h4 className="text-xl font-bold text-gray-800">Unlock All Skins</h4>
-                      <p className="text-gray-600 text-sm">
-                        Get access to all premium bird skins
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-yellow-600">25 Pi</div>
-                      <div className="text-sm text-gray-500">30 days</div>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 gap-3 mb-4 text-sm">
-                    <div className="flex items-center space-x-3">
-                      <Star className="h-5 w-5 text-yellow-500" />
-                      <span>Unlock all premium bird skins instantly</span>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <Infinity className="h-5 w-5 text-green-500" />
-                      <span>Switch between any skin without paying individually</span>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <Calendar className="h-5 w-5 text-blue-500" />
-                      <span>30 days full access to all skins</span>
-                    </div>
-                  </div>
-                  
-                  <Button
-                    onClick={handleSubscriptionPurchase}
-                    className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white border-0 rounded-lg py-3 font-bold"
-                  >
-                    <Star className="mr-2 h-5 w-5" />
-                    ⭐ Subscribe with Pi (25 Pi)
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Pi Premium Subscription Section */}
           <div>
             <h3 className="text-lg font-bold mb-4 text-gray-800 flex items-center">
@@ -410,8 +220,9 @@ const ShopModal: React.FC<ShopModalProps> = ({
               </span>
             </h3>
             
-            <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-4 border border-purple-200">
+            <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-6 border border-purple-200">
               {adSystem.isAdFree ? (
+                /* Active subscription */
                 <div className="text-center">
                   <div className="text-4xl mb-3">✨</div>
                   <h4 className="text-xl font-bold text-purple-700 mb-2">Premium Active!</h4>
@@ -443,6 +254,7 @@ const ShopModal: React.FC<ShopModalProps> = ({
                   </div>
                 </div>
               ) : (
+                /* Purchase offer */
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <div>
@@ -488,11 +300,9 @@ const ShopModal: React.FC<ShopModalProps> = ({
           <div>
             <h3 className="text-lg font-bold mb-4 text-gray-800 flex items-center">
               🐦 Bird Characters
-              {hasSubscription && (
-                <span className="ml-2 text-sm bg-green-100 px-2 py-1 rounded text-green-700">
-                  All Unlocked ⭐
-                </span>
-              )}
+              <span className="ml-2 text-sm bg-purple-100 px-2 py-1 rounded text-purple-700">
+                Premium Skins
+              </span>
             </h3>
             <div className="grid grid-cols-1 gap-4">
               {birdSkins.map((skin) => (

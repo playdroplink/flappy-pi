@@ -1,17 +1,20 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, ShoppingBag, Trophy, Shield, FileText, Mail, HelpCircle, Volume2, VolumeX, User } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Play, ShoppingCart, Trophy, Coins, Volume2, VolumeX, Shield, FileText, HelpCircle, Mail } from 'lucide-react';
+import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
+
+type GameMode = 'classic' | 'endless' | 'challenge';
 
 interface WelcomeScreenProps {
-  onStartGame: (mode: 'classic' | 'endless' | 'challenge') => void;
+  onStartGame: (mode: GameMode) => void;
   onOpenShop: () => void;
   onOpenLeaderboard: () => void;
   onOpenPrivacy: () => void;
   onOpenTerms: () => void;
   onOpenContact: () => void;
   onOpenHelp: () => void;
-  onOpenProfile: () => void;
   coins: number;
   musicEnabled: boolean;
   onToggleMusic: (enabled: boolean) => void;
@@ -25,156 +28,172 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onOpenTerms,
   onOpenContact,
   onOpenHelp,
-  onOpenProfile,
   coins,
   musicEnabled,
   onToggleMusic
 }) => {
+  // Add background music
+  useBackgroundMusic({ musicEnabled, gameState: 'menu' });
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-400 to-sky-600 flex flex-col items-center justify-center p-4">
-      {/* Background clouds */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-10 w-20 h-12 bg-white rounded-full opacity-60 animate-pulse"></div>
-        <div className="absolute top-20 right-20 w-16 h-10 bg-white rounded-full opacity-40 animate-pulse delay-1000"></div>
-        <div className="absolute bottom-32 left-16 w-24 h-14 bg-white rounded-full opacity-50 animate-pulse delay-2000"></div>
-        <div className="absolute bottom-20 right-12 w-18 h-11 bg-white rounded-full opacity-45 animate-pulse delay-500"></div>
+    <div className="fixed inset-0 w-full h-full bg-gradient-to-b from-sky-400 via-sky-500 to-sky-600 flex flex-col relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0">
+        {/* Floating clouds */}
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute bg-white/15 rounded-full animate-pulse"
+            style={{
+              width: `${80 + i * 15}px`,
+              height: `${40 + i * 8}px`,
+              left: `${5 + i * 15}%`,
+              top: `${15 + i * 12}%`,
+              animationDelay: `${i * 0.8}s`,
+              animationDuration: '4s'
+            }}
+          />
+        ))}
       </div>
 
-      {/* Top Bar with Music Toggle and Profile */}
-      <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
-        <Button
-          onClick={() => onToggleMusic(!musicEnabled)}
-          variant="outline"
-          size="sm"
-          className="bg-white/90 hover:bg-white"
-        >
-          {musicEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-        </Button>
-        
-        <Button
-          onClick={onOpenProfile}
-          variant="outline"
-          size="sm"
-          className="bg-white/90 hover:bg-white"
-        >
-          <User className="h-4 w-4 mr-2" />
-          Profile
-        </Button>
-      </div>
+      {/* Main content */}
+      <div className="flex-1 flex items-center justify-center relative z-10 p-4">
+        <div className="w-full max-w-md space-y-6">
+          {/* Header - Better organized */}
+          <Card className="p-6 text-center animate-fade-in bg-white/90 backdrop-blur-sm">
+            <div className="mb-4 flex justify-center">
+              <img 
+                src="/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png" 
+                alt="Flappy Pi Character" 
+                className="w-16 h-16 animate-bounce"
+              />
+            </div>
+            <h1 className="text-4xl font-bold text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text mb-2">
+              Flappy Pi
+            </h1>
+            <p className="text-gray-700 text-base">Ready for takeoff?</p>
+          </Card>
 
-      {/* Main Content */}
-      <div className="text-center space-y-8 z-10">
-        {/* Game Title */}
-        <div className="space-y-4">
-          <h1 className="text-6xl font-bold text-white drop-shadow-lg">
-            🐦 Flappy Pi
-          </h1>
-          <p className="text-xl text-sky-100 max-w-md mx-auto">
-            Fly through pipes, earn Pi coins, and compete with friends!
-          </p>
-        </div>
+          {/* User stats - Better organized */}
+          <Card className="p-4 animate-fade-in bg-white/90 backdrop-blur-sm" style={{ animationDelay: '0.2s' }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Coins className="h-5 w-5 text-yellow-500" />
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold text-gray-800">{coins}</span>
+                  <span className="text-gray-600 text-xs">Pi Coins</span>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onToggleMusic(!musicEnabled)}
+                className="text-gray-700 hover:bg-gray-100 p-2"
+              >
+                {musicEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+              </Button>
+            </div>
+          </Card>
 
-        {/* Coins Display */}
-        <div className="bg-white/90 rounded-lg px-6 py-3 inline-flex items-center space-x-2">
-          <span className="text-yellow-500 text-xl">🪙</span>
-          <span className="font-bold text-gray-800">{coins.toLocaleString()} Pi Coins</span>
-        </div>
-
-        {/* Game Mode Buttons */}
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold text-white">Choose Your Challenge</h2>
-          <div className="grid gap-4 max-w-sm mx-auto">
-            <Button
+          {/* Game modes */}
+          <Card className="p-6 space-y-4 animate-fade-in bg-white/90 backdrop-blur-sm" style={{ animationDelay: '0.4s' }}>
+            <h3 className="text-gray-800 font-bold text-lg mb-4 text-center">Choose Your Adventure</h3>
+            
+            <Button 
               onClick={() => onStartGame('classic')}
-              size="lg"
-              className="bg-green-500 hover:bg-green-600 text-white text-lg py-6"
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
             >
-              <Play className="mr-3 h-6 w-6" />
+              <Play className="mr-2 h-5 w-5" />
               Classic Mode
             </Button>
             
-            <Button
+            <Button 
               onClick={() => onStartGame('endless')}
-              size="lg"
-              variant="outline"
-              className="bg-white/90 hover:bg-white text-sky-700 text-lg py-6"
+              className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
             >
-              <Play className="mr-3 h-6 w-6" />
+              <Play className="mr-2 h-5 w-5" />
               Endless Mode
             </Button>
             
-            <Button
+            <Button 
               onClick={() => onStartGame('challenge')}
-              size="lg"
-              variant="outline"
-              className="bg-white/90 hover:bg-white text-orange-600 text-lg py-6"
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
             >
-              <Play className="mr-3 h-6 w-6" />
+              <Play className="mr-2 h-5 w-5" />
               Challenge Mode
+            </Button>
+          </Card>
+
+          {/* Menu options */}
+          <div className="grid grid-cols-2 gap-4 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+            <Button 
+              onClick={onOpenShop}
+              variant="outline"
+              className="bg-white/80 border-white/50 text-gray-700 hover:bg-white/90 transform hover:scale-105 transition-all duration-200 backdrop-blur-sm"
+            >
+              <ShoppingCart className="mr-2 h-4 w-4" />
+              Shop
+            </Button>
+            
+            <Button 
+              onClick={onOpenLeaderboard}
+              variant="outline"
+              className="bg-white/80 border-white/50 text-gray-700 hover:bg-white/90 transform hover:scale-105 transition-all duration-200 backdrop-blur-sm"
+            >
+              <Trophy className="mr-2 h-4 w-4" />
+              Leaderboard
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap justify-center gap-3">
-          <Button
-            onClick={onOpenShop}
-            variant="outline"
-            size="sm"
-            className="bg-white/90 hover:bg-white text-purple-600"
-          >
-            <ShoppingBag className="mr-2 h-4 w-4" />
-            Pi Shop
-          </Button>
-          
-          <Button
-            onClick={onOpenLeaderboard}
-            variant="outline"
-            size="sm"
-            className="bg-white/90 hover:bg-white text-orange-600"
-          >
-            <Trophy className="mr-2 h-4 w-4" />
-            Leaderboard
-          </Button>
-        </div>
-
-        {/* Footer Links */}
-        <div className="pt-8">
-          <div className="flex flex-wrap justify-center gap-4 text-sm">
-            <button
+      {/* Footer - Fixed text size */}
+      <div className="relative z-10 p-4 animate-fade-in" style={{ animationDelay: '0.8s' }}>
+        <Card className="p-4 bg-white/80 backdrop-blur-sm border-white/50">
+          <div className="grid grid-cols-4 gap-2 text-center">
+            <Button 
+              variant="ghost" 
+              size="sm" 
               onClick={onOpenPrivacy}
-              className="text-sky-100 hover:text-white underline"
+              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2"
             >
-              <Shield className="inline mr-1 h-3 w-3" />
-              Privacy
-            </button>
-            <button
+              <Shield className="h-4 w-4" />
+              <span className="text-xs">Privacy</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
               onClick={onOpenTerms}
-              className="text-sky-100 hover:text-white underline"
+              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2"
             >
-              <FileText className="inline mr-1 h-3 w-3" />
-              Terms
-            </button>
-            <button
+              <FileText className="h-4 w-4" />
+              <span className="text-xs">Terms</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
               onClick={onOpenContact}
-              className="text-sky-100 hover:text-white underline"
+              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2"
             >
-              <Mail className="inline mr-1 h-3 w-3" />
-              Contact
-            </button>
-            <button
+              <Mail className="h-4 w-4" />
+              <span className="text-xs">Contact</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
               onClick={onOpenHelp}
-              className="text-sky-100 hover:text-white underline"
+              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2"
             >
-              <HelpCircle className="inline mr-1 h-3 w-3" />
-              Help
-            </button>
+              <HelpCircle className="h-4 w-4" />
+              <span className="text-xs">Help</span>
+            </Button>
           </div>
-          
-          <p className="text-sky-200 text-xs mt-4">
-            © 2025 mrwain organization. All rights reserved.
-          </p>
-        </div>
+          <div className="text-center mt-3 pt-3 border-t border-gray-200">
+            <p className="text-gray-800 text-sm font-semibold">
+              Powered by Pi Network • MRWAIN ORGANIZATION
+            </p>
+          </div>
+        </Card>
       </div>
     </div>
   );
