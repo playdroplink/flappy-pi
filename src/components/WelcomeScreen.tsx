@@ -70,7 +70,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <img 
                 src="/lovable-uploads/8d2aed26-e6ed-4f65-9613-6ec708c96c50.png" 
                 alt="Flappy Pi Character" 
-                className="w-full h-full object-contain animate-bounce drop-shadow-2xl"
+                className="w-full h-full object-contain animate-bounce"
               />
             </div>
           </div>
@@ -92,7 +92,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-800">{coins}</div>
-                <div className="text-sm text-gray-600">Pi Coins</div>
+                <div className="text-sm text-gray-600">Flappy Coins</div>
               </div>
             </div>
             <Button
