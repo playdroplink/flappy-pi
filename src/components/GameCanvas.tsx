@@ -58,14 +58,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const AD_INTERVAL = 8000; // 8 seconds
   const PIPE_SPAWN_DELAY = 2000; // 2 seconds before first pipe
 
-  // Load new bird character image
+  // Load bird character image based on skin
   useEffect(() => {
     const img = new Image();
     img.onload = () => {
       birdImageRef.current = img;
     };
-    img.src = '/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png';
-  }, []);
+    
+    // Use different bird images based on skin
+    switch (birdSkin) {
+      case 'green':
+        img.src = '/lovable-uploads/b2ccab90-dff7-4e09-9564-3cdd075c6793.png';
+        break;
+      case 'red':
+        img.src = '/lovable-uploads/3a780914-6faf-4deb-81ab-ce1f4b059984.png';
+        break;
+      default: // blue/default
+        img.src = '/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png';
+    }
+  }, [birdSkin]);
 
   // Dynamic difficulty based on game mode and level
   const getDifficulty = useCallback(() => {

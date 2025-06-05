@@ -3,7 +3,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Flappy Pi - Powered by mrwain organization</title>
     <meta name="description" content="Flappy Pi - The ultimate Flappy Bird experience with Pi Network integration. Play, earn, and compete!" />
     <meta name="author" content="mrwain organization" />
@@ -13,15 +13,16 @@
     <meta property="og:title" content="Flappy Pi - Play & Earn Pi Coins" />
     <meta property="og:description" content="The ultimate Flappy Bird experience with Pi Network integration. Play, earn, and compete!" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png" />
+    <meta property="og:image" content="/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png" />
 
     <!-- Twitter Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@mrwain_org" />
-    <meta name="twitter:image" content="/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png" />
+    <meta name="twitter:image" content="/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png" />
 
-    <!-- Favicon using your new logo -->
-    <link rel="icon" href="/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png" type="image/png" />
+    <!-- Favicon using the new blue bird logo -->
+    <link rel="icon" href="/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png" />
 
     <!-- PWA Meta Tags for mobile fullscreen -->
     <meta name="theme-color" content="#0ea5e9" />
@@ -29,6 +30,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen" />
     <meta name="apple-mobile-web-app-title" content="Flappy Pi" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-touch-fullscreen" content="yes" />
+
+    <!-- Prevent zoom and bouncing on iOS -->
+    <meta name="format-detection" content="telephone=no" />
 
     <!-- Preload critical resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -38,21 +43,63 @@
       /* Prevent zoom and ensure fullscreen mobile experience */
       html, body {
         height: 100vh;
+        height: 100dvh; /* Dynamic viewport height for mobile */
         overflow: hidden;
         touch-action: manipulation;
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        position: fixed;
+        width: 100%;
+        top: 0;
+        left: 0;
       }
       
-      /* Hide address bar on mobile */
+      /* Hide address bar on mobile and prevent bounce */
       @media screen and (max-width: 768px) {
         html {
           height: -webkit-fill-available;
+          height: 100dvh;
         }
         body {
           height: -webkit-fill-available;
+          height: 100dvh;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior: none;
         }
+        
+        /* Prevent pull-to-refresh */
+        body {
+          overscroll-behavior-y: contain;
+        }
+      }
+      
+      /* Ensure root element fills screen */
+      #root {
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        position: relative;
+      }
+      
+      /* Disable text selection globally */
+      * {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      /* Disable context menu on long press */
+      canvas, img, div {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
       }
     </style>
   </head>
