@@ -36,6 +36,13 @@ const Index = () => {
     }
   });
 
+  // Enhanced start game function that resets all states
+  const handleStartGame = React.useCallback((mode: 'classic' | 'endless' | 'challenge') => {
+    console.log('Starting new game - resetting all event states');
+    gameEvents.resetGameEventStates();
+    gameState.startGame(mode);
+  }, [gameEvents, gameState]);
+
   if (gameState.showSplash) {
     return <SplashScreen />;
   }
@@ -44,7 +51,7 @@ const Index = () => {
     return (
       <>
         <WelcomeScreen 
-          onStartGame={gameState.startGame}
+          onStartGame={handleStartGame}
           onOpenShop={() => modals.setShowShop(true)}
           onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
           onOpenPrivacy={() => modals.setShowPrivacy(true)}
@@ -113,7 +120,7 @@ const Index = () => {
         highScore={gameState.highScore}
         coins={gameState.coins}
         gameMode={gameState.gameMode}
-        onStartGame={() => gameState.startGame(gameState.gameMode)}
+        onStartGame={() => handleStartGame(gameState.gameMode)}
         onBackToMenu={gameState.backToMenu}
         onOpenShop={() => modals.setShowShop(true)}
         onOpenLeaderboard={() => modals.setShowLeaderboard(true)}

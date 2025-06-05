@@ -48,6 +48,18 @@ export const useGameEvents = ({
   // Add collision handling lock to prevent multiple collision events
   const collisionHandledRef = useRef(false);
 
+  // Reset all game event states for new game
+  const resetGameEventStates = useCallback(() => {
+    console.log('Resetting all game event states for new game');
+    collisionHandledRef.current = false;
+    setShowContinueButton(false);
+    setIsPausedForRevive(false);
+    setReviveUsed(false);
+    setAdWatched(false);
+    setShowMandatoryAd(false);
+    setShowAdFreeModal(false);
+  }, []);
+
   const handleGameOver = useCallback(async (finalScore: number) => {
     console.log('Game over with final score:', finalScore);
     
@@ -280,6 +292,7 @@ export const useGameEvents = ({
     showAdFreeModal,
     adSystem,
     handleMandatoryAdWatch,
-    setShowAdFreeModal
+    setShowAdFreeModal,
+    resetGameEventStates
   };
 };
