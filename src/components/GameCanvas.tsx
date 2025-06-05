@@ -50,7 +50,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const backgroundOffsetRef = useRef(0);
 
   const BIRD_SIZE = 35;
-  const PIPE_WIDTH = 65;
+  const PIPE_WIDTH = 120; // Increased from 65 to 120 for larger pipes
   const BASE_PIPE_GAP = 160;
   const GRAVITY = 0.6;
   const FLAP_STRENGTH = -10;
@@ -257,49 +257,57 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const { pipeGap } = getDifficulty();
     
     pipes.forEach(pipe => {
-      // 3D pipe effect with multiple gradients
+      // Enhanced 3D pipe effect with multiple gradients for larger pipes
       const pipeGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH, 0);
       pipeGradient.addColorStop(0, '#228B22');
-      pipeGradient.addColorStop(0.3, '#32CD32');
+      pipeGradient.addColorStop(0.15, '#32CD32');
+      pipeGradient.addColorStop(0.3, '#90EE90');
+      pipeGradient.addColorStop(0.5, '#32CD32');
       pipeGradient.addColorStop(0.7, '#228B22');
-      pipeGradient.addColorStop(1, '#006400');
+      pipeGradient.addColorStop(0.85, '#006400');
+      pipeGradient.addColorStop(1, '#013220');
       
-      // Shadow effect
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-      ctx.fillRect(pipe.x + 3, 3, PIPE_WIDTH, pipe.y);
-      ctx.fillRect(pipe.x + 3, pipe.y + pipeGap + 3, PIPE_WIDTH, canvas.height - pipe.y - pipeGap - 60);
+      // Enhanced shadow effect for larger pipes
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.fillRect(pipe.x + 6, 6, PIPE_WIDTH, pipe.y);
+      ctx.fillRect(pipe.x + 6, pipe.y + pipeGap + 6, PIPE_WIDTH, canvas.height - pipe.y - pipeGap - 60);
       
-      // Main pipe body
+      // Main pipe body with enhanced gradient
       ctx.fillStyle = pipeGradient;
       ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.y);
       ctx.fillRect(pipe.x, pipe.y + pipeGap, PIPE_WIDTH, canvas.height - pipe.y - pipeGap - 60);
       
-      // Pipe borders
+      // Enhanced pipe borders
       ctx.strokeStyle = '#006400';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3;
       ctx.strokeRect(pipe.x, 0, PIPE_WIDTH, pipe.y);
       ctx.strokeRect(pipe.x, pipe.y + pipeGap, PIPE_WIDTH, canvas.height - pipe.y - pipeGap - 60);
 
-      // Enhanced pipe caps with 3D effect
-      const capGradient = ctx.createLinearGradient(pipe.x - 8, 0, pipe.x + PIPE_WIDTH + 8, 0);
+      // Enhanced pipe caps with 3D effect for larger pipes
+      const capGradient = ctx.createLinearGradient(pipe.x - 12, 0, pipe.x + PIPE_WIDTH + 12, 0);
       capGradient.addColorStop(0, '#006400');
-      capGradient.addColorStop(0.3, '#32CD32');
-      capGradient.addColorStop(0.7, '#228B22');
+      capGradient.addColorStop(0.2, '#228B22');
+      capGradient.addColorStop(0.4, '#32CD32');
+      capGradient.addColorStop(0.6, '#90EE90');
+      capGradient.addColorStop(0.8, '#228B22');
       capGradient.addColorStop(1, '#013220');
       
       ctx.fillStyle = capGradient;
-      // Top cap
-      ctx.fillRect(pipe.x - 8, pipe.y - 30, PIPE_WIDTH + 16, 30);
-      ctx.strokeRect(pipe.x - 8, pipe.y - 30, PIPE_WIDTH + 16, 30);
-      // Bottom cap
-      ctx.fillRect(pipe.x - 8, pipe.y + pipeGap, PIPE_WIDTH + 16, 30);
-      ctx.strokeRect(pipe.x - 8, pipe.y + pipeGap, PIPE_WIDTH + 16, 30);
+      // Larger top cap
+      ctx.fillRect(pipe.x - 12, pipe.y - 40, PIPE_WIDTH + 24, 40);
+      ctx.strokeStyle = '#013220';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(pipe.x - 12, pipe.y - 40, PIPE_WIDTH + 24, 40);
+      
+      // Larger bottom cap
+      ctx.fillRect(pipe.x - 12, pipe.y + pipeGap, PIPE_WIDTH + 24, 40);
+      ctx.strokeRect(pipe.x - 12, pipe.y + pipeGap, PIPE_WIDTH + 24, 40);
 
-      // Pipe texture lines
+      // Enhanced pipe texture lines for larger pipes
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-      ctx.lineWidth = 1;
-      for (let i = 0; i < 3; i++) {
-        const lineX = pipe.x + (PIPE_WIDTH / 4) * (i + 1);
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i++) {
+        const lineX = pipe.x + (PIPE_WIDTH / 6) * (i + 1);
         ctx.beginPath();
         ctx.moveTo(lineX, 0);
         ctx.lineTo(lineX, pipe.y);
@@ -308,6 +316,27 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.moveTo(lineX, pipe.y + pipeGap);
         ctx.lineTo(lineX, canvas.height - 60);
         ctx.stroke();
+      }
+
+      // Add decorative rivets for larger pipes
+      ctx.fillStyle = '#013220';
+      for (let i = 0; i < 3; i++) {
+        const rivetY = (pipe.y / 4) * (i + 1);
+        ctx.beginPath();
+        ctx.arc(pipe.x + PIPE_WIDTH / 4, rivetY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(pipe.x + (PIPE_WIDTH * 3) / 4, rivetY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Bottom pipe rivets
+        const bottomRivetY = pipe.y + pipeGap + ((canvas.height - pipe.y - pipeGap - 60) / 4) * (i + 1);
+        ctx.beginPath();
+        ctx.arc(pipe.x + PIPE_WIDTH / 4, bottomRivetY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(pipe.x + (PIPE_WIDTH * 3) / 4, bottomRivetY, 3, 0, Math.PI * 2);
+        ctx.fill();
       }
     });
   };
@@ -395,7 +424,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       if (currentTime - lastAdTimeRef.current > AD_INTERVAL) {
         console.log('Show ad overlay for 3 seconds');
         lastAdTimeRef.current = currentTime;
-        // In a real implementation, this would trigger an ad overlay
       }
 
       // Check ground/ceiling collision (game over)
@@ -425,10 +453,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           console.log('Score sound effect');
         }
 
-        // Check pipe collision (lose life but don't end game)
+        // Check pipe collision
         if (checkPipeCollision(birdRef.current, pipe)) {
-          console.log('Pipe collision - Life lost');
-          onCollision();
+          console.log('Pipe collision - Game Over');
+          onGameOver(scoreRef.current);
           return;
         }
       });
@@ -436,10 +464,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       // Remove off-screen pipes
       pipesRef.current = pipesRef.current.filter(pipe => pipe.x + PIPE_WIDTH > 0);
 
-      // Add new pipes (with 2-second delay after game start)
+      // Add new pipes with increased spacing for larger pipes
       const timeSinceStart = currentTime - gameStartTimeRef.current;
       if (timeSinceStart > PIPE_SPAWN_DELAY) {
-        if (pipesRef.current.length === 0 || pipesRef.current[pipesRef.current.length - 1].x < canvas.width - 300) {
+        if (pipesRef.current.length === 0 || pipesRef.current[pipesRef.current.length - 1].x < canvas.width - 400) { // Increased spacing from 300 to 400
           pipesRef.current.push(createPipe(canvas.width));
         }
       }
