@@ -68,6 +68,7 @@ const Index = () => {
           showContact={modals.showContact}
           showHelp={modals.showHelp}
           showProfile={modals.showProfile}
+          adType={modals.adType}
           coins={gameState.coins}
           score={gameState.score}
           level={gameState.level}
@@ -122,7 +123,7 @@ const Index = () => {
         onBackToMenu={gameState.backToMenu}
         onOpenShop={() => modals.setShowShop(true)}
         onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
-        onShowAd={() => modals.setShowAdPopup(true)}
+        onShowAd={() => modals.showAdWithType('coins')}
         onShareScore={modals.handleShareScore}
         isPausedForRevive={gameEvents.isPausedForRevive}
       />
@@ -157,6 +158,7 @@ const Index = () => {
         showContact={modals.showContact}
         showHelp={modals.showHelp}
         showProfile={modals.showProfile}
+        adType={modals.adType}
         coins={gameState.coins}
         score={gameState.score}
         level={gameState.level}

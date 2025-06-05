@@ -20,6 +20,7 @@ interface GameModalsProps {
   showContact: boolean;
   showHelp: boolean;
   showProfile: boolean;
+  adType: 'continue' | 'coins' | 'life';
   coins: number;
   score: number;
   level: number;
@@ -52,6 +53,7 @@ const GameModals: React.FC<GameModalsProps> = ({
   showContact,
   showHelp,
   showProfile,
+  adType,
   coins,
   score,
   level,
@@ -93,6 +95,7 @@ const GameModals: React.FC<GameModalsProps> = ({
         isOpen={showAdPopup}
         onClose={() => setShowAdPopup(false)}
         onWatchAd={onWatchAd}
+        adType={adType}
       />
 
       <ShareScoreModal
@@ -100,7 +103,6 @@ const GameModals: React.FC<GameModalsProps> = ({
         onClose={() => setShowShareScore(false)}
         score={score}
         level={level}
-        gameState={gameState}
       />
 
       <PrivacyModal
