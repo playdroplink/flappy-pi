@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Check } from 'lucide-react';
@@ -69,7 +69,9 @@ const ShopModal: React.FC<ShopModalProps> = ({
           <DialogTitle className="text-2xl font-bold text-green-600">
             🏪 Pi Shop
           </DialogTitle>
-          <p className="text-gray-600">Your coins: 🪙 {coins}</p>
+          <DialogDescription className="text-gray-600">
+            Your coins: 🪙 {coins}. Purchase bird skins and power-ups to enhance your gaming experience.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6">

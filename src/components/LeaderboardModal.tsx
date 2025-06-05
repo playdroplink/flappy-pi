@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
 import { Trophy, Medal, Award } from 'lucide-react';
 
@@ -57,7 +57,9 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose }) 
           <DialogTitle className="text-2xl font-bold text-yellow-600">
             🏆 Weekly Leaderboard
           </DialogTitle>
-          <p className="text-gray-600">Top players earn Pi rewards every week!</p>
+          <DialogDescription className="text-gray-600">
+            Top players earn Pi rewards every week! Compete for the highest scores and climb the rankings.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-3">
