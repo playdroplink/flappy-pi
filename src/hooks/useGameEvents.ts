@@ -69,18 +69,18 @@ export const useGameEvents = ({
   const handleAdWatch = (adType: 'continue' | 'coins' | 'life') => {
     switch (adType) {
       case 'continue':
-        // Add a 3-second countdown before continuing
+        // Start 3-second countdown and then continue
         let countdown = 3;
         
-        const countdownInterval = setInterval(() => {
-          if (countdown > 1) {
+        const showCountdown = () => {
+          if (countdown > 0) {
             toast({
-              title: `Get Ready! ${countdown - 1}`,
+              title: `Get Ready! ${countdown}`,
               description: "Prepare to continue flying!"
             });
             countdown--;
+            setTimeout(showCountdown, 1000);
           } else {
-            clearInterval(countdownInterval);
             // Continue the game with current score preserved
             setLives(1);
             setGameState('playing');
@@ -89,13 +89,10 @@ export const useGameEvents = ({
               description: "Thanks for watching the Pi Ad! Keep flying!"
             });
           }
-        }, 1000);
+        };
         
-        // Show initial countdown
-        toast({
-          title: `Get Ready! ${countdown}`,
-          description: "Prepare to continue flying!"
-        });
+        // Start the countdown immediately
+        showCountdown();
         break;
         
       case 'coins':
