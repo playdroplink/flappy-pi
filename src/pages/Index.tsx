@@ -4,6 +4,7 @@ import WelcomeScreen from '../components/WelcomeScreen';
 import GameCanvas from '../components/GameCanvas';
 import GameUI from '../components/GameUI';
 import GameModals from '../components/GameModals';
+import GameContinueOverlay from '../components/GameContinueOverlay';
 import { useGameState } from '../hooks/useGameState';
 import { useGameEvents } from '../hooks/useGameEvents';
 import { useModals } from '../hooks/useModals';
@@ -115,6 +116,13 @@ const Index = () => {
         onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
         onShowAd={() => modals.setShowAdPopup(true)}
         onShareScore={modals.handleShareScore}
+      />
+
+      <GameContinueOverlay
+        isVisible={gameEvents.showContinueOverlay}
+        countdown={gameEvents.countdown}
+        showContinueButton={gameEvents.showContinueButton}
+        onContinue={gameEvents.handleContinueClick}
       />
 
       <GameModals

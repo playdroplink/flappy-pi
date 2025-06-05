@@ -1,6 +1,6 @@
 
 import { useToast } from '@/hooks/use-toast';
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState } from 'react';
 
 interface UseGameEventsProps {
   score: number;
@@ -31,7 +31,9 @@ export const useGameEvents = ({
 }: UseGameEventsProps) => {
   const { toast } = useToast();
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const isCountingDownRef = useRef(false);
+  const [showContinueOverlay, setShowContinueOverlay] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [showContinueButton, setShowContinueButton] = useState(false);
 
   const handleCollision = () => {
     console.log('Collision handled, setting game over');
@@ -72,47 +74,49 @@ export const useGameEvents = ({
   };
 
   const startContinueCountdown = useCallback(() => {
-    if (isCountingDownRef.current) return; // Prevent multiple countdowns
-    
-    isCountingDownRef.current = true;
-    let countdownValue = 3;
+    console.log('Starting continue countdown');
+    setShowContinueOverlay(true);
+    setShowContinueButton(false);
+    setCountdown(3);
 
     const doCountdown = () => {
-      if (countdownValue > 0) {
-        console.log('Continue countdown:', countdownValue);
-        toast({
-          title: `Get Ready! ${countdownValue}`,
-          description: "Prepare to continue flying!",
-          duration: 1000
-        });
-        
-        countdownValue--;
-        countdownTimerRef.current = setTimeout(doCountdown, 1000);
-      } else {
-        // Countdown finished - continue the game
-        console.log('Countdown finished, continuing game');
-        isCountingDownRef.current = false;
-        
-        // Reset bird and continue with current score
-        setLives(1);
-        
-        // Continue the game with preserved score
-        if (continueGame) {
-          continueGame();
+      setCountdown(prev => {
+        if (prev > 1) {
+          countdownTimerRef.current = setTimeout(doCountdown, 1000);
+          return prev - 1;
+        } else {
+          // Countdown finished - show continue button
+          setShowContinueButton(true);
+          return 0;
         }
-        
-        // Set game state to playing
-        setGameState('playing');
-        
-        toast({
-          title: "Continue! 🚀",
-          description: "Thanks for watching the Pi Ad! Keep flying!",
-          duration: 2000
-        });
-      }
+      });
     };
 
-    doCountdown();
+    countdownTimerRef.current = setTimeout(doCountdown, 1000);
+  }, []);
+
+  const handleContinueClick = useCallback(() => {
+    console.log('Continue button clicked');
+    setShowContinueOverlay(false);
+    setShowContinueButton(false);
+    setCountdown(0);
+    
+    // Reset bird and continue with current score
+    setLives(1);
+    
+    // Continue the game with preserved score
+    if (continueGame) {
+      continueGame();
+    }
+    
+    // Set game state to playing
+    setGameState('playing');
+    
+    toast({
+      title: "Continue! 🚀",
+      description: "Keep flying and reach new heights!",
+      duration: 2000
+    });
   }, [continueGame, setLives, setGameState, toast]);
 
   const handleAdWatch = (adType: 'continue' | 'coins' | 'life') => {
@@ -121,7 +125,6 @@ export const useGameEvents = ({
       clearTimeout(countdownTimerRef.current);
       countdownTimerRef.current = null;
     }
-    isCountingDownRef.current = false;
 
     switch (adType) {
       case 'continue':
@@ -153,6 +156,10 @@ export const useGameEvents = ({
     handleCollision,
     handleGameOver,
     handleCoinEarned,
-    handleAdWatch
+    handleAdWatch,
+    showContinueOverlay,
+    countdown,
+    showContinueButton,
+    handleContinueClick
   };
 };
