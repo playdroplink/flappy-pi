@@ -12,6 +12,7 @@ interface UseGameEventsProps {
   setLevel: (level: number) => void;
   setHighScore: (score: number) => void;
   setCoins: (coins: number) => void;
+  continueGame?: () => void;
 }
 
 export const useGameEvents = ({
@@ -24,7 +25,8 @@ export const useGameEvents = ({
   setLives,
   setLevel,
   setHighScore,
-  setCoins
+  setCoins,
+  continueGame
 }: UseGameEventsProps) => {
   const { toast } = useToast();
 
@@ -83,6 +85,9 @@ export const useGameEvents = ({
           } else {
             // Continue the game with current score preserved
             setLives(1);
+            if (continueGame) {
+              continueGame(); // Use the continue function instead of resetting
+            }
             setGameState('playing');
             toast({
               title: "Continue! 🚀",

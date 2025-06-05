@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { getDifficulty } from '../utils/gameDifficulty';
 
@@ -23,6 +24,10 @@ export const useGamePhysics = ({
     if (!canvas) return;
 
     const state = gameStateRef.current;
+    
+    // Don't update physics if game is not actively playing
+    if (!state || state.gameOver) return;
+    
     const difficulty = getDifficulty(state.score, gameMode);
     const GRAVITY = 0.35; // Slightly reduced gravity
     const PIPE_WIDTH = 120;
@@ -114,9 +119,10 @@ export const useGamePhysics = ({
       });
     }
 
-    // Check collisions AFTER updating positions
-    if (checkCollisions(canvas)) {
+    // Check collisions AFTER updating positions - only if game is active
+    if (!state.gameOver && checkCollisions(canvas)) {
       console.log(`Collision detected in ${gameMode} mode! Final score: ${state.score}`);
+      state.gameOver = true; // Set game over flag to prevent further collision checks
       onCollision();
       return;
     }

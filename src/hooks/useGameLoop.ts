@@ -1,4 +1,3 @@
-
 import { useRef, useCallback } from 'react';
 
 interface Bird {
@@ -32,6 +31,7 @@ interface GameLoopState {
   frameCount: number;
   score: number;
   lastPipeSpawn: number;
+  gameOver: boolean;
 }
 
 interface UseGameLoopProps {
@@ -47,7 +47,8 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     clouds: [],
     frameCount: 0,
     score: 0,
-    lastPipeSpawn: 0
+    lastPipeSpawn: 0,
+    gameOver: false
   });
 
   const resetGame = useCallback((canvasHeight: number) => {
@@ -58,20 +59,34 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       clouds: [],
       frameCount: 0,
       score: 0,
-      lastPipeSpawn: 0
+      lastPipeSpawn: 0,
+      gameOver: false
     };
     onScoreUpdate(0);
   }, [onScoreUpdate]);
 
+  const continueGame = useCallback(() => {
+    console.log('Continuing game with current score:', gameStateRef.current.score);
+    // Reset only the bird position and game over flag, keep score and pipes
+    gameStateRef.current.bird.y = 300;
+    gameStateRef.current.bird.velocity = 0;
+    gameStateRef.current.bird.rotation = 0;
+    gameStateRef.current.gameOver = false;
+  }, []);
+
   const jump = useCallback(() => {
-    if (gameState === 'playing') {
+    if (gameState === 'playing' && !gameStateRef.current.gameOver) {
       gameStateRef.current.bird.velocity = -7; // Slightly reduced jump force
       console.log('Bird jumped! Velocity:', gameStateRef.current.bird.velocity);
     }
   }, [gameState]);
 
   const checkCollisions = useCallback((canvas: HTMLCanvasElement) => {
-    const { bird, pipes } = gameStateRef.current;
+    const { bird, pipes, gameOver } = gameStateRef.current;
+    
+    // Don't check collisions if game is already over
+    if (gameOver) return false;
+    
     const BIRD_SIZE = 25; // Even smaller for easier gameplay
     const PIPE_WIDTH = 120;
     
@@ -108,6 +123,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   return {
     gameStateRef,
     resetGame,
+    continueGame,
     jump,
     checkCollisions
   };

@@ -36,7 +36,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   // Add background music
   useBackgroundMusic({ musicEnabled, gameState });
 
-  const { gameStateRef, resetGame, jump, checkCollisions } = useGameLoop({
+  const { gameStateRef, resetGame, continueGame, jump, checkCollisions } = useGameLoop({
     gameState,
     onCollision,
     onScoreUpdate
@@ -59,7 +59,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   });
 
   const gameLoop = useCallback(() => {
-    updateGame();
+    // Only update game if actually playing and not in game over state
+    if (gameState === 'playing' && !gameStateRef.current.gameOver) {
+      updateGame();
+    }
     draw();
     
     if (gameState === 'playing') {
@@ -135,6 +138,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       window.removeEventListener('resize', resizeCanvas);
     };
   }, []);
+
+  // Expose continueGame function to parent
+  useEffect(() => {
+    if (window) {
+      (window as any).continueGame = continueGame;
+    }
+  }, [continueGame]);
 
   return (
     <canvas
