@@ -23,24 +23,32 @@ export const useCollisionHandler = ({
   onGameOver
 }: UseCollisionHandlerProps) => {
   const collisionLockRef = useRef(false);
+  const lastCollisionTimeRef = useRef(0);
 
   const handleCollision = useCallback(() => {
-    // Prevent multiple collision triggers
-    if (collisionLockRef.current) {
-      console.log('⚠️ Collision ignored - already processing');
+    const now = Date.now();
+    
+    // Prevent multiple collision triggers within 500ms
+    if (collisionLockRef.current || (now - lastCollisionTimeRef.current) < 500) {
+      console.log('⚠️ Collision ignored - too recent or already processing');
       return;
     }
 
     collisionLockRef.current = true;
-    console.log('Collision detected - processing game over immediately');
+    lastCollisionTimeRef.current = now;
+    
+    console.log('💥 Collision detected - processing game over');
 
-    // Directly go to game over without any ad checks
-    onGameOver(score);
+    // Direct game over without ads
+    setTimeout(() => {
+      onGameOver(score);
+    }, 100);
   }, [score, onGameOver]);
 
   const resetCollisionLock = useCallback(() => {
-    console.log('🔓 Resetting collision lock');
+    console.log('🔓 Resetting collision lock for fresh start');
     collisionLockRef.current = false;
+    lastCollisionTimeRef.current = 0;
   }, []);
 
   return {

@@ -1,5 +1,5 @@
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef } from 'react';
 import { useCollisionHandler } from '@/hooks/useCollisionHandler';
 import { useGameOverHandler } from '@/hooks/useGameOverHandler';
 import { useAdRewardHandler } from '@/hooks/useAdRewardHandler';
@@ -33,12 +33,21 @@ export const useGameEvents = ({
   continueGame
 }: UseGameEventsProps) => {
   
-  const [showContinueButton, setShowContinueButton] = useState(false);
-  const [isPausedForRevive, setIsPausedForRevive] = useState(false);
-  const [reviveUsed, setReviveUsed] = useState(false);
-  const [adWatched, setAdWatched] = useState(false);
-  const [showMandatoryAd, setShowMandatoryAd] = useState(false);
-  const [showAdFreeModal, setShowAdFreeModal] = useState(false);
+  // Use refs to prevent React state queue issues
+  const stateRef = useRef({
+    showContinueButton: false,
+    isPausedForRevive: false,
+    reviveUsed: false,
+    adWatched: false,
+    showMandatoryAd: false,
+    showAdFreeModal: false
+  });
+
+  // State getters
+  const getState = useCallback(() => stateRef.current, []);
+  const setState = useCallback((updates: Partial<typeof stateRef.current>) => {
+    stateRef.current = { ...stateRef.current, ...updates };
+  }, []);
 
   const { handleGameOver } = useGameOverHandler({
     level,
@@ -46,44 +55,44 @@ export const useGameEvents = ({
     highScore,
     setGameState,
     setScore,
-    setIsPausedForRevive,
-    setShowContinueButton,
-    setAdWatched,
-    setShowMandatoryAd,
+    setIsPausedForRevive: (paused) => setState({ isPausedForRevive: paused }),
+    setShowContinueButton: (show) => setState({ showContinueButton: show }),
+    setAdWatched: (watched) => setState({ adWatched: watched }),
+    setShowMandatoryAd: (show) => setState({ showMandatoryAd: show }),
     setCoins,
     setHighScore,
     setLives,
     setLevel,
-    setReviveUsed
+    setReviveUsed: (used) => setState({ reviveUsed: used })
   });
 
   const { handleCollision, resetCollisionLock } = useCollisionHandler({
-    reviveUsed,
+    reviveUsed: getState().reviveUsed,
     score,
     setGameState,
-    setIsPausedForRevive,
-    setShowContinueButton,
-    setAdWatched,
-    setShowMandatoryAd,
+    setIsPausedForRevive: (paused) => setState({ isPausedForRevive: paused }),
+    setShowContinueButton: (show) => setState({ showContinueButton: show }),
+    setAdWatched: (watched) => setState({ adWatched: watched }),
+    setShowMandatoryAd: (show) => setState({ showMandatoryAd: show }),
     onGameOver: handleGameOver
   });
 
   const { handleAdWatch } = useAdRewardHandler({
     coins,
-    adWatched,
-    isPausedForRevive,
-    setShowContinueButton,
-    setAdWatched,
+    adWatched: getState().adWatched,
+    isPausedForRevive: getState().isPausedForRevive,
+    setShowContinueButton: (show) => setState({ showContinueButton: show }),
+    setAdWatched: (watched) => setState({ adWatched: watched }),
     setCoins,
     setLives
   });
 
   const { handleContinueClick } = useContinueGame({
     continueGame,
-    setShowContinueButton,
-    setReviveUsed,
-    setIsPausedForRevive,
-    setAdWatched,
+    setShowContinueButton: (show) => setState({ showContinueButton: show }),
+    setReviveUsed: (used) => setState({ reviveUsed: used }),
+    setIsPausedForRevive: (paused) => setState({ isPausedForRevive: paused }),
+    setAdWatched: (watched) => setState({ adWatched: watched }),
     setGameState,
     resetCollisionLock
   });
@@ -94,24 +103,25 @@ export const useGameEvents = ({
     localStorage.setItem('flappypi-coins', newCoins.toString());
   }, [coins, setCoins]);
 
-  // Remove automatic mandatory ad handling
   const handleMandatoryAdWatch = useCallback(() => {
     console.log('Skipping mandatory ad - going straight to game over');
     resetCollisionLock();
-    setShowMandatoryAd(false);
+    setState({ showMandatoryAd: false });
     handleGameOver(score);
-  }, [setShowMandatoryAd, handleGameOver, score, resetCollisionLock]);
+  }, [handleGameOver, score, resetCollisionLock, setState]);
 
-  // Reset all game event states for new game
+  // Complete reset for new game start
   const resetGameEventStates = useCallback(() => {
-    console.log('🔄 Resetting all game event states for new game');
+    console.log('🔄 Complete reset of all game event states for fresh start');
     resetCollisionLock();
-    setShowContinueButton(false);
-    setIsPausedForRevive(false);
-    setReviveUsed(false);
-    setAdWatched(false);
-    setShowMandatoryAd(false);
-    setShowAdFreeModal(false);
+    stateRef.current = {
+      showContinueButton: false,
+      isPausedForRevive: false,
+      reviveUsed: false,
+      adWatched: false,
+      showMandatoryAd: false,
+      showAdFreeModal: false
+    };
   }, [resetCollisionLock]);
 
   return {
@@ -119,21 +129,21 @@ export const useGameEvents = ({
     handleGameOver,
     handleCoinEarned,
     handleAdWatch,
-    showContinueButton,
+    showContinueButton: getState().showContinueButton,
     handleContinueClick,
-    isPausedForRevive,
-    reviveUsed,
-    showMandatoryAd: false, // Disable mandatory ads
-    showAdFreeModal,
+    isPausedForRevive: getState().isPausedForRevive,
+    reviveUsed: getState().reviveUsed,
+    showMandatoryAd: false, // Always disabled
+    showAdFreeModal: getState().showAdFreeModal,
     adSystem: { 
-      isAdFree: true, // Always ad-free to prevent issues
+      isAdFree: true,
       purchaseAdFree: () => Promise.resolve(true),
       adFreeTimeRemaining: null,
       resetAdCounter: () => {},
       incrementGameCount: () => {}
     },
     handleMandatoryAdWatch,
-    setShowAdFreeModal,
+    setShowAdFreeModal: (show: boolean) => setState({ showAdFreeModal: show }),
     resetGameEventStates
   };
 };

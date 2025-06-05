@@ -33,10 +33,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number>();
   const [canvasReady, setCanvasReady] = useState(false);
-  const gameInitializedRef = useRef(false);
-  const gameStateChangeRef = useRef(gameState);
+  const previousGameStateRef = useRef(gameState);
 
-  // Add background music
   useBackgroundMusic({ musicEnabled, gameState });
 
   const { gameStateRef, resetGame, continueGame, jump, checkCollisions } = useGameLoop({
@@ -72,14 +70,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   }, [updateGame, draw, gameState, canvasReady]);
 
-  // Expose continueGame function to parent
+  // Expose continueGame function
   useEffect(() => {
     if (onContinueGameRef) {
       onContinueGameRef(continueGame);
     }
   }, [continueGame, onContinueGameRef]);
 
-  // Handle input
+  // Input handling
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       e.preventDefault();
@@ -126,39 +124,37 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
   }, []);
 
-  // Game state management - improved restart handling
+  // Game state management with better restart handling
   useEffect(() => {
-    const prevGameState = gameStateChangeRef.current;
-    gameStateChangeRef.current = gameState;
+    const prevState = previousGameStateRef.current;
+    previousGameStateRef.current = gameState;
 
     if (gameState === 'playing' && canvasReady) {
-      // Only reset if transitioning from non-playing to playing
-      if (prevGameState !== 'playing') {
-        console.log('🎮 Starting/Restarting game - fresh start');
-        gameInitializedRef.current = true;
+      // Fresh start when transitioning to playing
+      if (prevState !== 'playing') {
+        console.log('🎮 Starting fresh game session');
         
-        // Reset immediately when canvas is ready
+        // Stop any existing game loop
+        if (gameLoopRef.current) {
+          cancelAnimationFrame(gameLoopRef.current);
+          gameLoopRef.current = undefined;
+        }
+        
+        // Reset game state and start fresh
         setTimeout(() => {
           resetGame();
-          // Start game loop after reset
-          if (!gameLoopRef.current) {
-            gameLoopRef.current = requestAnimationFrame(gameLoop);
-          }
-        }, 50);
+          // Start new game loop
+          gameLoopRef.current = requestAnimationFrame(gameLoop);
+        }, 100);
       } else if (!gameLoopRef.current) {
-        // Resume game loop if needed
+        // Resume if needed
         gameLoopRef.current = requestAnimationFrame(gameLoop);
       }
     } else {
-      // Stop the game loop when not playing
+      // Stop game loop when not playing
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
         gameLoopRef.current = undefined;
-      }
-      
-      // Reset initialization flag when leaving game
-      if (gameState === 'menu' || gameState === 'gameOver') {
-        gameInitializedRef.current = false;
       }
     }
 
