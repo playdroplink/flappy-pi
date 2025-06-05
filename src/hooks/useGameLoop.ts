@@ -56,7 +56,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     console.log('Resetting game with canvas height:', canvasHeight);
     const safeY = Math.max(100, canvasHeight / 2);
     
-    // Reset all game state atomically
+    // Complete reset of all game state
     gameStateRef.current = {
       bird: { x: 100, y: safeY, velocity: 0, rotation: 0 },
       pipes: [],
@@ -67,8 +67,9 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       gameOver: false
     };
     
-    // Update score through callback to sync with parent state
+    // Force update score to sync with parent
     onScoreUpdate(0);
+    console.log('Game reset complete - all state cleared');
   }, [onScoreUpdate]);
 
   const continueGame = useCallback(() => {
@@ -76,7 +77,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     const canvas = document.querySelector('canvas');
     const safeY = canvas ? Math.max(150, canvas.height / 2) : 300;
     
-    // Reset bird to safe position atomically
+    // Reset bird to safe position only
     gameStateRef.current.bird = {
       x: 80,
       y: safeY,
@@ -142,11 +143,19 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     return false;
   }, [gameState]);
 
+  const forceReset = useCallback(() => {
+    console.log('Force resetting game state');
+    const canvas = document.querySelector('canvas');
+    const canvasHeight = canvas ? canvas.height : 600;
+    resetGame(canvasHeight);
+  }, [resetGame]);
+
   return {
     gameStateRef,
     resetGame,
     continueGame,
     jump,
-    checkCollisions
+    checkCollisions,
+    forceReset
   };
 };
