@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
 interface GameCanvasProps {
@@ -102,11 +103,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const checkCollisions = useCallback((canvas: HTMLCanvasElement) => {
     const { bird, pipes } = gameStateRef.current;
     
-    // Ground and ceiling collision
-    if (bird.y + BIRD_SIZE >= canvas.height - 20 || bird.y <= 0) {
-      return true;
-    }
-
     // Pipe collisions - more precise collision detection
     for (const pipe of pipes) {
       // Check if bird is within pipe's x range
@@ -156,7 +152,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       pipe.x -= difficulty.pipeSpeed;
       
       // Score when bird passes the center of the pipe
-      if (!pipe.passed && bird.x > pipe.x + PIPE_WIDTH / 2) {
+      if (!pipe.passed && state.bird.x > pipe.x + PIPE_WIDTH / 2) {
         pipe.passed = true;
         state.score++;
         setScore(state.score);
