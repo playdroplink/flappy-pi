@@ -33,6 +33,7 @@ interface GameLoopState {
   score: number;
   lastPipeSpawn: number;
   gameOver: boolean;
+  gameStarted: boolean; // Add flag to track if game has actually started
 }
 
 interface UseGameLoopProps {
@@ -49,7 +50,8 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     frameCount: 0,
     score: 0,
     lastPipeSpawn: 0,
-    gameOver: false
+    gameOver: false,
+    gameStarted: false
   });
 
   const resetGame = useCallback(() => {
@@ -65,7 +67,8 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
         frameCount: 0,
         score: 0,
         lastPipeSpawn: 0,
-        gameOver: false
+        gameOver: false,
+        gameStarted: false
       };
       onScoreUpdate(0);
       return;
@@ -82,8 +85,9 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       clouds: [],
       frameCount: 0,
       score: 0,
-      lastPipeSpawn: 0,
-      gameOver: false
+      lastPipeSpawn: 120, // Give some time before first pipe
+      gameOver: false,
+      gameStarted: false // Reset the started flag
     };
     onScoreUpdate(0);
   }, [onScoreUpdate]);
@@ -103,6 +107,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     
     // Clear game over flag IMMEDIATELY to prevent further collision processing
     gameStateRef.current.gameOver = false;
+    gameStateRef.current.gameStarted = true; // Mark as started since we're continuing
     
     // Remove pipes that are too close
     gameStateRef.current.pipes = gameStateRef.current.pipes.filter(pipe => 
@@ -117,16 +122,21 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
 
   const jump = useCallback(() => {
     if (gameState === 'playing' && !gameStateRef.current.gameOver) {
+      // Mark game as started on first jump
+      if (!gameStateRef.current.gameStarted) {
+        gameStateRef.current.gameStarted = true;
+        console.log('Game started with first jump!');
+      }
       gameStateRef.current.bird.velocity = -7;
       console.log('Bird jumped! Velocity:', gameStateRef.current.bird.velocity);
     }
   }, [gameState]);
 
   const checkCollisions = useCallback((canvas: HTMLCanvasElement) => {
-    const { bird, pipes, gameOver } = gameStateRef.current;
+    const { bird, pipes, gameOver, gameStarted } = gameStateRef.current;
     
-    // Don't check collisions if game is already over or not playing
-    if (gameOver || gameState !== 'playing') return false;
+    // Don't check collisions if game is already over, not playing, or hasn't started yet
+    if (gameOver || gameState !== 'playing' || !gameStarted) return false;
     
     const BIRD_SIZE = 25;
     const PIPE_WIDTH = 120;
