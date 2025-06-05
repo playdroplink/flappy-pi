@@ -18,6 +18,16 @@ const AdPopup: React.FC<AdPopupProps> = ({ isOpen, onClose, onWatchAd, adType })
   const [isAdComplete, setIsAdComplete] = useState(false);
   const [readyCountdown, setReadyCountdown] = useState(3);
 
+  // Reset state when popup opens
+  useEffect(() => {
+    if (isOpen) {
+      setIsWatching(false);
+      setIsAdComplete(false);
+      setCountdown(3);
+      setReadyCountdown(3);
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (isWatching && countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -34,12 +44,13 @@ const AdPopup: React.FC<AdPopupProps> = ({ isOpen, onClose, onWatchAd, adType })
       const timer = setTimeout(() => setReadyCountdown(readyCountdown - 1), 1000);
       return () => clearTimeout(timer);
     } else if (isAdComplete && readyCountdown === 0) {
-      setIsAdComplete(false);
-      setCountdown(3);
-      setReadyCountdown(3);
-      onWatchAd(adType);
+      // Close popup first, then trigger the reward
+      onClose();
+      setTimeout(() => {
+        onWatchAd(adType);
+      }, 100);
     }
-  }, [isAdComplete, readyCountdown, onWatchAd, adType]);
+  }, [isAdComplete, readyCountdown, onWatchAd, adType, onClose]);
 
   const getAdInfo = () => {
     switch (adType) {

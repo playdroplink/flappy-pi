@@ -82,12 +82,7 @@ const GameModals: React.FC<GameModalsProps> = ({
 
       <AdPopup
         isOpen={showAdPopup}
-        onClose={() => {
-          setShowAdPopup(false);
-          if (gameState === 'gameOver') {
-            // Stay on game over screen if ad is closed without watching
-          }
-        }}
+        onClose={() => setShowAdPopup(false)}
         onWatchAd={onWatchAd}
         adType="continue"
       />
