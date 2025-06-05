@@ -32,8 +32,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number>();
-  const [score, setScore] = useState(0);
   const gameStartedRef = useRef(false);
+  const lastGameStateRef = useRef(gameState);
 
   // Add background music
   useBackgroundMusic({ musicEnabled, gameState });
@@ -61,16 +61,21 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   });
 
   const gameLoop = useCallback(() => {
+    if (!gameStateRef.current) return;
+    
     // Only update game if actually playing and not in game over state
     if (gameState === 'playing' && !gameStateRef.current.gameOver) {
       updateGame();
     }
+    
+    // Always draw the current state
     draw();
     
+    // Continue loop if playing
     if (gameState === 'playing') {
       gameLoopRef.current = requestAnimationFrame(gameLoop);
     }
-  }, [updateGame, draw, gameState]);
+  }, [updateGame, draw, gameState, gameStateRef]);
 
   // Expose continueGame function to parent through callback
   useEffect(() => {
@@ -81,7 +86,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Handle input
   useEffect(() => {
-    const handleClick = () => jump();
+    const handleClick = (e: MouseEvent) => {
+      e.preventDefault();
+      jump();
+    };
+    
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
         e.preventDefault();
@@ -100,27 +109,41 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
   }, [jump, gameState]);
 
-  // Game loop management - improved reset logic
+  // Game loop management
   useEffect(() => {
+    console.log('GameCanvas effect: gameState changed to:', gameState);
+    
     if (gameState === 'playing') {
       const canvas = canvasRef.current;
       if (canvas) {
-        // Only reset if this is truly a new game (not a resume)
-        if (!gameStartedRef.current || gameStateRef.current.frameCount === 0) {
+        // Only reset if this is a new game (not continue)
+        if (!gameStartedRef.current || lastGameStateRef.current === 'menu') {
           console.log('Starting new game, resetting state');
           resetGame(canvas.height);
           gameStartedRef.current = true;
+        } else if (lastGameStateRef.current === 'gameOver') {
+          console.log('Continuing from game over - not resetting');
         }
       }
-      gameLoopRef.current = requestAnimationFrame(gameLoop);
-    } else {
-      if (gameState === 'gameOver' || gameState === 'menu') {
-        gameStartedRef.current = false; // Allow reset on next game
-      }
+      
+      // Start the game loop
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
       }
+      gameLoopRef.current = requestAnimationFrame(gameLoop);
+    } else {
+      // Stop the game loop
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+        gameLoopRef.current = undefined;
+      }
+      
+      if (gameState === 'menu') {
+        gameStartedRef.current = false;
+      }
     }
+    
+    lastGameStateRef.current = gameState;
 
     return () => {
       if (gameLoopRef.current) {
@@ -135,8 +158,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     if (!canvas) return;
 
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(dpr, dpr);
+      }
+      
       console.log('Canvas resized to:', canvas.width, 'x', canvas.height);
     };
 

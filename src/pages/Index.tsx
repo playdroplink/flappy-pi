@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useEffect } from 'react';
 import SplashScreen from '../components/SplashScreen';
 import WelcomeScreen from '../components/WelcomeScreen';
 import GameCanvas from '../components/GameCanvas';
@@ -33,6 +34,15 @@ const Index = () => {
       }
     }
   });
+
+  // Cleanup timers when component unmounts
+  useEffect(() => {
+    return () => {
+      if (gameEvents.cleanup) {
+        gameEvents.cleanup();
+      }
+    };
+  }, [gameEvents]);
 
   if (gameState.showSplash) {
     return <SplashScreen />;

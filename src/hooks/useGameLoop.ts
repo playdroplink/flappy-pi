@@ -33,6 +33,7 @@ interface GameLoopState {
   score: number;
   lastPipeSpawn: number;
   gameOver: boolean;
+  initialized: boolean;
 }
 
 interface UseGameLoopProps {
@@ -49,12 +50,14 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     frameCount: 0,
     score: 0,
     lastPipeSpawn: 0,
-    gameOver: false
+    gameOver: false,
+    initialized: false
   });
 
   const resetGame = useCallback((canvasHeight: number) => {
     console.log('Resetting game with canvas height:', canvasHeight);
     const safeY = Math.max(100, canvasHeight / 2);
+    
     gameStateRef.current = {
       bird: { x: 100, y: safeY, velocity: 0, rotation: 0 },
       pipes: [],
@@ -62,8 +65,10 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       frameCount: 0,
       score: 0,
       lastPipeSpawn: 0,
-      gameOver: false
+      gameOver: false,
+      initialized: true
     };
+    
     onScoreUpdate(0);
   }, [onScoreUpdate]);
 
@@ -71,6 +76,11 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     console.log('Continuing game - preserving score:', gameStateRef.current.score);
     const canvas = document.querySelector('canvas');
     const safeY = canvas ? Math.max(150, canvas.height / 2) : 300;
+    
+    if (!gameStateRef.current.initialized) {
+      console.log('Game not initialized, cannot continue');
+      return;
+    }
     
     // Reset bird position and physics only
     gameStateRef.current.bird = {
@@ -83,53 +93,52 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     // Clear game over flag
     gameStateRef.current.gameOver = false;
     
-    // Clear pipes that are too close to bird to give player a fair chance
+    // Clear pipes that are too close to bird
     gameStateRef.current.pipes = gameStateRef.current.pipes.filter(pipe => 
-      pipe.x > gameStateRef.current.bird.x + 250
+      pipe.x > gameStateRef.current.bird.x + 300
     );
     
-    // Reset spawn timer to prevent immediate pipe spawn
+    // Reset spawn timer
     gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount;
     
-    console.log('Bird reset to safe position:', safeY, 'Score preserved:', gameStateRef.current.score);
+    console.log('Game continued with preserved score:', gameStateRef.current.score);
   }, []);
 
   const jump = useCallback(() => {
-    if (gameState === 'playing' && !gameStateRef.current.gameOver) {
+    if (gameState === 'playing' && !gameStateRef.current.gameOver && gameStateRef.current.initialized) {
       gameStateRef.current.bird.velocity = -7;
       console.log('Bird jumped! Velocity:', gameStateRef.current.bird.velocity);
     }
   }, [gameState]);
 
   const checkCollisions = useCallback((canvas: HTMLCanvasElement) => {
-    const { bird, pipes, gameOver } = gameStateRef.current;
+    const { bird, pipes, gameOver, initialized } = gameStateRef.current;
     
-    // Don't check collisions if game is already over
-    if (gameOver) return false;
+    if (!initialized || gameOver) return false;
     
     const BIRD_SIZE = 25;
     const PIPE_WIDTH = 120;
     
-    // Ground collision - more forgiving
+    // Ground collision
     if (bird.y + BIRD_SIZE >= canvas.height - 30) {
-      console.log('Bird hit ground! Bird Y:', bird.y, 'Canvas height:', canvas.height);
+      console.log('Bird hit ground!');
       return true;
     }
 
-    // Ceiling collision - more forgiving
+    // Ceiling collision
     if (bird.y <= 10) {
-      console.log('Bird hit ceiling! Bird Y:', bird.y);
+      console.log('Bird hit ceiling!');
       return true;
     }
     
-    // Pipe collisions - more forgiving
+    // Pipe collisions
     for (const pipe of pipes) {
       if (
         bird.x + BIRD_SIZE - 8 > pipe.x &&
         bird.x + 8 < pipe.x + PIPE_WIDTH
       ) {
         if (bird.y + 8 < pipe.topHeight || bird.y + BIRD_SIZE - 8 > pipe.bottomY) {
-          console.log('Bird hit pipe! Bird Y:', bird.y, 'Top height:', pipe.topHeight, 'Bottom Y:', pipe.bottomY);
+          console.log('Bird hit pipe!');
           return true;
         }
       }

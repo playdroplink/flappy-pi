@@ -35,16 +35,13 @@ export const useGameEvents = ({
   const [countdown, setCountdown] = useState(0);
   const [showContinueButton, setShowContinueButton] = useState(false);
 
-  const handleCollision = () => {
-    console.log('Collision handled, setting game over');
+  const handleCollision = useCallback(() => {
+    console.log('Collision detected, setting game over state');
     setGameState('gameOver');
-    handleGameOver(score);
-  };
+  }, [setGameState]);
 
-  const handleGameOver = (finalScore: number) => {
-    console.log('Game over with score:', finalScore);
-    setGameState('gameOver');
-    setScore(finalScore);
+  const handleGameOver = useCallback((finalScore: number) => {
+    console.log('Game over with final score:', finalScore);
     
     // Add coins based on score and level
     const earnedCoins = Math.floor(finalScore / 3) + (level * 2);
@@ -65,25 +62,32 @@ export const useGameEvents = ({
     // Reset for next game
     setLives(1);
     setLevel(1);
-  };
+  }, [coins, level, highScore, setCoins, setHighScore, setLives, setLevel, toast]);
 
-  const handleCoinEarned = (coinAmount: number) => {
+  const handleCoinEarned = useCallback((coinAmount: number) => {
     const newCoins = coins + coinAmount;
     setCoins(newCoins);
     localStorage.setItem('flappypi-coins', newCoins.toString());
-  };
+  }, [coins, setCoins]);
 
   const startContinueCountdown = useCallback(() => {
     console.log('Starting continue countdown');
+    
+    // Clear any existing timer
+    if (countdownTimerRef.current) {
+      clearTimeout(countdownTimerRef.current);
+    }
+    
     setShowContinueOverlay(true);
     setShowContinueButton(false);
     setCountdown(3);
 
     const doCountdown = () => {
       setCountdown(prev => {
-        if (prev > 1) {
+        const newCount = prev - 1;
+        if (newCount > 0) {
           countdownTimerRef.current = setTimeout(doCountdown, 1000);
-          return prev - 1;
+          return newCount;
         } else {
           // Countdown finished - show continue button
           setShowContinueButton(true);
@@ -96,7 +100,15 @@ export const useGameEvents = ({
   }, []);
 
   const handleContinueClick = useCallback(() => {
-    console.log('Continue button clicked');
+    console.log('Continue button clicked, resuming game');
+    
+    // Clear any timers
+    if (countdownTimerRef.current) {
+      clearTimeout(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+    
+    // Hide overlay
     setShowContinueOverlay(false);
     setShowContinueButton(false);
     setCountdown(0);
@@ -119,7 +131,9 @@ export const useGameEvents = ({
     });
   }, [continueGame, setLives, setGameState, toast]);
 
-  const handleAdWatch = (adType: 'continue' | 'coins' | 'life') => {
+  const handleAdWatch = useCallback((adType: 'continue' | 'coins' | 'life') => {
+    console.log('Ad watch completed for:', adType);
+    
     // Clear any existing countdown
     if (countdownTimerRef.current) {
       clearTimeout(countdownTimerRef.current);
@@ -134,8 +148,9 @@ export const useGameEvents = ({
         
       case 'coins':
         const bonusCoins = 25;
-        setCoins(coins + bonusCoins);
-        localStorage.setItem('flappypi-coins', (coins + bonusCoins).toString());
+        const newCoins = coins + bonusCoins;
+        setCoins(newCoins);
+        localStorage.setItem('flappypi-coins', newCoins.toString());
         toast({
           title: "Bonus Pi Coins! 🪙",
           description: `You earned ${bonusCoins} Pi coins!`
@@ -150,7 +165,15 @@ export const useGameEvents = ({
         });
         break;
     }
-  };
+  }, [coins, setCoins, setLives, startContinueCountdown, toast]);
+
+  // Cleanup on unmount
+  const cleanup = useCallback(() => {
+    if (countdownTimerRef.current) {
+      clearTimeout(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+  }, []);
 
   return {
     handleCollision,
@@ -160,6 +183,7 @@ export const useGameEvents = ({
     showContinueOverlay,
     countdown,
     showContinueButton,
-    handleContinueClick
+    handleContinueClick,
+    cleanup
   };
 };
