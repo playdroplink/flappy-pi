@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -56,7 +57,7 @@ export const useGameState = () => {
   }, [profile]);
 
   const startGame = (mode: GameMode) => {
-    console.log('Starting new game with mode:', mode, '- Resetting all states');
+    console.log('Starting game with mode:', mode);
     setGameMode(mode);
     setGameState('playing');
     setScore(0);
@@ -66,12 +67,8 @@ export const useGameState = () => {
   };
 
   const backToMenu = () => {
-    console.log('Going back to menu - Resetting game state');
     setGameState('menu');
     setShowWelcome(true);
-    setScore(0);
-    setLevel(1);
-    setLives(1);
   };
 
   const handleScoreUpdate = (newScore: number) => {
