@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { getDifficulty } from '../utils/gameDifficulty';
 
@@ -25,7 +24,7 @@ export const useGamePhysics = ({
 
     const state = gameStateRef.current;
     
-    // Don't update physics if game is not actively playing or already over
+    // Don't update if game is not actively playing or already over
     if (!state || state.gameOver) return;
     
     const difficulty = getDifficulty(state.score, gameMode);
@@ -52,9 +51,9 @@ export const useGamePhysics = ({
     }
 
     // Spawn new pipes based on difficulty
-    const spawnThreshold = Math.max(difficulty.spawnRate, 100); // Increased minimum spacing for easier continue
+    const spawnThreshold = Math.max(difficulty.spawnRate, 120);
     if (state.frameCount - state.lastPipeSpawn > spawnThreshold) {
-      const minHeight = 80; // Increased minimum for easier gameplay
+      const minHeight = 80;
       const maxHeight = canvas.height - difficulty.pipeGap - minHeight;
       const pipeHeight = Math.random() * (maxHeight - minHeight) + minHeight;
       
@@ -119,10 +118,10 @@ export const useGamePhysics = ({
       });
     }
 
-    // Check collisions AFTER updating positions - only if game is active
-    if (!state.gameOver && checkCollisions(canvas)) {
+    // Check collisions AFTER updating positions
+    if (checkCollisions(canvas)) {
       console.log(`Collision detected in ${gameMode} mode! Final score: ${state.score}`);
-      state.gameOver = true; // Immediately set game over flag
+      state.gameOver = true;
       onCollision();
       return;
     }

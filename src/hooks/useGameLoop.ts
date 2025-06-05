@@ -55,6 +55,8 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   const resetGame = useCallback((canvasHeight: number) => {
     console.log('Resetting game with canvas height:', canvasHeight);
     const safeY = Math.max(100, canvasHeight / 2);
+    
+    // Reset all game state atomically
     gameStateRef.current = {
       bird: { x: 100, y: safeY, velocity: 0, rotation: 0 },
       pipes: [],
@@ -64,6 +66,8 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       lastPipeSpawn: 0,
       gameOver: false
     };
+    
+    // Update score through callback to sync with parent state
     onScoreUpdate(0);
   }, [onScoreUpdate]);
 
@@ -72,24 +76,24 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     const canvas = document.querySelector('canvas');
     const safeY = canvas ? Math.max(150, canvas.height / 2) : 300;
     
-    // Reset bird to safe position - move it back and up from collision point
+    // Reset bird to safe position atomically
     gameStateRef.current.bird = {
-      x: 80, // Move bird back a bit
+      x: 80,
       y: safeY,
-      velocity: -2, // Give slight upward momentum
+      velocity: -2,
       rotation: 0
     };
     
-    // Clear game over flag and reset physics
+    // Clear game over flag
     gameStateRef.current.gameOver = false;
     
-    // Remove pipes that are too close to give player breathing room
+    // Remove nearby pipes for breathing room
     gameStateRef.current.pipes = gameStateRef.current.pipes.filter(pipe => 
-      pipe.x > gameStateRef.current.bird.x + 300 // Increased clearance for safer continue
+      pipe.x > gameStateRef.current.bird.x + 300
     );
     
-    // Reset spawn timer to prevent immediate pipe spawn
-    gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 120; // Add extra delay
+    // Reset spawn timer
+    gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 120;
     
     console.log('Revive complete - Bird at safe position, score preserved:', gameStateRef.current.score);
   }, []);
@@ -104,25 +108,25 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   const checkCollisions = useCallback((canvas: HTMLCanvasElement) => {
     const { bird, pipes, gameOver } = gameStateRef.current;
     
-    // Don't check collisions if game is already over or paused
+    // Don't check collisions if game is already over or not playing
     if (gameOver || gameState !== 'playing') return false;
     
     const BIRD_SIZE = 25;
     const PIPE_WIDTH = 120;
     
-    // Ground collision - more forgiving
+    // More forgiving ground collision
     if (bird.y + BIRD_SIZE >= canvas.height - 30) {
       console.log('Bird hit ground! Bird Y:', bird.y, 'Canvas height:', canvas.height);
       return true;
     }
 
-    // Ceiling collision - more forgiving
+    // More forgiving ceiling collision
     if (bird.y <= 10) {
       console.log('Bird hit ceiling! Bird Y:', bird.y);
       return true;
     }
     
-    // Pipe collisions - more forgiving hitbox
+    // More forgiving pipe collisions
     for (const pipe of pipes) {
       if (
         bird.x + BIRD_SIZE - 8 > pipe.x &&

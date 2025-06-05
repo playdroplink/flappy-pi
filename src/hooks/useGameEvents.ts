@@ -44,16 +44,31 @@ export const useGameEvents = ({
   const [adWatched, setAdWatched] = useState(false);
   const [showMandatoryAd, setShowMandatoryAd] = useState(false);
   const [showAdFreeModal, setShowAdFreeModal] = useState(false);
+  
+  // Prevent multiple collision calls
+  const collisionHandledRef = useRef(false);
 
-  const handleCollision = () => {
+  const handleCollision = useCallback(() => {
+    // Prevent multiple collision handling
+    if (collisionHandledRef.current) {
+      console.log('Collision already handled, ignoring');
+      return;
+    }
+    
+    collisionHandledRef.current = true;
     console.log('Collision detected - checking ad system');
+    
+    // Reset collision flag after delay to allow new games
+    setTimeout(() => {
+      collisionHandledRef.current = false;
+    }, 1000);
     
     // Check if user can continue without ad (Premium subscription)
     if (adSystem.canContinueWithoutAd && !reviveUsed) {
       console.log('User has Premium - allowing continue without ad');
       setIsPausedForRevive(true);
       setGameState('paused');
-      setShowContinueButton(true); // Show continue button immediately for Premium users
+      setShowContinueButton(true);
       setAdWatched(false);
       return;
     }
@@ -75,10 +90,13 @@ export const useGameEvents = ({
     } else {
       handleGameOver(score);
     }
-  };
+  }, [adSystem.canContinueWithoutAd, adSystem.shouldShowMandatoryAd, reviveUsed, score, setGameState]);
 
-  const handleGameOver = async (finalScore: number) => {
+  const handleGameOver = useCallback(async (finalScore: number) => {
     console.log('Game over with final score:', finalScore);
+    
+    // Reset collision flag
+    collisionHandledRef.current = false;
     
     // Increment game count for ad system
     adSystem.incrementGameCount();
@@ -99,14 +117,13 @@ export const useGameEvents = ({
       // Complete game session in backend
       const sessionResult = await gameBackendService.completeGameSession(
         profile.pi_user_id,
-        'classic', // Default to classic mode
+        'classic',
         finalScore,
         level,
-        Math.floor(finalScore / 3) + (level * 2) // Coins earned calculation
+        Math.floor(finalScore / 3) + (level * 2)
       );
       
       if (sessionResult) {
-        // Update local state with backend results
         setCoins(sessionResult.total_coins);
         localStorage.setItem('flappypi-coins', sessionResult.total_coins.toString());
         
@@ -124,7 +141,6 @@ export const useGameEvents = ({
           });
         }
         
-        // Refresh user profile to get updated data
         await refreshProfile();
       }
     } catch (error) {
@@ -145,7 +161,7 @@ export const useGameEvents = ({
       }
     }
 
-    // Submit score to leaderboard if it's a decent score (> 0)
+    // Submit score to leaderboard
     if (finalScore > 0 && profile) {
       try {
         await submitScore(profile.pi_user_id, profile.username, finalScore);
@@ -158,13 +174,13 @@ export const useGameEvents = ({
     setLives(1);
     setLevel(1);
     setReviveUsed(false);
-  };
+  }, [adSystem, setGameState, setScore, setIsPausedForRevive, setShowContinueButton, setAdWatched, setShowMandatoryAd, profile, level, setCoins, coins, setHighScore, highScore, toast, refreshProfile, submitScore, setLives, setLevel]);
 
-  const handleCoinEarned = (coinAmount: number) => {
+  const handleCoinEarned = useCallback((coinAmount: number) => {
     const newCoins = coins + coinAmount;
     setCoins(newCoins);
     localStorage.setItem('flappypi-coins', newCoins.toString());
-  };
+  }, [coins, setCoins]);
 
   const handleContinueClick = useCallback(() => {
     console.log('Continue button clicked - resuming game');
@@ -186,14 +202,14 @@ export const useGameEvents = ({
     });
   }, [continueGame, setGameState, toast]);
 
-  const handleMandatoryAdWatch = () => {
+  const handleMandatoryAdWatch = useCallback(() => {
     console.log('Mandatory ad watched - resetting counter and ending game');
     adSystem.resetAdCounter();
     setShowMandatoryAd(false);
     handleGameOver(score);
-  };
+  }, [adSystem, setShowMandatoryAd, handleGameOver, score]);
 
-  const handleAdWatch = async (adType: 'continue' | 'coins' | 'life') => {
+  const handleAdWatch = useCallback(async (adType: 'continue' | 'coins' | 'life') => {
     if (!profile) {
       console.warn('No user profile available for ad reward');
       return;
@@ -207,7 +223,6 @@ export const useGameEvents = ({
             setShowContinueButton(true);
             setAdWatched(true);
             
-            // Record ad watch in backend
             await gameBackendService.watchAdReward(profile.pi_user_id, 'continue', 0);
           }
           break;
@@ -217,7 +232,7 @@ export const useGameEvents = ({
           if (coinsResult) {
             setCoins(coins + coinsResult.reward_amount);
             localStorage.setItem('flappypi-coins', (coins + coinsResult.reward_amount).toString());
-            await refreshProfile(); // Refresh to get updated backend data
+            await refreshProfile();
             toast({
               title: "Bonus Pi Coins! 🪙",
               description: `You earned ${coinsResult.reward_amount} Pi coins!`
@@ -236,7 +251,6 @@ export const useGameEvents = ({
       }
     } catch (error) {
       console.error('Error handling ad watch:', error);
-      // Fallback to local handling for coins
       if (adType === 'coins') {
         const bonusCoins = 25;
         setCoins(coins + bonusCoins);
@@ -247,7 +261,7 @@ export const useGameEvents = ({
         });
       }
     }
-  };
+  }, [profile, adWatched, isPausedForRevive, setShowContinueButton, setAdWatched, coins, setCoins, refreshProfile, toast, setLives]);
 
   return {
     handleCollision,
