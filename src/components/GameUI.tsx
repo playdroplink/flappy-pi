@@ -18,6 +18,7 @@ interface GameUIProps {
   onOpenLeaderboard: () => void;
   onShowAd: () => void;
   onShareScore?: () => void;
+  isPausedForRevive?: boolean;
 }
 
 const GameUI: React.FC<GameUIProps> = ({
@@ -32,7 +33,8 @@ const GameUI: React.FC<GameUIProps> = ({
   onOpenShop,
   onOpenLeaderboard,
   onShowAd,
-  onShareScore
+  onShareScore,
+  isPausedForRevive = false
 }) => {
   if (gameState === 'playing') {
     const difficulty = getDifficulty(score, gameMode);
@@ -82,6 +84,53 @@ const GameUI: React.FC<GameUIProps> = ({
             </Card>
           </div>
         )}
+      </div>
+    );
+  }
+
+  // Show crash/continue prompt when paused for revive
+  if (gameState === 'paused' && isPausedForRevive) {
+    return (
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-lg flex items-center justify-center z-50 p-4">
+        <Card className="p-8 max-w-sm w-full text-center shadow-2xl bg-white border-gray-200">
+          <div className="text-6xl mb-4">💥</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            Oops! You Crashed!
+          </h2>
+          
+          <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg p-4 border border-blue-200 mb-6">
+            <div className="text-3xl font-bold text-blue-600 mb-1">{score}</div>
+            <div className="text-sm text-blue-500">Current Score</div>
+          </div>
+          
+          <div className="space-y-4">
+            <Button 
+              onClick={onShowAd}
+              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
+            >
+              <PlayCircle className="mr-2 h-5 w-5" />
+              Watch Pi Ad to Continue
+            </Button>
+
+            <Button 
+              onClick={onStartGame}
+              variant="outline"
+              className="w-full bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100 transform hover:scale-105 transition-all duration-200"
+            >
+              <Play className="mr-2 h-4 w-4" />
+              Start New Game
+            </Button>
+            
+            <Button 
+              onClick={onBackToMenu}
+              variant="ghost"
+              className="w-full text-gray-600 hover:text-gray-800 hover:bg-gray-100 transform hover:scale-105 transition-all duration-200"
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Back to Menu
+            </Button>
+          </div>
+        </Card>
       </div>
     );
   }

@@ -34,17 +34,27 @@ export const useGameEvents = ({
   const [showContinueOverlay, setShowContinueOverlay] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [showContinueButton, setShowContinueButton] = useState(false);
+  const [isPausedForRevive, setIsPausedForRevive] = useState(false);
+  const [reviveUsed, setReviveUsed] = useState(false);
 
   const handleCollision = () => {
-    console.log('Collision handled, setting game over');
-    setGameState('gameOver');
-    handleGameOver(score);
+    console.log('Collision detected - pausing for revive option');
+    
+    // Only allow revive if not used in this session
+    if (!reviveUsed) {
+      setIsPausedForRevive(true);
+      setGameState('paused');
+    } else {
+      // Go directly to game over if revive already used
+      handleGameOver(score);
+    }
   };
 
   const handleGameOver = (finalScore: number) => {
-    console.log('Game over with score:', finalScore);
+    console.log('Game over with final score:', finalScore);
     setGameState('gameOver');
     setScore(finalScore);
+    setIsPausedForRevive(false);
     
     // Add coins based on score and level
     const earnedCoins = Math.floor(finalScore / 3) + (level * 2);
@@ -65,6 +75,7 @@ export const useGameEvents = ({
     // Reset for next game
     setLives(1);
     setLevel(1);
+    setReviveUsed(false); // Reset revive for next game
   };
 
   const handleCoinEarned = (coinAmount: number) => {
@@ -74,7 +85,8 @@ export const useGameEvents = ({
   };
 
   const startContinueCountdown = useCallback(() => {
-    console.log('Starting continue countdown');
+    console.log('Starting continue countdown after ad');
+    setIsPausedForRevive(false); // Hide the crash prompt
     setShowContinueOverlay(true);
     setShowContinueButton(false);
     setCountdown(3);
@@ -96,15 +108,19 @@ export const useGameEvents = ({
   }, []);
 
   const handleContinueClick = useCallback(() => {
-    console.log('Continue button clicked');
+    console.log('Continue button clicked - resuming game');
     setShowContinueOverlay(false);
     setShowContinueButton(false);
     setCountdown(0);
+    setReviveUsed(true); // Mark revive as used
     
-    // Reset bird and continue with current score
-    setLives(1);
+    // Clear any existing countdown
+    if (countdownTimerRef.current) {
+      clearTimeout(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
     
-    // Continue the game with preserved score
+    // Continue the game at current position with preserved score
     if (continueGame) {
       continueGame();
     }
@@ -113,11 +129,11 @@ export const useGameEvents = ({
     setGameState('playing');
     
     toast({
-      title: "Continue! 🚀",
-      description: "Keep flying and reach new heights!",
+      title: "Welcome Back! 🚀",
+      description: "Continue your flight and reach new heights!",
       duration: 2000
     });
-  }, [continueGame, setLives, setGameState, toast]);
+  }, [continueGame, setGameState, toast]);
 
   const handleAdWatch = (adType: 'continue' | 'coins' | 'life') => {
     // Clear any existing countdown
@@ -160,6 +176,8 @@ export const useGameEvents = ({
     showContinueOverlay,
     countdown,
     showContinueButton,
-    handleContinueClick
+    handleContinueClick,
+    isPausedForRevive,
+    reviveUsed
   };
 };

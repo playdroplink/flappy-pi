@@ -116,6 +116,7 @@ const Index = () => {
         onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
         onShowAd={() => modals.setShowAdPopup(true)}
         onShareScore={modals.handleShareScore}
+        isPausedForRevive={gameEvents.isPausedForRevive}
       />
 
       <GameContinueOverlay
