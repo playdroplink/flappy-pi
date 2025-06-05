@@ -82,13 +82,6 @@ const ShopModal: React.FC<ShopModalProps> = ({
     }
   };
 
-  const handleCoinPayment = (item: any) => {
-    if (coins >= item.price) {
-      setCoins(coins - item.price);
-      localStorage.setItem('flappypi-coins', (coins - item.price).toString());
-    }
-  };
-
   const isOwned = (skinId: string) => {
     const ownedSkins = JSON.parse(localStorage.getItem('flappypi-owned-skins') || '["default"]');
     return ownedSkins.includes(skinId);
@@ -96,17 +89,17 @@ const ShopModal: React.FC<ShopModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-violet-300/50 bg-gradient-to-br from-violet-600/95 to-purple-700/95 backdrop-blur-sm text-white">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border-gray-300">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl text-white flex items-center justify-center space-x-2">
+          <DialogTitle className="text-center text-2xl text-gray-800 flex items-center justify-center space-x-2">
             <span>🛍️ Pi Shop</span>
           </DialogTitle>
           <div className="text-center">
-            <div className="flex items-center justify-center space-x-2 bg-white/10 rounded-lg p-2 mt-2">
-              <Coins className="h-5 w-5 text-yellow-400" />
-              <span className="font-bold">{coins} Game Coins</span>
+            <div className="flex items-center justify-center space-x-2 bg-gray-100 rounded-lg p-2 mt-2">
+              <Coins className="h-5 w-5 text-yellow-500" />
+              <span className="font-bold text-gray-800">{coins} Game Coins</span>
             </div>
-            <p className="text-white/80 text-sm mt-2">
+            <p className="text-gray-600 text-sm mt-2">
               Premium skins require Pi Network payments
             </p>
           </div>
@@ -115,17 +108,17 @@ const ShopModal: React.FC<ShopModalProps> = ({
         <div className="space-y-6">
           {/* Bird Skins */}
           <div>
-            <h3 className="text-lg font-bold mb-4 text-white flex items-center">
+            <h3 className="text-lg font-bold mb-4 text-gray-800 flex items-center">
               🐦 Bird Characters
-              <span className="ml-2 text-sm bg-yellow-500/20 px-2 py-1 rounded text-yellow-300">
+              <span className="ml-2 text-sm bg-purple-100 px-2 py-1 rounded text-purple-700">
                 Premium Pi Skins
               </span>
             </h3>
             <div className="grid grid-cols-1 gap-4">
               {birdSkins.map((skin) => (
-                <Card key={skin.id} className="p-4 bg-white/10 border-white/20">
+                <Card key={skin.id} className="p-4 bg-gray-50 border-gray-200">
                   <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 flex items-center justify-center bg-white/20 rounded-lg">
+                    <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg border border-gray-200">
                       <img 
                         src={skin.image} 
                         alt={skin.name}
@@ -134,14 +127,14 @@ const ShopModal: React.FC<ShopModalProps> = ({
                     </div>
                     
                     <div className="flex-1">
-                      <h4 className="font-semibold text-white text-lg">{skin.name}</h4>
+                      <h4 className="font-semibold text-gray-800 text-lg">{skin.name}</h4>
                       <div className="mb-2">
                         {skin.priceType === 'free' ? (
-                          <span className="text-green-400 text-sm font-medium">Free</span>
+                          <span className="text-green-600 text-sm font-medium">Free</span>
                         ) : (
                           <div className="flex items-center space-x-1">
-                            <Zap className="h-4 w-4 text-purple-300" />
-                            <span className="text-purple-300 font-bold">{skin.price} Pi</span>
+                            <Zap className="h-4 w-4 text-purple-600" />
+                            <span className="text-purple-600 font-bold">{skin.price} Pi</span>
                           </div>
                         )}
                       </div>
@@ -149,45 +142,32 @@ const ShopModal: React.FC<ShopModalProps> = ({
 
                     <div className="text-right">
                       {selectedBirdSkin === skin.id ? (
-                        <Button className="bg-green-600 hover:bg-green-700" disabled>
+                        <Button className="bg-green-600 hover:bg-green-700 text-white" disabled>
                           <Check className="mr-1 h-4 w-4" />
                           Selected
                         </Button>
                       ) : isOwned(skin.id) ? (
                         <Button 
                           onClick={() => setSelectedBirdSkin(skin.id)}
-                          className="bg-blue-600 hover:bg-blue-700"
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
                         >
                           Select
                         </Button>
                       ) : skin.priceType === 'pi' ? (
                         <Button 
                           onClick={() => handlePiPayment(skin)}
-                          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
                         >
                           <Zap className="mr-1 h-4 w-4" />
                           Buy with Pi
                         </Button>
                       ) : (
                         <Button 
-                          onClick={() => {
-                            handleCoinPayment(skin);
-                            setSelectedBirdSkin(skin.id);
-                          }}
-                          disabled={coins < skin.price}
-                          className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600"
+                          onClick={() => setSelectedBirdSkin(skin.id)}
+                          className="bg-yellow-600 hover:bg-yellow-700 text-white"
                         >
-                          {coins >= skin.price ? (
-                            <>
-                              <Coins className="mr-1 h-4 w-4" />
-                              Buy
-                            </>
-                          ) : (
-                            <>
-                              <Lock className="mr-1 h-4 w-4" />
-                              Locked
-                            </>
-                          )}
+                          <Coins className="mr-1 h-4 w-4" />
+                          Free
                         </Button>
                       )}
                     </div>
@@ -198,15 +178,15 @@ const ShopModal: React.FC<ShopModalProps> = ({
           </div>
 
           {/* Info Section */}
-          <Card className="p-4 bg-blue-500/20 border-blue-300/30">
+          <Card className="p-4 bg-blue-50 border-blue-200">
             <div className="flex items-start space-x-3">
-              <Zap className="h-6 w-6 text-blue-300 mt-1" />
+              <Zap className="h-6 w-6 text-blue-600 mt-1" />
               <div>
-                <h4 className="font-semibold text-blue-200">Pi Network Integration</h4>
-                <p className="text-blue-100 text-sm mt-1">
+                <h4 className="font-semibold text-blue-800">Pi Network Integration</h4>
+                <p className="text-blue-700 text-sm mt-1">
                   Premium bird skins are purchased with Pi cryptocurrency. Connect your Pi wallet to unlock exclusive characters!
                 </p>
-                <p className="text-blue-200 text-xs mt-2">
+                <p className="text-blue-600 text-xs mt-2">
                   Game coins are earned through gameplay and can be used for power-ups and temporary boosts.
                 </p>
               </div>

@@ -32,18 +32,17 @@ const GameUI: React.FC<GameUIProps> = ({
 }) => {
   if (gameState === 'playing') {
     return (
-      <div className="fixed top-4 left-4 right-4 z-50 pointer-events-none">
-        <div className="flex justify-between items-start">
-          {/* Enhanced score display */}
-          <Card className="px-6 py-3 pointer-events-auto shadow-2xl bg-white/90 backdrop-blur-sm border-blue-200">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-1">{score}</div>
-              <div className="text-xs text-blue-500 mb-1">SCORE</div>
-              <div className="text-sm text-gray-600">Level {level}</div>
-            </div>
-          </Card>
+      <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+        {/* Score at top center like Flappy Bird */}
+        <div className="flex justify-center pt-8">
+          <div className="text-6xl font-bold text-white drop-shadow-2xl pointer-events-auto" 
+               style={{ textShadow: '3px 3px 0px rgba(0,0,0,0.8), -1px -1px 0px rgba(0,0,0,0.8), 1px -1px 0px rgba(0,0,0,0.8), -1px 1px 0px rgba(0,0,0,0.8)' }}>
+            {score}
+          </div>
+        </div>
 
-          {/* Coins display only */}
+        {/* Coins display - top right */}
+        <div className="absolute top-4 right-4">
           <Card className="px-4 py-3 pointer-events-auto shadow-2xl bg-white/90 backdrop-blur-sm border-yellow-200">
             <div className="flex items-center space-x-2">
               <Coins className="h-5 w-5 text-yellow-500" />

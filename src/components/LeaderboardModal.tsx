@@ -27,38 +27,38 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose }) 
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <Crown className="h-6 w-6 text-yellow-400" />;
+        return <Crown className="h-6 w-6 text-yellow-500" />;
       case 2:
-        return <Medal className="h-6 w-6 text-gray-400" />;
+        return <Medal className="h-6 w-6 text-gray-500" />;
       case 3:
         return <Award className="h-6 w-6 text-amber-600" />;
       default:
-        return <Trophy className="h-5 w-5 text-blue-400" />;
+        return <Trophy className="h-5 w-5 text-blue-500" />;
     }
   };
 
   const getRankColor = (rank: number) => {
     switch (rank) {
       case 1:
-        return 'from-yellow-500/20 to-amber-500/20 border-yellow-400/30';
+        return 'from-yellow-100 to-amber-100 border-yellow-300';
       case 2:
-        return 'from-gray-500/20 to-slate-500/20 border-gray-400/30';
+        return 'from-gray-100 to-slate-100 border-gray-300';
       case 3:
-        return 'from-amber-600/20 to-orange-500/20 border-amber-600/30';
+        return 'from-amber-100 to-orange-100 border-amber-300';
       default:
-        return 'from-blue-500/10 to-indigo-500/10 border-blue-400/20';
+        return 'from-blue-50 to-indigo-50 border-blue-200';
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto border-violet-300/50 bg-gradient-to-br from-violet-600/95 to-purple-700/95 backdrop-blur-sm text-white">
+      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto bg-white border-gray-300">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl text-white flex items-center justify-center space-x-2">
-            <Trophy className="h-6 w-6 text-yellow-400" />
+          <DialogTitle className="text-center text-2xl text-gray-800 flex items-center justify-center space-x-2">
+            <Trophy className="h-6 w-6 text-yellow-500" />
             <span>Pi Leaderboard</span>
           </DialogTitle>
-          <p className="text-center text-white/80 text-sm">
+          <p className="text-center text-gray-600 text-sm">
             Top flyers this week
           </p>
         </DialogHeader>
@@ -73,18 +73,18 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose }) 
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2">
                     {getRankIcon(player.rank)}
-                    <span className="font-bold text-white text-lg">
+                    <span className="font-bold text-gray-800 text-lg">
                       #{player.rank}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="text-2xl">{player.avatar}</span>
                     <div>
-                      <div className="font-semibold text-white">
+                      <div className="font-semibold text-gray-800">
                         {player.username}
                       </div>
                       {player.rank <= 3 && (
-                        <div className="text-xs text-white/80">
+                        <div className="text-xs text-gray-600">
                           {player.rank === 1 ? 'Champion' : 
                            player.rank === 2 ? 'Runner-up' : 'Third Place'}
                         </div>
@@ -93,10 +93,10 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose }) 
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-white text-lg">
+                  <div className="font-bold text-gray-800 text-lg">
                     {player.score.toLocaleString()}
                   </div>
-                  <div className="text-white/80 text-sm">points</div>
+                  <div className="text-gray-600 text-sm">points</div>
                 </div>
               </div>
             </Card>
@@ -104,15 +104,15 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose }) 
         </div>
 
         <div className="mt-6 text-center">
-          <Card className="p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-400/30">
+          <Card className="p-4 bg-gradient-to-r from-green-100 to-emerald-100 border-green-300">
             <div className="flex items-center justify-center space-x-2 mb-2">
               <span className="text-2xl">🎯</span>
-              <span className="font-bold text-white">Weekly Prize Pool</span>
+              <span className="font-bold text-gray-800">Weekly Prize Pool</span>
             </div>
-            <div className="text-white/90 text-sm">
+            <div className="text-gray-700 text-sm">
               Top 3 players win Pi coins every week!
             </div>
-            <div className="mt-2 space-x-4 text-xs text-white/80">
+            <div className="mt-2 space-x-4 text-xs text-gray-600">
               <span>🥇 100 Pi</span>
               <span>🥈 50 Pi</span>
               <span>🥉 25 Pi</span>
