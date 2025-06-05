@@ -87,13 +87,13 @@ export const useGamePhysics = ({
         }
       }
       
-      // Score when bird passes the center of the pipe
+      // Score when bird passes the center of the pipe (only once per pipe)
       if (!pipe.passed && state.bird.x > pipe.x + PIPE_WIDTH / 2) {
         pipe.passed = true;
         state.score++;
+        console.log(`Score: ${state.score} (${gameMode} mode)`);
         onScoreUpdate(state.score);
         onCoinEarned(1);
-        console.log(`Score updated: ${state.score} (${gameMode} mode), Coin earned!`);
       }
       
       return pipe.x > -PIPE_WIDTH;

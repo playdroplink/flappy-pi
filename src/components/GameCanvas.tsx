@@ -82,11 +82,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
   }, [jump, gameState]);
 
-  // Game loop management
+  // Game loop management - FIXED: only reset when starting new game
   useEffect(() => {
     if (gameState === 'playing') {
       const canvas = canvasRef.current;
-      if (canvas) {
+      if (canvas && gameStateRef.current.frameCount === 0) {
+        // Only reset if this is a fresh start
         resetGame(canvas.height);
       }
       gameLoopRef.current = requestAnimationFrame(gameLoop);

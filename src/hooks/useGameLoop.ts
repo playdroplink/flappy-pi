@@ -70,30 +70,30 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
 
   const checkCollisions = useCallback((canvas: HTMLCanvasElement) => {
     const { bird, pipes } = gameStateRef.current;
-    const BIRD_SIZE = 40;
+    const BIRD_SIZE = 30; // Reduced from 40 to make it easier
     const PIPE_WIDTH = 120;
     
-    // Ground collision - bird hits the bottom
-    if (bird.y + BIRD_SIZE >= canvas.height - 20) { // 20 is ground height
+    // Ground collision - bird hits the bottom (with some margin)
+    if (bird.y + BIRD_SIZE >= canvas.height - 25) { // Added 5px margin
       console.log('Bird hit ground!');
       return true;
     }
 
-    // Ceiling collision - bird hits the top
-    if (bird.y <= 0) {
+    // Ceiling collision - bird hits the top (with some margin)
+    if (bird.y <= 5) { // Added 5px margin from top
       console.log('Bird hit ceiling!');
       return true;
     }
     
-    // Pipe collisions - more precise collision detection
+    // Pipe collisions - more forgiving collision detection
     for (const pipe of pipes) {
-      // Check if bird is within pipe's x range
+      // Check if bird is within pipe's x range (with smaller collision box)
       if (
-        bird.x + BIRD_SIZE > pipe.x &&
-        bird.x < pipe.x + PIPE_WIDTH
+        bird.x + BIRD_SIZE - 5 > pipe.x &&
+        bird.x + 5 < pipe.x + PIPE_WIDTH
       ) {
-        // Check collision with top pipe or bottom pipe
-        if (bird.y < pipe.topHeight || bird.y + BIRD_SIZE > pipe.bottomY) {
+        // Check collision with top pipe or bottom pipe (with margin)
+        if (bird.y + 5 < pipe.topHeight || bird.y + BIRD_SIZE - 5 > pipe.bottomY) {
           console.log('Bird hit pipe!');
           return true;
         }
