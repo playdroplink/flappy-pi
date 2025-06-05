@@ -2,7 +2,7 @@
 import React from 'react';
 import SplashScreen from '../components/SplashScreen';
 import WelcomeScreen from '../components/WelcomeScreen';
-import GameCanvas from '../components/GameCanvas';
+import NewGameCanvas from '../components/NewGameCanvas';
 import GameUI from '../components/GameUI';
 import GameModals from '../components/GameModals';
 import GameContinueOverlay from '../components/GameContinueOverlay';
@@ -16,9 +16,6 @@ const Index = () => {
   const gameState = useGameState();
   const modals = useModals();
   
-  // Create a ref to store the continue game function
-  const continueGameRef = React.useRef<(() => void) | null>(null);
-  
   const gameEvents = useGameEvents({
     score: gameState.score,
     coins: gameState.coins,
@@ -31,9 +28,8 @@ const Index = () => {
     setHighScore: gameState.setHighScore,
     setCoins: gameState.setCoins,
     continueGame: () => {
-      if (continueGameRef.current) {
-        continueGameRef.current();
-      }
+      // New implementation doesn't need continue function
+      console.log('Continue game called');
     }
   });
 
@@ -91,19 +87,12 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-400 to-sky-600 relative overflow-hidden">
-      <GameCanvas 
+      <NewGameCanvas 
         gameState={gameState.gameState}
         gameMode={gameState.gameMode}
-        level={gameState.level}
         onCollision={gameEvents.handleCollision}
-        onGameOver={gameEvents.handleGameOver}
         onScoreUpdate={gameState.handleScoreUpdate}
-        onCoinEarned={gameEvents.handleCoinEarned}
         birdSkin={gameState.selectedBirdSkin}
-        musicEnabled={gameState.musicEnabled}
-        onContinueGameRef={(fn) => {
-          continueGameRef.current = fn;
-        }}
       />
       
       <GameUI 
