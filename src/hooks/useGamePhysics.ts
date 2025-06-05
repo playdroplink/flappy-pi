@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { getDifficulty } from '../utils/gameDifficulty';
 
@@ -68,7 +69,7 @@ export const useGamePhysics = ({
       };
       state.pipes.push(newPipe);
       state.lastPipeSpawn = state.frameCount;
-      console.log('New pipe spawned at frame:', state.frameCount);
+      console.log('New pipe spawned at frame:', state.frameCount, 'Current pipes:', state.pipes.length);
     }
 
     // Spawn clouds if enabled
@@ -82,7 +83,7 @@ export const useGamePhysics = ({
       });
     }
 
-    // Update pipes and check for scoring
+    // Update pipes and check for scoring - FIXED scoring logic
     state.pipes = state.pipes.filter((pipe: any) => {
       pipe.x -= difficulty.pipeSpeed;
       
@@ -98,11 +99,11 @@ export const useGamePhysics = ({
         }
       }
       
-      // Score when bird passes the pipe completely
-      if (!pipe.passed && state.bird.x > pipe.x + PIPE_WIDTH) {
+      // IMPROVED SCORING: Score when bird's CENTER passes the pipe's RIGHT edge
+      if (!pipe.passed && (state.bird.x + 12) > (pipe.x + PIPE_WIDTH)) {
         pipe.passed = true;
         state.score++;
-        console.log(`Score: ${state.score} (${gameMode} mode) - Pipe passed!`);
+        console.log(`SCORE! Bird center at ${state.bird.x + 12} passed pipe right edge at ${pipe.x + PIPE_WIDTH}. New score: ${state.score}`);
         onScoreUpdate(state.score);
         onCoinEarned(1);
       }
