@@ -56,9 +56,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         ))}
         
         {/* Geometric shapes */}
-        <div className="absolute top-20 right-10 w-16 h-16 bg-yellow-300/20 rounded-full animate-bounce" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-32 left-8 w-12 h-12 bg-purple-300/20 rotate-45 animate-pulse" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/3 right-1/4 w-8 h-8 bg-green-300/20 rounded-full animate-ping" style={{ animationDelay: '3s' }} />
+        <div className="absolute top-20 right-10 w-16 h-16 bg-white/10 rounded-full animate-bounce" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-32 left-8 w-12 h-12 bg-white/10 rotate-45 animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/3 right-1/4 w-8 h-8 bg-white/10 rounded-full animate-ping" style={{ animationDelay: '3s' }} />
       </div>
 
       {/* Header Section */}
@@ -72,7 +72,6 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 alt="Flappy Pi Character" 
                 className="w-full h-full object-contain animate-bounce drop-shadow-2xl"
               />
-              <div className="absolute -inset-4 bg-gradient-to-r from-yellow-400/30 to-orange-400/30 rounded-full blur-xl animate-pulse" />
             </div>
           </div>
           
@@ -88,7 +87,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         <Card className="w-full p-4 mb-6 bg-white/95 backdrop-blur-sm border-0 shadow-xl animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
                 <Coins className="h-5 w-5 text-white" />
               </div>
               <div>

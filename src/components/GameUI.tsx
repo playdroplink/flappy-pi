@@ -42,44 +42,51 @@ const GameUI: React.FC<GameUIProps> = ({
     
     return (
       <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
-        {/* Header Container */}
-        <div className="flex justify-between items-start p-4">
-          {/* Left Side - Level Info */}
-          <Card className="px-4 py-3 pointer-events-auto shadow-lg bg-white/95 backdrop-blur-sm border-blue-200 rounded-xl">
+        {/* Enhanced Header Container */}
+        <div className="flex justify-between items-start p-3">
+          {/* Left Side - Level Info with enhanced design */}
+          <Card className="px-4 py-3 pointer-events-auto shadow-xl bg-gradient-to-r from-blue-500/95 to-cyan-500/95 backdrop-blur-sm border-0 rounded-2xl">
             <div className="text-center">
-              <div className="text-lg font-bold text-blue-600">Level {currentLevel}</div>
-              <div className="text-sm text-blue-500 capitalize">{difficulty.timeOfDay}</div>
-              <div className="text-xs text-gray-600 uppercase font-medium tracking-wide">{gameMode}</div>
+              <div className="text-lg font-bold text-white">Level {currentLevel}</div>
+              <div className="text-sm text-blue-100 capitalize">{difficulty.timeOfDay}</div>
+              <div className="text-xs text-white/80 uppercase font-medium tracking-wide bg-white/20 px-2 py-1 rounded-full mt-1">
+                {gameMode}
+              </div>
             </div>
           </Card>
 
-          {/* Right Side - Coins */}
-          <Card className="px-4 py-3 pointer-events-auto shadow-lg bg-white/95 backdrop-blur-sm border-yellow-200 rounded-xl">
+          {/* Right Side - Enhanced Coins Display */}
+          <Card className="px-4 py-3 pointer-events-auto shadow-xl bg-gradient-to-r from-amber-400/95 to-yellow-500/95 backdrop-blur-sm border-0 rounded-2xl">
             <div className="flex items-center space-x-2">
-              <Coins className="h-5 w-5 text-yellow-500" />
-              <span className="text-lg font-bold text-gray-800">{coins}</span>
+              <div className="w-6 h-6 bg-white/30 rounded-full flex items-center justify-center">
+                <Coins className="h-4 w-4 text-white" />
+              </div>
+              <span className="text-lg font-bold text-white">{coins}</span>
             </div>
           </Card>
         </div>
 
-        {/* Center Score */}
-        <div className="flex justify-center mt-8">
-          <div className="text-7xl font-bold text-white drop-shadow-2xl pointer-events-auto" 
-               style={{ textShadow: '4px 4px 0px rgba(0,0,0,0.8), -2px -2px 0px rgba(0,0,0,0.8), 2px -2px 0px rgba(0,0,0,0.8), -2px 2px 0px rgba(0,0,0,0.8)' }}>
-            {score}
+        {/* Enhanced Center Score */}
+        <div className="flex justify-center mt-6">
+          <div className="relative">
+            <div className="text-7xl font-bold text-white drop-shadow-2xl pointer-events-auto animate-pulse" 
+                 style={{ textShadow: '4px 4px 0px rgba(0,0,0,0.8), -2px -2px 0px rgba(0,0,0,0.8), 2px -2px 0px rgba(0,0,0,0.8), -2px 2px 0px rgba(0,0,0,0.8)' }}>
+              {score}
+            </div>
+            <div className="absolute -inset-2 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-2xl blur-xl -z-10"></div>
           </div>
         </div>
 
-        {/* Bottom Indicators - if obstacles are active */}
+        {/* Enhanced Bottom Indicators */}
         {(difficulty.hasMovingPipes || difficulty.hasClouds || difficulty.hasWind) && (
-          <div className="absolute bottom-6 left-4">
-            <Card className="px-3 py-2 pointer-events-auto shadow-lg bg-red-50/95 backdrop-blur-sm border-red-300 rounded-lg">
-              <div className="flex items-center space-x-2 text-red-700">
-                <div className="text-xs font-bold">OBSTACLES:</div>
+          <div className="absolute bottom-6 left-3">
+            <Card className="px-3 py-2 pointer-events-auto shadow-xl bg-gradient-to-r from-red-500/95 to-pink-500/95 backdrop-blur-sm border-0 rounded-xl">
+              <div className="flex items-center space-x-2 text-white">
+                <div className="text-xs font-bold">⚠️ OBSTACLES:</div>
                 <div className="flex space-x-1 text-xs">
-                  {difficulty.hasMovingPipes && <span className="bg-red-200 px-2 py-1 rounded">Moving Pipes</span>}
-                  {difficulty.hasClouds && <span className="bg-red-200 px-2 py-1 rounded">Clouds</span>}
-                  {difficulty.hasWind && <span className="bg-red-200 px-2 py-1 rounded">Wind</span>}
+                  {difficulty.hasMovingPipes && <span className="bg-white/30 px-2 py-1 rounded-full">Moving Pipes</span>}
+                  {difficulty.hasClouds && <span className="bg-white/30 px-2 py-1 rounded-full">Clouds</span>}
+                  {difficulty.hasWind && <span className="bg-white/30 px-2 py-1 rounded-full">Wind</span>}
                 </div>
               </div>
             </Card>
