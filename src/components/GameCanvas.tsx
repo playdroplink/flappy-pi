@@ -130,21 +130,21 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   }, [gameState]);
 
-  const checkCollision = (bird: typeof birdRef.current, pipe: Pipe, canvas: HTMLCanvasElement) => {
+  // Check if bird hits ground or ceiling (game over conditions)
+  const checkGroundCeilingCollision = (bird: typeof birdRef.current, canvas: HTMLCanvasElement) => {
+    return bird.y + BIRD_SIZE >= canvas.height - 60 || bird.y <= 0;
+  };
+
+  // Check if bird hits pipe (but don't end game, just bounce back or lose life)
+  const checkPipeCollision = (bird: typeof birdRef.current, pipe: Pipe) => {
     const { pipeGap } = getDifficulty();
     
-    // Check collision with ground or ceiling
-    if (bird.y + BIRD_SIZE >= canvas.height - 60 || bird.y <= 0) {
-      return true;
-    }
-
     // Check collision with pipe
     if (bird.x + BIRD_SIZE > pipe.x && bird.x < pipe.x + PIPE_WIDTH) {
       if (bird.y < pipe.y || bird.y + BIRD_SIZE > pipe.y + pipeGap) {
         return true;
       }
     }
-
     return false;
   };
 
@@ -166,6 +166,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       birdRef.current.y += birdRef.current.velocity;
       birdRef.current.rotation = Math.min(birdRef.current.rotation + 0.08, 0.6);
 
+      // Check ground/ceiling collision (game over)
+      if (checkGroundCeilingCollision(birdRef.current, canvas)) {
+        console.log('Ground/Ceiling collision - Game Over');
+        onGameOver(scoreRef.current);
+        return;
+      }
+
       // Update pipes
       pipesRef.current.forEach((pipe) => {
         pipe.x -= pipeSpeed;
@@ -186,9 +193,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           console.log('Score sound effect');
         }
 
-        // Check collision
-        if (checkCollision(birdRef.current, pipe, canvas)) {
-          console.log('Collision sound effect');
+        // Check pipe collision (lose life but don't end game)
+        if (checkPipeCollision(birdRef.current, pipe)) {
+          console.log('Pipe collision - Life lost');
           onCollision();
           return;
         }
@@ -399,7 +406,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
 
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [gameState, gameMode, level, onCollision, onScoreUpdate, getBirdColor, getDifficulty]);
+  }, [gameState, gameMode, level, onCollision, onGameOver, onScoreUpdate, getBirdColor, getDifficulty]);
 
   useEffect(() => {
     if (gameState === 'playing') {
