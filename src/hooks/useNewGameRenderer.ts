@@ -49,9 +49,9 @@ export const useNewGameRenderer = () => {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw pipes
+    // Draw pipes with proper styling
     pipes.forEach(pipe => {
-      // Pipe color
+      // Pipe body color
       ctx.fillStyle = colors.pipe;
       ctx.strokeStyle = colors.pipeStroke;
       ctx.lineWidth = 3;
@@ -64,35 +64,58 @@ export const useNewGameRenderer = () => {
       ctx.fillRect(pipe.x, pipe.bottomY, pipe.width, canvas.height - pipe.bottomY);
       ctx.strokeRect(pipe.x, pipe.bottomY, pipe.width, canvas.height - pipe.bottomY);
 
-      // Pipe caps
+      // Pipe caps for better visual appeal
+      const capHeight = 20;
+      const capWidth = pipe.width + 10;
+      
       ctx.fillStyle = colors.pipeStroke;
-      ctx.fillRect(pipe.x - 5, pipe.topHeight - 20, pipe.width + 10, 20);
-      ctx.fillRect(pipe.x - 5, pipe.bottomY, pipe.width + 10, 20);
+      // Top pipe cap
+      ctx.fillRect(pipe.x - 5, pipe.topHeight - capHeight, capWidth, capHeight);
+      // Bottom pipe cap
+      ctx.fillRect(pipe.x - 5, pipe.bottomY, capWidth, capHeight);
     });
 
-    // Draw bird
+    // Draw bird with rotation
     const birdImage = new Image();
     birdImage.src = BIRD_IMAGES[birdSkin] || BIRD_IMAGES.default;
     
     ctx.save();
     ctx.translate(bird.x + BIRD_SIZE/2, bird.y + BIRD_SIZE/2);
     ctx.rotate(bird.rotation * Math.PI / 180);
+    
+    // Add shadow for better visibility
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.shadowBlur = 4;
+    
     ctx.drawImage(birdImage, -BIRD_SIZE/2, -BIRD_SIZE/2, BIRD_SIZE, BIRD_SIZE);
     ctx.restore();
 
-    // Draw score
+    // Draw score with better styling
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 48px Arial';
     ctx.textAlign = 'center';
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = 3;
+    
+    // Add shadow to score text
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.shadowBlur = 4;
+    
     ctx.strokeText(score.toString(), canvas.width / 2, 80);
     ctx.fillText(score.toString(), canvas.width / 2, 80);
 
     // Draw mode indicator
+    ctx.shadowColor = 'transparent'; // Reset shadow
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 16px Arial';
     ctx.textAlign = 'left';
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.strokeText(`${gameMode.toUpperCase()} MODE`, 10, 30);
     ctx.fillText(`${gameMode.toUpperCase()} MODE`, 10, 30);
   }, []);
 

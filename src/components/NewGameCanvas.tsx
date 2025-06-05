@@ -21,6 +21,7 @@ const NewGameCanvas: React.FC<NewGameCanvasProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const lastScoreRef = useRef<number>(0);
+  const gameOverHandledRef = useRef<boolean>(false);
 
   const { 
     gameState: engineState, 
@@ -45,10 +46,17 @@ const NewGameCanvas: React.FC<NewGameCanvasProps> = ({
     }
   }, [engineState.score, onScoreUpdate]);
 
-  // Handle game over
+  // Handle game over with proper reset
   useEffect(() => {
-    if (engineState.gameOver) {
+    if (engineState.gameOver && !gameOverHandledRef.current) {
+      gameOverHandledRef.current = true;
+      console.log('Game over detected - calling collision handler');
       onCollision();
+    }
+    
+    // Reset the game over flag when game is not over
+    if (!engineState.gameOver) {
+      gameOverHandledRef.current = false;
     }
   }, [engineState.gameOver, onCollision]);
 
@@ -60,7 +68,7 @@ const NewGameCanvas: React.FC<NewGameCanvasProps> = ({
       updateGame();
     }
 
-    // Render
+    // Always render the current state
     render({
       canvas: canvasRef.current,
       bird: engineState.bird,
@@ -76,11 +84,19 @@ const NewGameCanvas: React.FC<NewGameCanvasProps> = ({
   // Start/stop game loop based on state
   useEffect(() => {
     if (gameState === 'playing') {
+      // Only reset if not already playing
       if (!engineState.isPlaying) {
+        console.log('Starting new game - resetting engine');
         resetGame();
+      }
+      
+      // Start the game loop
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
       }
       animationRef.current = requestAnimationFrame(gameLoop);
     } else {
+      // Stop the game loop when not playing
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }

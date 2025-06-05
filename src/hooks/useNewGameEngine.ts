@@ -149,7 +149,7 @@ export const useNewGameEngine = (gameMode: 'classic' | 'endless' | 'challenge') 
         })
         .filter(pipe => pipe.x > -pipe.width);
 
-      // Check collisions (only pipes)
+      // Check pipe collisions ONLY
       const BIRD_SIZE = 25;
       for (const pipe of newState.pipes) {
         if (
@@ -162,7 +162,7 @@ export const useNewGameEngine = (gameMode: 'classic' | 'endless' | 'challenge') 
           ) {
             newState.gameOver = true;
             newState.isPlaying = false;
-            console.log('Collision detected - Game Over');
+            console.log('Collision with pipe - Game Over');
             break;
           }
         }
