@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Play, Home, Trophy, ShoppingCart, Coins, Share2, PlayCircle } from 'lucide-react';
+import { getDifficulty } from '../utils/gameDifficulty';
 
 interface GameUIProps {
   gameState: 'menu' | 'playing' | 'gameOver' | 'paused';
@@ -10,6 +11,7 @@ interface GameUIProps {
   lives: number;
   highScore: number;
   coins: number;
+  gameMode?: 'classic' | 'endless' | 'challenge';
   onStartGame: () => void;
   onBackToMenu: () => void;
   onOpenShop: () => void;
@@ -24,6 +26,7 @@ const GameUI: React.FC<GameUIProps> = ({
   level,
   highScore,
   coins,
+  gameMode = 'classic',
   onStartGame,
   onBackToMenu,
   onOpenShop,
@@ -32,6 +35,9 @@ const GameUI: React.FC<GameUIProps> = ({
   onShareScore
 }) => {
   if (gameState === 'playing') {
+    const difficulty = getDifficulty(score, gameMode);
+    const currentLevel = Math.floor(score / 5) + 1;
+    
     return (
       <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
         {/* Score at top center like Flappy Bird */}
@@ -40,6 +46,17 @@ const GameUI: React.FC<GameUIProps> = ({
                style={{ textShadow: '3px 3px 0px rgba(0,0,0,0.8), -1px -1px 0px rgba(0,0,0,0.8), 1px -1px 0px rgba(0,0,0,0.8), -1px 1px 0px rgba(0,0,0,0.8)' }}>
             {score}
           </div>
+        </div>
+
+        {/* Level and Time of Day - top left */}
+        <div className="absolute top-4 left-4">
+          <Card className="px-4 py-3 pointer-events-auto shadow-2xl bg-white/90 backdrop-blur-sm border-blue-200">
+            <div className="text-center">
+              <div className="text-lg font-bold text-blue-600">Level {currentLevel}</div>
+              <div className="text-sm text-blue-500 capitalize">{difficulty.timeOfDay}</div>
+              <div className="text-xs text-gray-600 uppercase">{gameMode}</div>
+            </div>
+          </Card>
         </div>
 
         {/* Coins display - top right */}
@@ -51,11 +68,28 @@ const GameUI: React.FC<GameUIProps> = ({
             </div>
           </Card>
         </div>
+
+        {/* Difficulty indicators - bottom left if obstacles are active */}
+        {(difficulty.hasMovingPipes || difficulty.hasClouds || difficulty.hasWind) && (
+          <div className="absolute bottom-4 left-4">
+            <Card className="px-3 py-2 pointer-events-auto shadow-2xl bg-red-100/90 backdrop-blur-sm border-red-300">
+              <div className="flex items-center space-x-2 text-red-700">
+                <div className="text-xs font-bold">OBSTACLES:</div>
+                {difficulty.hasMovingPipes && <span className="text-xs">Moving Pipes</span>}
+                {difficulty.hasClouds && <span className="text-xs">Clouds</span>}
+                {difficulty.hasWind && <span className="text-xs">Wind</span>}
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
     );
   }
 
   if (gameState === 'gameOver') {
+    const difficulty = getDifficulty(score, gameMode);
+    const finalLevel = Math.floor(score / 5) + 1;
+    
     return (
       <div className="fixed inset-0 bg-black/70 backdrop-blur-lg flex items-center justify-center z-50 p-4">
         <Card className="p-8 max-w-sm w-full text-center shadow-2xl bg-white border-gray-200">
@@ -68,12 +102,15 @@ const GameUI: React.FC<GameUIProps> = ({
             <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg p-4 border border-blue-200">
               <div className="text-4xl font-bold text-blue-600 mb-1">{score}</div>
               <div className="text-sm text-blue-500">Final Score</div>
+              <div className="text-xs text-gray-600 mt-1">
+                Reached Level {finalLevel} ({difficulty.timeOfDay}) in {gameMode.toUpperCase()} mode
+              </div>
             </div>
             
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="bg-gray-100 rounded-lg p-3 border border-gray-200">
                 <div className="font-bold text-gray-700">Level Reached</div>
-                <div className="text-2xl font-bold text-green-500">{level}</div>
+                <div className="text-2xl font-bold text-green-500">{finalLevel}</div>
               </div>
               <div className="bg-gray-100 rounded-lg p-3 border border-gray-200">
                 <div className="font-bold text-gray-700">Best Score</div>

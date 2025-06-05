@@ -13,11 +13,22 @@ interface Pipe {
   topHeight: number;
   bottomY: number;
   passed: boolean;
+  isMoving?: boolean;
+  verticalDirection?: number;
+  moveSpeed?: number;
+}
+
+interface Cloud {
+  x: number;
+  y: number;
+  size: number;
+  speed: number;
 }
 
 interface GameLoopState {
   bird: Bird;
   pipes: Pipe[];
+  clouds: Cloud[];
   frameCount: number;
   score: number;
   lastPipeSpawn: number;
@@ -33,6 +44,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   const gameStateRef = useRef<GameLoopState>({
     bird: { x: 100, y: 200, velocity: 0, rotation: 0 },
     pipes: [],
+    clouds: [],
     frameCount: 0,
     score: 0,
     lastPipeSpawn: 0
@@ -42,6 +54,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     gameStateRef.current = {
       bird: { x: 100, y: canvasHeight / 2, velocity: 0, rotation: 0 },
       pipes: [],
+      clouds: [],
       frameCount: 0,
       score: 0,
       lastPipeSpawn: 0

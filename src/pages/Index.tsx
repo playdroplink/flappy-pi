@@ -98,6 +98,7 @@ const Index = () => {
         lives={gameState.lives}
         highScore={gameState.highScore}
         coins={gameState.coins}
+        gameMode={gameState.gameMode}
         onStartGame={() => gameState.startGame(gameState.gameMode)}
         onBackToMenu={gameState.backToMenu}
         onOpenShop={() => modals.setShowShop(true)}

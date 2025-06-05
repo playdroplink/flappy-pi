@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
@@ -42,10 +41,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     onScoreUpdate,
     onCoinEarned,
     checkCollisions,
-    onCollision
+    onCollision,
+    gameMode
   });
 
-  const { draw } = useGameRenderer({ canvasRef, gameStateRef, birdSkin });
+  const { draw } = useGameRenderer({ 
+    canvasRef, 
+    gameStateRef, 
+    birdSkin,
+    gameMode 
+  });
 
   const gameLoop = useCallback(() => {
     updateGame();
