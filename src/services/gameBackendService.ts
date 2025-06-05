@@ -70,7 +70,7 @@ class GameBackendService {
         return null;
       }
 
-      return data as GameSessionResult;
+      return data as any as GameSessionResult;
     } catch (error) {
       console.error('Error in completeGameSession:', error);
       return null;
@@ -99,7 +99,7 @@ class GameBackendService {
         return { success: false, error: error.message };
       }
 
-      return data as PurchaseResult;
+      return data as any as PurchaseResult;
     } catch (error) {
       console.error('Error in makePurchase:', error);
       return { success: false, error: 'Failed to process purchase' };
@@ -118,7 +118,7 @@ class GameBackendService {
         return { success: false, error: error.message };
       }
 
-      return data as DailyRewardResult;
+      return data as any as DailyRewardResult;
     } catch (error) {
       console.error('Error in claimDailyReward:', error);
       return { success: false, error: 'Failed to claim daily reward' };
@@ -143,7 +143,7 @@ class GameBackendService {
         return null;
       }
 
-      return data as AdRewardResult;
+      return data as any as AdRewardResult;
     } catch (error) {
       console.error('Error in watchAdReward:', error);
       return null;
@@ -172,7 +172,7 @@ class GameBackendService {
   }
 
   // Create or update user profile
-  async upsertUserProfile(profile: Partial<UserProfile>): Promise<UserProfile | null> {
+  async upsertUserProfile(profile: Partial<UserProfile> & { pi_user_id: string; username: string }): Promise<UserProfile | null> {
     try {
       const { data, error } = await supabase
         .from('user_profiles')

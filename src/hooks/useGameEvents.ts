@@ -4,6 +4,7 @@ import { useRef, useCallback, useState } from 'react';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { gameBackendService } from '@/services/gameBackendService';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useAdSystem } from '@/hooks/useAdSystem';
 
 interface UseGameEventsProps {
   score: number;
@@ -35,14 +36,37 @@ export const useGameEvents = ({
   const { toast } = useToast();
   const { submitScore } = useLeaderboard();
   const { profile, refreshProfile } = useUserProfile();
+  const adSystem = useAdSystem();
+  
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [isPausedForRevive, setIsPausedForRevive] = useState(false);
   const [reviveUsed, setReviveUsed] = useState(false);
   const [adWatched, setAdWatched] = useState(false);
+  const [showMandatoryAd, setShowMandatoryAd] = useState(false);
+  const [showAdFreeModal, setShowAdFreeModal] = useState(false);
 
   const handleCollision = () => {
-    console.log('Collision detected - pausing for revive option');
+    console.log('Collision detected - checking ad system');
     
+    // Check if user can continue without ad (Premium subscription)
+    if (adSystem.canContinueWithoutAd && !reviveUsed) {
+      console.log('User has Premium - allowing continue without ad');
+      setIsPausedForRevive(true);
+      setGameState('paused');
+      setShowContinueButton(true); // Show continue button immediately for Premium users
+      setAdWatched(false);
+      return;
+    }
+    
+    // Check if this is a mandatory ad game over
+    if (adSystem.shouldShowMandatoryAd) {
+      console.log('Showing mandatory ad');
+      setShowMandatoryAd(true);
+      setGameState('paused');
+      return;
+    }
+    
+    // Normal revive flow (optional ad)
     if (!reviveUsed) {
       setIsPausedForRevive(true);
       setGameState('paused');
@@ -55,11 +79,16 @@ export const useGameEvents = ({
 
   const handleGameOver = async (finalScore: number) => {
     console.log('Game over with final score:', finalScore);
+    
+    // Increment game count for ad system
+    adSystem.incrementGameCount();
+    
     setGameState('gameOver');
     setScore(finalScore);
     setIsPausedForRevive(false);
     setShowContinueButton(false);
     setAdWatched(false);
+    setShowMandatoryAd(false);
     
     if (!profile) {
       console.warn('No user profile available for game over handling');
@@ -157,6 +186,13 @@ export const useGameEvents = ({
     });
   }, [continueGame, setGameState, toast]);
 
+  const handleMandatoryAdWatch = () => {
+    console.log('Mandatory ad watched - resetting counter and ending game');
+    adSystem.resetAdCounter();
+    setShowMandatoryAd(false);
+    handleGameOver(score);
+  };
+
   const handleAdWatch = async (adType: 'continue' | 'coins' | 'life') => {
     if (!profile) {
       console.warn('No user profile available for ad reward');
@@ -221,6 +257,11 @@ export const useGameEvents = ({
     showContinueButton,
     handleContinueClick,
     isPausedForRevive,
-    reviveUsed
+    reviveUsed,
+    showMandatoryAd,
+    showAdFreeModal,
+    adSystem,
+    handleMandatoryAdWatch,
+    setShowAdFreeModal
   };
 };
