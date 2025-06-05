@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
@@ -92,9 +91,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
 
     if (gameState === 'playing') {
-      // Create new handlers
-      const handleClick = (e: MouseEvent) => {
-        e.preventDefault();
+      // Create new handlers - note: handleClick now doesn't accept parameters
+      const handleClick = () => {
         jump();
       };
       
