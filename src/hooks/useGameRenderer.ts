@@ -1,13 +1,13 @@
 
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
-interface GameRendererProps {
+interface UseGameRendererProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
   gameStateRef: React.MutableRefObject<any>;
   birdSkin: string;
 }
 
-const GameRenderer: React.FC<GameRendererProps> = ({ canvasRef, gameStateRef, birdSkin }) => {
+export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin }: UseGameRendererProps) => {
   const getBirdImage = useCallback(() => {
     const birdImages = {
       'default': '/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png',
@@ -71,5 +71,3 @@ const GameRenderer: React.FC<GameRendererProps> = ({ canvasRef, gameStateRef, bi
 
   return { draw };
 };
-
-export default GameRenderer;

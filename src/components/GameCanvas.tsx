@@ -1,8 +1,7 @@
-
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
-import GameRenderer from './GameRenderer';
+import { useGameRenderer } from '../hooks/useGameRenderer';
 
 interface GameCanvasProps {
   gameState: 'menu' | 'playing' | 'gameOver' | 'paused';
@@ -42,16 +41,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     onCollision
   });
 
-  const renderer = GameRenderer({ canvasRef, gameStateRef, birdSkin });
+  const { draw } = useGameRenderer({ canvasRef, gameStateRef, birdSkin });
 
   const gameLoop = useCallback(() => {
     updateGame();
-    renderer.draw();
+    draw();
     
     if (gameState === 'playing') {
       gameLoopRef.current = requestAnimationFrame(gameLoop);
     }
-  }, [updateGame, renderer.draw, gameState]);
+  }, [updateGame, draw, gameState]);
 
   // Handle input
   useEffect(() => {
