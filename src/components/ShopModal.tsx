@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import ShopHeader from './shop/ShopHeader';
@@ -106,15 +107,6 @@ const ShopModal: React.FC<ShopModalProps> = ({
   ];
 
   const handleAllSkinsSubscription = async () => {
-    if (!profile) {
-      toast({
-        title: "Error",
-        description: "User profile not available",
-        variant: "destructive"
-      });
-      return;
-    }
-
     try {
       console.log('Purchasing All Skins Subscription - 25 Pi for 30 days');
       
@@ -140,19 +132,6 @@ const ShopModal: React.FC<ShopModalProps> = ({
             expiresAt: subscriptionData.expiresAt,
             daysRemaining
           });
-          
-          // Record purchase in backend if available
-          try {
-            await gameBackendService.makePurchase(
-              profile.pi_user_id,
-              'all_skins_subscription',
-              'all_skins_30days',
-              0, // Pi payments don't deduct coins
-              `pi_tx_all_skins_${Date.now()}` // Mock Pi transaction ID
-            );
-          } catch (error) {
-            console.error('Backend purchase recording failed:', error);
-          }
           
           await refreshProfile();
           

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import SplashScreen from '../components/SplashScreen';
 import WelcomeScreen from '../components/WelcomeScreen';
@@ -51,6 +52,7 @@ const Index = () => {
           onOpenTerms={() => modals.setShowTerms(true)}
           onOpenContact={() => modals.setShowContact(true)}
           onOpenHelp={() => modals.setShowHelp(true)}
+          onOpenProfile={() => {}} // Add empty function as placeholder
           coins={gameState.coins}
           musicEnabled={gameState.musicEnabled}
           onToggleMusic={gameState.setMusicEnabled}
