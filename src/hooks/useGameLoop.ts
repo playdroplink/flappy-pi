@@ -72,24 +72,24 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     const canvas = document.querySelector('canvas');
     const safeY = canvas ? Math.max(150, canvas.height / 2) : 300;
     
-    // Reset bird to safe position
+    // Reset bird to safe position - move it back and up from collision point
     gameStateRef.current.bird = {
-      x: 80,
+      x: 80, // Move bird back a bit
       y: safeY,
-      velocity: -2,
+      velocity: -2, // Give slight upward momentum
       rotation: 0
     };
     
-    // Clear game over flag IMMEDIATELY to prevent further collision processing
+    // Clear game over flag and reset physics
     gameStateRef.current.gameOver = false;
     
-    // Remove pipes that are too close
+    // Remove pipes that are too close to give player breathing room
     gameStateRef.current.pipes = gameStateRef.current.pipes.filter(pipe => 
-      pipe.x > gameStateRef.current.bird.x + 300
+      pipe.x > gameStateRef.current.bird.x + 300 // Increased clearance for safer continue
     );
     
-    // Reset spawn timer
-    gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 120;
+    // Reset spawn timer to prevent immediate pipe spawn
+    gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 120; // Add extra delay
     
     console.log('Revive complete - Bird at safe position, score preserved:', gameStateRef.current.score);
   }, []);
@@ -104,7 +104,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   const checkCollisions = useCallback((canvas: HTMLCanvasElement) => {
     const { bird, pipes, gameOver } = gameStateRef.current;
     
-    // Don't check collisions if game is already over or not playing
+    // Don't check collisions if game is already over or paused
     if (gameOver || gameState !== 'playing') return false;
     
     const BIRD_SIZE = 25;

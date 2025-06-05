@@ -44,18 +44,8 @@ export const useGameEvents = ({
   const [adWatched, setAdWatched] = useState(false);
   const [showMandatoryAd, setShowMandatoryAd] = useState(false);
   const [showAdFreeModal, setShowAdFreeModal] = useState(false);
-  
-  // Add collision handling lock to prevent multiple collision events
-  const collisionHandledRef = useRef(false);
 
-  const handleCollision = useCallback(() => {
-    // Prevent multiple collision handling
-    if (collisionHandledRef.current) {
-      console.log('Collision already handled, ignoring...');
-      return;
-    }
-    
-    collisionHandledRef.current = true;
+  const handleCollision = () => {
     console.log('Collision detected - checking ad system');
     
     // Check if user can continue without ad (Premium subscription)
@@ -63,7 +53,7 @@ export const useGameEvents = ({
       console.log('User has Premium - allowing continue without ad');
       setIsPausedForRevive(true);
       setGameState('paused');
-      setShowContinueButton(true);
+      setShowContinueButton(true); // Show continue button immediately for Premium users
       setAdWatched(false);
       return;
     }
@@ -85,13 +75,10 @@ export const useGameEvents = ({
     } else {
       handleGameOver(score);
     }
-  }, [adSystem.canContinueWithoutAd, adSystem.shouldShowMandatoryAd, reviveUsed, score, setGameState]);
+  };
 
   const handleGameOver = async (finalScore: number) => {
     console.log('Game over with final score:', finalScore);
-    
-    // Reset collision lock for next game
-    collisionHandledRef.current = false;
     
     // Increment game count for ad system
     adSystem.incrementGameCount();
@@ -112,10 +99,10 @@ export const useGameEvents = ({
       // Complete game session in backend
       const sessionResult = await gameBackendService.completeGameSession(
         profile.pi_user_id,
-        'classic',
+        'classic', // Default to classic mode
         finalScore,
         level,
-        Math.floor(finalScore / 3) + (level * 2)
+        Math.floor(finalScore / 3) + (level * 2) // Coins earned calculation
       );
       
       if (sessionResult) {
@@ -181,10 +168,6 @@ export const useGameEvents = ({
 
   const handleContinueClick = useCallback(() => {
     console.log('Continue button clicked - resuming game');
-    
-    // Reset collision lock to allow new collisions
-    collisionHandledRef.current = false;
-    
     setShowContinueButton(false);
     setReviveUsed(true);
     setIsPausedForRevive(false);
@@ -205,7 +188,6 @@ export const useGameEvents = ({
 
   const handleMandatoryAdWatch = () => {
     console.log('Mandatory ad watched - resetting counter and ending game');
-    collisionHandledRef.current = false;
     adSystem.resetAdCounter();
     setShowMandatoryAd(false);
     handleGameOver(score);
@@ -235,10 +217,10 @@ export const useGameEvents = ({
           if (coinsResult) {
             setCoins(coins + coinsResult.reward_amount);
             localStorage.setItem('flappypi-coins', (coins + coinsResult.reward_amount).toString());
-            await refreshProfile();
+            await refreshProfile(); // Refresh to get updated backend data
             toast({
-              title: "Bonus Flappy Coins! 🪙",
-              description: `You earned ${coinsResult.reward_amount} Flappy coins!`
+              title: "Bonus Pi Coins! 🪙",
+              description: `You earned ${coinsResult.reward_amount} Pi coins!`
             });
           }
           break;
@@ -260,8 +242,8 @@ export const useGameEvents = ({
         setCoins(coins + bonusCoins);
         localStorage.setItem('flappypi-coins', (coins + bonusCoins).toString());
         toast({
-          title: "Bonus Flappy Coins! 🪙",
-          description: `You earned ${bonusCoins} Flappy coins!`
+          title: "Bonus Pi Coins! 🪙",
+          description: `You earned ${bonusCoins} Pi coins!`
         });
       }
     }
