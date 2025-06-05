@@ -1,4 +1,3 @@
-
 import React from 'react';
 import SplashScreen from '../components/SplashScreen';
 import WelcomeScreen from '../components/WelcomeScreen';
@@ -66,6 +65,7 @@ const Index = () => {
           showTerms={modals.showTerms}
           showContact={modals.showContact}
           showHelp={modals.showHelp}
+          adType={modals.adType}
           coins={gameState.coins}
           score={gameState.score}
           level={gameState.level}
@@ -117,7 +117,7 @@ const Index = () => {
         onBackToMenu={gameState.backToMenu}
         onOpenShop={() => modals.setShowShop(true)}
         onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
-        onShowAd={() => modals.setShowAdPopup(true)}
+        onShowAd={() => modals.handleShowAd('continue')}
         onShareScore={modals.handleShareScore}
         isPausedForRevive={gameEvents.isPausedForRevive}
       />
@@ -151,6 +151,7 @@ const Index = () => {
         showTerms={modals.showTerms}
         showContact={modals.showContact}
         showHelp={modals.showHelp}
+        adType={modals.adType}
         coins={gameState.coins}
         score={gameState.score}
         level={gameState.level}

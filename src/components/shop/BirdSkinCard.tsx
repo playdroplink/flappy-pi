@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Coins, Check, Zap } from 'lucide-react';
+import { Coins, Check, Zap, Sparkles } from 'lucide-react';
 
 interface BirdSkin {
   id: string;
@@ -19,6 +19,7 @@ interface BirdSkinCardProps {
   selectedBirdSkin: string;
   coins: number;
   isOwned: boolean;
+  hasAllSkinsSubscription?: boolean;
   onSelectSkin: (skinId: string) => void;
   onPiPayment: (skin: BirdSkin) => void;
   onCoinPurchase: (skin: BirdSkin) => void;
@@ -29,6 +30,7 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
   selectedBirdSkin,
   coins,
   isOwned,
+  hasAllSkinsSubscription = false,
   onSelectSkin,
   onPiPayment,
   onCoinPurchase
@@ -43,13 +45,24 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
       );
     }
 
-    if (isOwned) {
+    // If user has all skins subscription, they can select any skin
+    if (hasAllSkinsSubscription || isOwned) {
       return (
         <Button 
           onClick={() => onSelectSkin(skin.id)}
           className="bg-blue-600 hover:bg-blue-700 text-white w-full"
         >
-          Select
+          {hasAllSkinsSubscription && !isOwned ? (
+            <>
+              <Sparkles className="mr-1 h-4 w-4" />
+              Select (Subscription)
+            </>
+          ) : (
+            <>
+              <Check className="mr-1 h-4 w-4" />
+              Select
+            </>
+          )}
         </Button>
       );
     }
@@ -90,35 +103,45 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
   return (
     <Card className="p-4 bg-gray-50 border-gray-200">
       <div className="flex items-center space-x-4">
-        <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg border border-gray-200">
+        <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg border border-gray-200 relative">
           <img 
             src={skin.image} 
             alt={skin.name}
             className="w-12 h-12 object-contain"
           />
+          {hasAllSkinsSubscription && !isOwned && (
+            <div className="absolute -top-1 -right-1 bg-pink-500 rounded-full p-1">
+              <Sparkles className="h-3 w-3 text-white" />
+            </div>
+          )}
         </div>
         
-        <div className="flex-1">
-          <h4 className="font-semibold text-gray-800 text-lg">{skin.name}</h4>
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-gray-800 text-lg truncate">{skin.name}</h4>
           <div className="mb-2">
-            {skin.priceType === 'free' ? (
+            {hasAllSkinsSubscription && !isOwned ? (
+              <span className="text-pink-600 text-sm font-medium flex items-center">
+                <Sparkles className="h-4 w-4 mr-1" />
+                Subscription Access
+              </span>
+            ) : skin.priceType === 'free' ? (
               <span className="text-green-600 text-sm font-medium">Free</span>
             ) : (
               <div className="space-y-1">
                 <div className="flex items-center space-x-1">
                   <Zap className="h-4 w-4 text-purple-600" />
-                  <span className="text-purple-600 font-bold">{skin.piPrice} Pi</span>
+                  <span className="text-purple-600 font-bold text-sm">{skin.piPrice} Pi</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Coins className="h-4 w-4 text-yellow-600" />
-                  <span className="text-yellow-600 font-bold">{skin.coinPrice.toLocaleString()} Coins</span>
+                  <span className="text-yellow-600 font-bold text-sm">{skin.coinPrice.toLocaleString()} Coins</span>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        <div className="text-right space-y-2">
+        <div className="text-right space-y-2 flex-shrink-0">
           {renderActionButtons()}
         </div>
       </div>

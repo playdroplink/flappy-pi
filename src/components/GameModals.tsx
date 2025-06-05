@@ -18,6 +18,7 @@ interface GameModalsProps {
   showTerms: boolean;
   showContact: boolean;
   showHelp: boolean;
+  adType: 'continue' | 'coins' | 'life';
   coins: number;
   score: number;
   level: number;
@@ -46,6 +47,7 @@ const GameModals: React.FC<GameModalsProps> = ({
   showTerms,
   showContact,
   showHelp,
+  adType,
   coins,
   score,
   level,
@@ -84,7 +86,7 @@ const GameModals: React.FC<GameModalsProps> = ({
         isOpen={showAdPopup}
         onClose={() => setShowAdPopup(false)}
         onWatchAd={onWatchAd}
-        adType="continue"
+        adType={adType}
       />
 
       <ShareScoreModal
