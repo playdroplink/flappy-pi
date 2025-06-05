@@ -1,5 +1,10 @@
 
-import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import { useAdSystem } from '@/hooks/useAdSystem';
+import { useCollisionHandler } from '@/hooks/useCollisionHandler';
+import { useGameOverHandler } from '@/hooks/useGameOverHandler';
+import { useAdHandler } from '@/hooks/useAdHandler';
+import { useContinueGame } from '@/hooks/useContinueGame';
 
 interface UseGameEventsProps {
   score: number;
@@ -12,6 +17,7 @@ interface UseGameEventsProps {
   setLevel: (level: number) => void;
   setHighScore: (score: number) => void;
   setCoins: (coins: number) => void;
+  continueGame?: () => void;
 }
 
 export const useGameEvents = ({
@@ -24,96 +30,81 @@ export const useGameEvents = ({
   setLives,
   setLevel,
   setHighScore,
-  setCoins
+  setCoins,
+  continueGame
 }: UseGameEventsProps) => {
-  const { toast } = useToast();
+  const adSystem = useAdSystem();
+  
+  const [showContinueButton, setShowContinueButton] = useState(false);
+  const [isPausedForRevive, setIsPausedForRevive] = useState(false);
+  const [reviveUsed, setReviveUsed] = useState(false);
+  const [adWatched, setAdWatched] = useState(false);
+  const [showMandatoryAd, setShowMandatoryAd] = useState(false);
+  const [showAdFreeModal, setShowAdFreeModal] = useState(false);
 
-  const handleCollision = () => {
-    console.log('Collision handled, setting game over');
-    setGameState('gameOver');
-    handleGameOver(score);
-  };
+  const { handleGameOver } = useGameOverHandler({
+    coins,
+    highScore,
+    level,
+    setGameState,
+    setScore,
+    setLives,
+    setLevel,
+    setHighScore,
+    setCoins,
+    setIsPausedForRevive,
+    setShowContinueButton,
+    setAdWatched,
+    setShowMandatoryAd,
+    setReviveUsed
+  });
 
-  const handleGameOver = (finalScore: number) => {
-    console.log('Game over with score:', finalScore);
-    setGameState('gameOver');
-    setScore(finalScore);
-    
-    // Add coins based on score and level (already earned during gameplay)
-    const earnedCoins = Math.floor(finalScore / 3) + (level * 2);
-    const newCoins = coins + earnedCoins;
-    setCoins(newCoins);
-    localStorage.setItem('flappypi-coins', newCoins.toString());
-    
-    // Update high score
-    if (finalScore > highScore) {
-      setHighScore(finalScore);
-      localStorage.setItem('flappypi-highscore', finalScore.toString());
-      toast({
-        title: "🎉 New High Score!",
-        description: `Amazing! You scored ${finalScore} points!`
-      });
-    }
+  const { handleCollision } = useCollisionHandler({
+    reviveUsed,
+    score,
+    setGameState,
+    setIsPausedForRevive,
+    setShowContinueButton,
+    setAdWatched,
+    setShowMandatoryAd,
+    onGameOver: handleGameOver
+  });
 
-    // Reset for next game
-    setLives(1);
-    setLevel(1);
-  };
+  const { handleAdWatch, handleMandatoryAdWatch } = useAdHandler({
+    coins,
+    adWatched,
+    isPausedForRevive,
+    setCoins,
+    setLives,
+    setShowContinueButton,
+    setAdWatched,
+    setShowMandatoryAd,
+    onGameOver: handleGameOver,
+    score
+  });
 
-  const handleCoinEarned = (coinAmount: number) => {
-    const newCoins = coins + coinAmount;
-    setCoins(newCoins);
-    localStorage.setItem('flappypi-coins', newCoins.toString());
-  };
-
-  const handleAdWatch = (adType: 'continue' | 'coins' | 'life') => {
-    switch (adType) {
-      case 'continue':
-        // Add a 3-second countdown before continuing
-        let countdown = 3;
-        
-        const countdownInterval = setInterval(() => {
-          if (countdown > 1) {
-            toast({
-              title: `Get Ready! ${countdown - 1}`,
-              description: "Prepare to continue flying!"
-            });
-            countdown--;
-          } else {
-            clearInterval(countdownInterval);
-            // Continue the game with current score preserved
-            setLives(1);
-            setGameState('playing');
-            toast({
-              title: "Continue! 🚀",
-              description: "Thanks for watching the Pi Ad! Keep flying!"
-            });
-          }
-        }, 1000);
-        
-        // Show initial countdown
-        toast({
-          title: `Get Ready! ${countdown}`,
-          description: "Prepare to continue flying!"
-        });
-        break;
-        
-      case 'coins':
-        const bonusCoins = 25;
-        setCoins(coins + bonusCoins);
-        localStorage.setItem('flappypi-coins', (coins + bonusCoins).toString());
-        toast({
-          title: "Bonus Pi Coins! 🪙",
-          description: `You earned ${bonusCoins} Pi coins!`
-        });
-        break;
-    }
-  };
+  const { handleContinueClick, handleCoinEarned } = useContinueGame({
+    continueGame,
+    setGameState,
+    setShowContinueButton,
+    setReviveUsed,
+    setIsPausedForRevive,
+    setAdWatched
+  });
 
   return {
     handleCollision,
     handleGameOver,
-    handleCoinEarned,
-    handleAdWatch
+    handleCoinEarned: (coinAmount: number) => handleCoinEarned(coinAmount, coins, setCoins),
+    handleAdWatch,
+    showContinueButton,
+    handleContinueClick,
+    isPausedForRevive,
+    reviveUsed,
+    showMandatoryAd,
+    showAdFreeModal,
+    adSystem,
+    handleMandatoryAdWatch,
+    setShowAdFreeModal
   };
 };

@@ -15,6 +15,7 @@ interface GameCanvasProps {
   onCoinEarned: (coins: number) => void;
   birdSkin: string;
   musicEnabled: boolean;
+  onContinueGameRef?: (fn: () => void) => void;
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({
@@ -26,17 +27,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   onScoreUpdate,
   onCoinEarned,
   birdSkin,
-  musicEnabled
+  musicEnabled,
+  onContinueGameRef
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number>();
-  const [score, setScore] = useState(0);
-  const gameStartedRef = useRef(false);
+  const inputHandlersRef = useRef<{
+    handleClick?: (e: MouseEvent) => void;
+    handleKeyPress?: (e: KeyboardEvent) => void;
+  }>({});
 
-  // Add background music
   useBackgroundMusic({ musicEnabled, gameState });
 
-  const { gameStateRef, resetGame, jump, checkCollisions } = useGameLoop({
+  const { gameStateRef, resetGame, continueGame, jump, checkCollisions } = useGameLoop({
     gameState,
     onCollision,
     onScoreUpdate
@@ -59,7 +62,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   });
 
   const gameLoop = useCallback(() => {
-    updateGame();
+    if (gameState === 'playing' && !gameStateRef.current.gameOver) {
+      updateGame();
+    }
     draw();
     
     if (gameState === 'playing') {
@@ -67,52 +72,73 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   }, [updateGame, draw, gameState]);
 
-  // Handle input
+  // Expose continueGame function to parent
   useEffect(() => {
-    const handleClick = () => jump();
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        e.preventDefault();
-        jump();
-      }
-    };
+    if (onContinueGameRef) {
+      onContinueGameRef(continueGame);
+    }
+  }, [continueGame, onContinueGameRef]);
+
+  // Input handlers
+  useEffect(() => {
+    // Clean up existing handlers
+    if (inputHandlersRef.current.handleClick) {
+      window.removeEventListener('click', inputHandlersRef.current.handleClick);
+    }
+    if (inputHandlersRef.current.handleKeyPress) {
+      window.removeEventListener('keydown', inputHandlersRef.current.handleKeyPress);
+    }
 
     if (gameState === 'playing') {
+      const handleClick = (e: MouseEvent) => {
+        e.preventDefault();
+        jump();
+      };
+      
+      const handleKeyPress = (e: KeyboardEvent) => {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          jump();
+        }
+      };
+
+      inputHandlersRef.current = { handleClick, handleKeyPress };
       window.addEventListener('click', handleClick);
       window.addEventListener('keydown', handleKeyPress);
+    } else {
+      inputHandlersRef.current = {};
     }
 
     return () => {
-      window.removeEventListener('click', handleClick);
-      window.removeEventListener('keydown', handleKeyPress);
+      if (inputHandlersRef.current.handleClick) {
+        window.removeEventListener('click', inputHandlersRef.current.handleClick);
+      }
+      if (inputHandlersRef.current.handleKeyPress) {
+        window.removeEventListener('keydown', inputHandlersRef.current.handleKeyPress);
+      }
     };
   }, [jump, gameState]);
 
-  // Game loop management - improved reset logic
+  // Game state management
   useEffect(() => {
+    if (gameLoopRef.current) {
+      cancelAnimationFrame(gameLoopRef.current);
+      gameLoopRef.current = undefined;
+    }
+
     if (gameState === 'playing') {
       const canvas = canvasRef.current;
-      if (canvas) {
-        // Only reset if this is truly a new game (not a resume)
-        if (!gameStartedRef.current || gameStateRef.current.frameCount === 0) {
-          console.log('Starting new game, resetting state');
-          resetGame(canvas.height);
-          gameStartedRef.current = true;
-        }
+      if (canvas && !gameStateRef.current.initialized) {
+        console.log('Starting new game');
+        resetGame(canvas.height);
       }
       gameLoopRef.current = requestAnimationFrame(gameLoop);
-    } else {
-      if (gameState === 'gameOver' || gameState === 'menu') {
-        gameStartedRef.current = false; // Allow reset on next game
-      }
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-      }
     }
 
     return () => {
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
+        gameLoopRef.current = undefined;
       }
     };
   }, [gameState, gameLoop, resetGame]);

@@ -15,16 +15,12 @@ interface AdPopupProps {
 const AdPopup: React.FC<AdPopupProps> = ({ isOpen, onClose, onWatchAd, adType }) => {
   const [isWatching, setIsWatching] = useState(false);
   const [countdown, setCountdown] = useState(3);
-  const [isAdComplete, setIsAdComplete] = useState(false);
-  const [readyCountdown, setReadyCountdown] = useState(3);
 
   // Reset state when popup opens
   useEffect(() => {
     if (isOpen) {
       setIsWatching(false);
-      setIsAdComplete(false);
       setCountdown(3);
-      setReadyCountdown(3);
     }
   }, [isOpen]);
 
@@ -33,24 +29,11 @@ const AdPopup: React.FC<AdPopupProps> = ({ isOpen, onClose, onWatchAd, adType })
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     } else if (isWatching && countdown === 0) {
-      setIsWatching(false);
-      setIsAdComplete(true);
-      setReadyCountdown(3);
-    }
-  }, [isWatching, countdown]);
-
-  useEffect(() => {
-    if (isAdComplete && readyCountdown > 0) {
-      const timer = setTimeout(() => setReadyCountdown(readyCountdown - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (isAdComplete && readyCountdown === 0) {
-      // Close popup first, then trigger the reward
+      // Ad completed - close popup immediately and trigger reward
       onClose();
-      setTimeout(() => {
-        onWatchAd(adType);
-      }, 100);
+      onWatchAd(adType);
     }
-  }, [isAdComplete, readyCountdown, onWatchAd, adType, onClose]);
+  }, [isWatching, countdown, onWatchAd, adType, onClose]);
 
   const getAdInfo = () => {
     switch (adType) {
@@ -111,7 +94,7 @@ const AdPopup: React.FC<AdPopupProps> = ({ isOpen, onClose, onWatchAd, adType })
             </div>
           </div>
 
-          {!isWatching && !isAdComplete ? (
+          {!isWatching ? (
             <>
               {/* Main content */}
               <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 mb-6 text-center border border-blue-100">
@@ -154,7 +137,7 @@ const AdPopup: React.FC<AdPopupProps> = ({ isOpen, onClose, onWatchAd, adType })
                 </p>
               </div>
             </>
-          ) : isWatching ? (
+          ) : (
             /* Watching state */
             <div className="text-center py-8">
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
@@ -178,17 +161,6 @@ const AdPopup: React.FC<AdPopupProps> = ({ isOpen, onClose, onWatchAd, adType })
                 <p className="text-xs text-yellow-600">
                   🚀 Join millions in the Pi Network revolution!
                 </p>
-              </div>
-            </div>
-          ) : (
-            /* Ready countdown */
-            <div className="text-center py-8">
-              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
-                <div className="text-4xl mb-4">✅</div>
-                <h3 className="text-lg font-bold mb-4 text-gray-800">Ad Complete!</h3>
-                <div className="text-2xl font-bold text-green-500 mb-3">Get Ready!</div>
-                <div className="text-4xl font-bold text-green-600 mb-3 animate-bounce">{readyCountdown}</div>
-                <p className="text-gray-600 text-sm">Continuing in {readyCountdown} seconds...</p>
               </div>
             </div>
           )}
