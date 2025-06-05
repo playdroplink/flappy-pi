@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
@@ -10,6 +11,7 @@ interface GameCanvasProps {
   onCollision: () => void;
   onGameOver: (score: number) => void;
   onScoreUpdate: (score: number) => void;
+  onCoinEarned: (coins: number) => void;
   birdSkin: string;
   musicEnabled: boolean;
 }
@@ -21,6 +23,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   onCollision,
   onGameOver,
   onScoreUpdate,
+  onCoinEarned,
   birdSkin,
   musicEnabled
 }) => {
@@ -37,6 +40,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const { updateGame } = useGamePhysics({
     gameStateRef,
     onScoreUpdate,
+    onCoinEarned,
     checkCollisions,
     onCollision
   });

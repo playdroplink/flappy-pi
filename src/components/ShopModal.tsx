@@ -26,7 +26,8 @@ const ShopModal: React.FC<ShopModalProps> = ({
     { 
       id: 'default', 
       name: 'Blue Buddy', 
-      price: 0, 
+      piPrice: 0,
+      coinPrice: 0,
       priceType: 'free',
       image: '/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png',
       owned: true 
@@ -34,16 +35,18 @@ const ShopModal: React.FC<ShopModalProps> = ({
     { 
       id: 'green', 
       name: 'Emerald Flyer', 
-      price: 10, 
-      priceType: 'pi',
+      piPrice: 10,
+      coinPrice: 10000,
+      priceType: 'premium',
       image: '/lovable-uploads/b2ccab90-dff7-4e09-9564-3cdd075c6793.png',
       owned: false 
     },
     { 
       id: 'red', 
       name: 'Ruby Racer', 
-      price: 10, 
-      priceType: 'pi',
+      piPrice: 10,
+      coinPrice: 10000,
+      priceType: 'premium',
       image: '/lovable-uploads/3a780914-6faf-4deb-81ab-ce1f4b059984.png',
       owned: false 
     },
@@ -52,11 +55,11 @@ const ShopModal: React.FC<ShopModalProps> = ({
   const handlePiPayment = async (skin: any) => {
     // Simulate Pi Network payment
     try {
-      console.log(`Initiating Pi payment for ${skin.name} - ${skin.price} Pi`);
+      console.log(`Initiating Pi payment for ${skin.name} - ${skin.piPrice} Pi`);
       
       // In a real implementation, this would call the Pi SDK
       // Pi.requestPayment({
-      //   amount: skin.price,
+      //   amount: skin.piPrice,
       //   memo: `Flappy Pi - ${skin.name} bird skin`,
       //   metadata: { skinId: skin.id }
       // })
@@ -73,12 +76,34 @@ const ShopModal: React.FC<ShopModalProps> = ({
           localStorage.setItem('flappypi-owned-skins', JSON.stringify(ownedSkins));
         }
         
-        alert(`Successfully purchased ${skin.name}! 🎉`);
+        alert(`Successfully purchased ${skin.name} with Pi! 🎉`);
       }, 1500);
       
     } catch (error) {
       console.error('Pi payment failed:', error);
       alert('Payment failed. Please try again.');
+    }
+  };
+
+  const handleCoinPurchase = (skin: any) => {
+    if (coins >= skin.coinPrice) {
+      const newCoins = coins - skin.coinPrice;
+      setCoins(newCoins);
+      localStorage.setItem('flappypi-coins', newCoins.toString());
+      
+      setSelectedBirdSkin(skin.id);
+      localStorage.setItem('flappypi-skin', skin.id);
+      
+      // Mark as owned
+      const ownedSkins = JSON.parse(localStorage.getItem('flappypi-owned-skins') || '["default"]');
+      if (!ownedSkins.includes(skin.id)) {
+        ownedSkins.push(skin.id);
+        localStorage.setItem('flappypi-owned-skins', JSON.stringify(ownedSkins));
+      }
+      
+      alert(`Successfully purchased ${skin.name} with coins! 🎉`);
+    } else {
+      alert(`Not enough coins! You need ${skin.coinPrice - coins} more coins.`);
     }
   };
 
@@ -97,10 +122,10 @@ const ShopModal: React.FC<ShopModalProps> = ({
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 bg-gray-100 rounded-lg p-2 mt-2">
               <Coins className="h-5 w-5 text-yellow-500" />
-              <span className="font-bold text-gray-800">{coins} Game Coins</span>
+              <span className="font-bold text-gray-800">{coins.toLocaleString()} Game Coins</span>
             </div>
             <p className="text-gray-600 text-sm mt-2">
-              Premium skins require Pi Network payments
+              Buy with Pi Network or Game Coins
             </p>
           </div>
         </DialogHeader>
@@ -111,7 +136,7 @@ const ShopModal: React.FC<ShopModalProps> = ({
             <h3 className="text-lg font-bold mb-4 text-gray-800 flex items-center">
               🐦 Bird Characters
               <span className="ml-2 text-sm bg-purple-100 px-2 py-1 rounded text-purple-700">
-                Premium Pi Skins
+                Premium Skins
               </span>
             </h3>
             <div className="grid grid-cols-1 gap-4">
@@ -132,39 +157,55 @@ const ShopModal: React.FC<ShopModalProps> = ({
                         {skin.priceType === 'free' ? (
                           <span className="text-green-600 text-sm font-medium">Free</span>
                         ) : (
-                          <div className="flex items-center space-x-1">
-                            <Zap className="h-4 w-4 text-purple-600" />
-                            <span className="text-purple-600 font-bold">{skin.price} Pi</span>
+                          <div className="space-y-1">
+                            <div className="flex items-center space-x-1">
+                              <Zap className="h-4 w-4 text-purple-600" />
+                              <span className="text-purple-600 font-bold">{skin.piPrice} Pi</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Coins className="h-4 w-4 text-yellow-600" />
+                              <span className="text-yellow-600 font-bold">{skin.coinPrice.toLocaleString()} Coins</span>
+                            </div>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="text-right">
+                    <div className="text-right space-y-2">
                       {selectedBirdSkin === skin.id ? (
-                        <Button className="bg-green-600 hover:bg-green-700 text-white" disabled>
+                        <Button className="bg-green-600 hover:bg-green-700 text-white w-full" disabled>
                           <Check className="mr-1 h-4 w-4" />
                           Selected
                         </Button>
                       ) : isOwned(skin.id) ? (
                         <Button 
                           onClick={() => setSelectedBirdSkin(skin.id)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          className="bg-blue-600 hover:bg-blue-700 text-white w-full"
                         >
                           Select
                         </Button>
-                      ) : skin.priceType === 'pi' ? (
-                        <Button 
-                          onClick={() => handlePiPayment(skin)}
-                          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-                        >
-                          <Zap className="mr-1 h-4 w-4" />
-                          Buy with Pi
-                        </Button>
+                      ) : skin.priceType === 'premium' ? (
+                        <div className="space-y-2">
+                          <Button 
+                            onClick={() => handlePiPayment(skin)}
+                            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white w-full"
+                          >
+                            <Zap className="mr-1 h-4 w-4" />
+                            Buy with Pi
+                          </Button>
+                          <Button 
+                            onClick={() => handleCoinPurchase(skin)}
+                            className={`w-full ${coins >= skin.coinPrice ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-gray-400 cursor-not-allowed'} text-white`}
+                            disabled={coins < skin.coinPrice}
+                          >
+                            <Coins className="mr-1 h-4 w-4" />
+                            Buy with Coins
+                          </Button>
+                        </div>
                       ) : (
                         <Button 
                           onClick={() => setSelectedBirdSkin(skin.id)}
-                          className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                          className="bg-yellow-600 hover:bg-yellow-700 text-white w-full"
                         >
                           <Coins className="mr-1 h-4 w-4" />
                           Free
@@ -182,12 +223,12 @@ const ShopModal: React.FC<ShopModalProps> = ({
             <div className="flex items-start space-x-3">
               <Zap className="h-6 w-6 text-blue-600 mt-1" />
               <div>
-                <h4 className="font-semibold text-blue-800">Pi Network Integration</h4>
+                <h4 className="font-semibold text-blue-800">Earning & Spending Coins</h4>
                 <p className="text-blue-700 text-sm mt-1">
-                  Premium bird skins are purchased with Pi cryptocurrency. Connect your Pi wallet to unlock exclusive characters!
+                  Earn 1 coin for every pipe you pass! Premium skins cost 10,000 coins or 10 Pi.
                 </p>
                 <p className="text-blue-600 text-xs mt-2">
-                  Game coins are earned through gameplay and can be used for power-ups and temporary boosts.
+                  Pi purchases support the Pi Network ecosystem and unlock exclusive content instantly.
                 </p>
               </div>
             </div>

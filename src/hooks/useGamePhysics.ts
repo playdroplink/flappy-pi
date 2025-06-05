@@ -5,6 +5,7 @@ import { getDifficulty } from '../utils/gameDifficulty';
 interface UseGamePhysicsProps {
   gameStateRef: React.MutableRefObject<any>;
   onScoreUpdate: (score: number) => void;
+  onCoinEarned: (coins: number) => void;
   checkCollisions: (canvas: HTMLCanvasElement) => boolean;
   onCollision: () => void;
 }
@@ -12,6 +13,7 @@ interface UseGamePhysicsProps {
 export const useGamePhysics = ({ 
   gameStateRef, 
   onScoreUpdate, 
+  onCoinEarned,
   checkCollisions, 
   onCollision 
 }: UseGamePhysicsProps) => {
@@ -50,7 +52,8 @@ export const useGamePhysics = ({
         pipe.passed = true;
         state.score++;
         onScoreUpdate(state.score);
-        console.log('Score updated:', state.score);
+        onCoinEarned(1); // Earn 1 coin per pipe
+        console.log('Score updated:', state.score, 'Coin earned!');
       }
       
       return pipe.x > -PIPE_WIDTH;
@@ -64,7 +67,7 @@ export const useGamePhysics = ({
     }
 
     state.frameCount++;
-  }, [gameStateRef, onScoreUpdate, checkCollisions, onCollision]);
+  }, [gameStateRef, onScoreUpdate, onCoinEarned, checkCollisions, onCollision]);
 
   return { updateGame };
 };

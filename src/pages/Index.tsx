@@ -86,6 +86,7 @@ const Index = () => {
         onCollision={gameEvents.handleCollision}
         onGameOver={gameEvents.handleGameOver}
         onScoreUpdate={gameState.handleScoreUpdate}
+        onCoinEarned={gameEvents.handleCoinEarned}
         birdSkin={gameState.selectedBirdSkin}
         musicEnabled={gameState.musicEnabled}
       />

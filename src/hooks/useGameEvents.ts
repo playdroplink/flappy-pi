@@ -39,7 +39,7 @@ export const useGameEvents = ({
     setGameState('gameOver');
     setScore(finalScore);
     
-    // Add coins based on score and level
+    // Add coins based on score and level (already earned during gameplay)
     const earnedCoins = Math.floor(finalScore / 3) + (level * 2);
     const newCoins = coins + earnedCoins;
     setCoins(newCoins);
@@ -58,6 +58,12 @@ export const useGameEvents = ({
     // Reset for next game
     setLives(1);
     setLevel(1);
+  };
+
+  const handleCoinEarned = (coinAmount: number) => {
+    const newCoins = coins + coinAmount;
+    setCoins(newCoins);
+    localStorage.setItem('flappypi-coins', newCoins.toString());
   };
 
   const handleAdWatch = (adType: 'continue' | 'coins' | 'life') => {
@@ -88,6 +94,7 @@ export const useGameEvents = ({
   return {
     handleCollision,
     handleGameOver,
+    handleCoinEarned,
     handleAdWatch
   };
 };
