@@ -21,7 +21,7 @@ const SplashScreen = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-sky-400 via-sky-500 to-sky-600 flex items-center justify-center relative overflow-hidden">
+    <div className="fixed inset-0 w-full h-full bg-gradient-to-b from-sky-400 via-sky-500 to-sky-600 flex flex-col items-center justify-center relative overflow-hidden">
       {/* Animated clouds */}
       <div className="absolute inset-0">
         {[...Array(8)].map((_, i) => (
@@ -40,35 +40,37 @@ const SplashScreen = () => {
         ))}
       </div>
 
-      <Card className="p-8 text-center max-w-sm mx-4 animate-scale-in bg-white/90 backdrop-blur-sm">
-        <div className="mb-6">
-          <div className="mb-4 flex justify-center">
-            <img 
-              src="/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png" 
-              alt="Flappy Pi Logo" 
-              className="w-24 h-24 animate-bounce"
-            />
+      <div className="flex-1 flex items-center justify-center w-full px-4">
+        <Card className="p-8 text-center w-full max-w-sm animate-scale-in bg-white/90 backdrop-blur-sm">
+          <div className="mb-6">
+            <div className="mb-4 flex justify-center">
+              <img 
+                src="/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png" 
+                alt="Flappy Pi Logo" 
+                className="w-24 h-24 animate-bounce"
+              />
+            </div>
+            <h1 className="text-4xl font-bold text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text mb-2">
+              Flappy Pi
+            </h1>
+            <p className="text-gray-700 text-lg">
+              Soar to new heights with Pi Network!
+            </p>
           </div>
-          <h1 className="text-4xl font-bold text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text mb-2">
-            Flappy Pi
-          </h1>
-          <p className="text-gray-700 text-lg">
-            Soar to new heights with Pi Network!
-          </p>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="w-full">
-            <Progress value={progress} className="w-full h-3" />
-            <div className="mt-2 text-sm text-gray-600 font-medium">
-              Loading... {progress}%
+          
+          <div className="space-y-4">
+            <div className="w-full">
+              <Progress value={progress} className="w-full h-3" />
+              <div className="mt-2 text-sm text-gray-600 font-medium">
+                Loading... {progress}%
+              </div>
+            </div>
+            <div className="text-sm text-gray-500">
+              Powered by mrwain organization
             </div>
           </div>
-          <div className="text-sm text-gray-500">
-            Powered by mrwain organization
-          </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };
