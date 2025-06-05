@@ -58,6 +58,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   });
 
   const initializationTimeoutRef = useRef<NodeJS.Timeout>();
+  const gameOverProcessingRef = useRef(false);
 
   const waitForCanvas = useCallback((): Promise<HTMLCanvasElement> => {
     return new Promise((resolve, reject) => {
@@ -77,12 +78,15 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   }, []);
 
   const resetGame = useCallback(async () => {
-    console.log('🔄 MASTER RESET - Starting complete game reset');
+    console.log('🔄 COMPLETE GAME RESET - Starting fresh game');
     
     // Clear any pending operations
     if (initializationTimeoutRef.current) {
       clearTimeout(initializationTimeoutRef.current);
     }
+
+    // Reset game over processing
+    gameOverProcessingRef.current = false;
 
     try {
       const canvas = await waitForCanvas();
@@ -91,78 +95,83 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       const safeY = Math.max(100, Math.min(canvas.height / 2, canvas.height - 200));
       const safeX = Math.max(80, canvas.width * 0.15);
       
-      console.log('🐦 Resetting bird to safe position:', safeX, safeY);
+      console.log('🐦 Placing bird at safe position:', safeX, safeY);
       
-      // COMPLETE STATE RESET - Fix all restart issues
+      // COMPLETE STATE RESET
       gameStateRef.current = {
         bird: { 
           x: safeX, 
           y: safeY, 
-          velocity: 0,  // Reset velocity completely
-          rotation: 0   // Reset rotation
+          velocity: 0,
+          rotation: 0
         },
-        pipes: [],      // Clear all pipes
-        clouds: [],     // Clear all clouds
-        frameCount: 0,  // Reset frame counter
-        score: 0,       // Reset score to zero
-        lastPipeSpawn: 400, // Safe delay before first pipe
-        gameOver: false,    // Clear game over flag
-        gameStarted: false, // Reset game started flag
+        pipes: [],
+        clouds: [],
+        frameCount: 0,
+        score: 0,
+        lastPipeSpawn: 500, // Longer delay for first pipe
+        gameOver: false,
+        gameStarted: false, // Will be set true on first jump
         isInitialized: true,
         canvasReady: true
       };
       
       // Update score display immediately
       onScoreUpdate(0);
-      console.log('✅ MASTER RESET COMPLETE - All states cleared');
+      console.log('✅ GAME RESET COMPLETE - Ready for play');
       
     } catch (error) {
       console.error('❌ Canvas reset failed:', error);
-      // Fallback reset without canvas dependency
+      // Fallback reset
       gameStateRef.current = {
         bird: { x: 100, y: 300, velocity: 0, rotation: 0 },
         pipes: [],
         clouds: [],
         frameCount: 0,
         score: 0,
-        lastPipeSpawn: 400,
+        lastPipeSpawn: 500,
         gameOver: false,
         gameStarted: false,
-        isInitialized: false,
-        canvasReady: false
+        isInitialized: true,
+        canvasReady: true
       };
       onScoreUpdate(0);
     }
   }, [onScoreUpdate, waitForCanvas]);
 
   const continueGame = useCallback(async () => {
-    console.log('🚀 CONTINUE GAME - After ad or revive');
+    console.log('🚀 CONTINUE GAME - After ad reward');
+    
+    if (gameOverProcessingRef.current) {
+      console.log('⚠️ Game over still processing, cannot continue');
+      return;
+    }
     
     try {
       const canvas = await waitForCanvas();
       const safeY = Math.max(100, Math.min(canvas.height / 2, canvas.height - 200));
       const safeX = Math.max(80, canvas.width * 0.15);
       
-      // Reset bird for continue (keep score and some pipes)
+      // Reset bird position and physics for continue
       gameStateRef.current.bird = {
         x: safeX,
         y: safeY,
-        velocity: -5,  // Small upward boost
-        rotation: -10
+        velocity: -6, // Give slight upward boost
+        rotation: -15
       };
       
-      // Clear ONLY dangerous pipes near bird
+      // Clear dangerous pipes near bird (keep distant ones)
       const birdX = gameStateRef.current.bird.x;
       gameStateRef.current.pipes = gameStateRef.current.pipes.filter(pipe => 
-        pipe.x > birdX + 400  // Keep distant pipes
+        pipe.x > birdX + 300 // Keep pipes that are far enough
       );
       
-      // Reset critical flags for continue
+      // Reset critical flags for continue (preserve score)
       gameStateRef.current.gameOver = false;
       gameStateRef.current.gameStarted = true;
       gameStateRef.current.isInitialized = true;
       gameStateRef.current.canvasReady = true;
-      gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 300;
+      gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 400; // Safe delay
       
       console.log('✅ Continue successful - Score preserved:', gameStateRef.current.score);
       
@@ -175,14 +184,22 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   const jump = useCallback(() => {
     const state = gameStateRef.current;
     
-    // Enhanced jump validation
-    if (gameState !== 'playing' || !state.canvasReady || !state.isInitialized) {
-      console.log('⚠️ Jump blocked - game not ready');
+    // Enhanced jump validation with better logging
+    if (gameState !== 'playing') {
+      console.log('⚠️ Jump blocked - game state:', gameState);
+      return;
+    }
+
+    if (!state.canvasReady || !state.isInitialized) {
+      console.log('⚠️ Jump blocked - canvas/init not ready:', {
+        canvasReady: state.canvasReady,
+        isInitialized: state.isInitialized
+      });
       return;
     }
 
     if (state.gameOver) {
-      console.log('⚠️ Jump blocked - game over');
+      console.log('⚠️ Jump blocked - game is over');
       return;
     }
     
@@ -193,9 +210,9 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     }
     
     // Apply jump physics
-    state.bird.velocity = -8.5;  // Consistent jump strength
+    state.bird.velocity = -8.5;
     state.bird.rotation = -20;
-    console.log('🐦 Bird jumped! New velocity:', state.bird.velocity);
+    console.log('🐦 Bird jumped! Velocity:', state.bird.velocity, 'Position:', state.bird.y);
   }, [gameState]);
 
   const checkCollisions = useCallback((canvas: HTMLCanvasElement) => {
@@ -205,6 +222,11 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     if (!state || state.gameOver || gameState !== 'playing' || !state.gameStarted || !state.canvasReady) {
       return false;
     }
+
+    // Prevent multiple collision detections
+    if (gameOverProcessingRef.current) {
+      return false;
+    }
     
     const BIRD_SIZE = 25;
     const PIPE_WIDTH = 120;
@@ -212,13 +234,15 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     
     // Ground collision (with margin)
     if (bird.y + BIRD_SIZE >= canvas.height - 30) {
-      console.log('💥 GROUND COLLISION - Game Over');
+      console.log('💥 GROUND COLLISION detected');
+      gameOverProcessingRef.current = true;
       return true;
     }
 
     // Ceiling collision
     if (bird.y <= 10) {
-      console.log('💥 CEILING COLLISION - Game Over');
+      console.log('💥 CEILING COLLISION detected');
+      gameOverProcessingRef.current = true;
       return true;
     }
     
@@ -234,7 +258,8 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       
       if (birdRight > pipeLeft && birdLeft < pipeRight) {
         if (birdTop < pipe.topHeight || birdBottom > pipe.bottomY) {
-          console.log('💥 PIPE COLLISION - Game Over');
+          console.log('💥 PIPE COLLISION detected');
+          gameOverProcessingRef.current = true;
           return true;
         }
       }

@@ -30,7 +30,7 @@ export const useCollisionHandler = ({
     const now = Date.now();
     
     // ENHANCED COLLISION PROTECTION - Prevent multiple triggers
-    if (collisionLockRef.current || processingRef.current || (now - lastCollisionTimeRef.current) < 800) {
+    if (collisionLockRef.current || processingRef.current || (now - lastCollisionTimeRef.current) < 1000) {
       console.log('⚠️ Collision ignored - protection active');
       return;
     }
@@ -39,20 +39,20 @@ export const useCollisionHandler = ({
     processingRef.current = true;
     lastCollisionTimeRef.current = now;
     
-    console.log('💥 COLLISION DETECTED - Processing game over');
+    console.log('💥 COLLISION DETECTED - Processing game over with score:', score);
 
     try {
-      // Direct game over (no ads, clean and fast)
+      // Direct game over - clean and fast
       setTimeout(() => {
         try {
-          console.log('🎮 Calling game over with score:', score);
+          console.log('🎮 Calling game over with final score:', score);
           onGameOver(score);
         } catch (error) {
           console.error('❌ Game over error:', error);
         } finally {
           processingRef.current = false;
         }
-      }, 100); // Reduced delay for faster response
+      }, 200); // Slight delay to ensure state is stable
       
     } catch (error) {
       console.error('❌ Collision handler error:', error);

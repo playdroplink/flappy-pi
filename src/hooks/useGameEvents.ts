@@ -1,5 +1,5 @@
 
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { useCollisionHandler } from '@/hooks/useCollisionHandler';
 import { useGameOverHandler } from '@/hooks/useGameOverHandler';
 import { useAdRewardHandler } from '@/hooks/useAdRewardHandler';
@@ -33,13 +33,46 @@ export const useGameEvents = ({
   continueGame
 }: UseGameEventsProps) => {
   
-  // FIXED: Use regular useState instead of refs to prevent React errors
-  const [showContinueButton, setShowContinueButton] = useState(false);
-  const [isPausedForRevive, setIsPausedForRevive] = useState(false);
-  const [reviveUsed, setReviveUsed] = useState(false);
-  const [adWatched, setAdWatched] = useState(false);
-  const [showMandatoryAd, setShowMandatoryAd] = useState(false);
-  const [showAdFreeModal, setShowAdFreeModal] = useState(false);
+  // FIXED: Use refs instead of useState to prevent React queue errors
+  const showContinueButtonRef = useRef(false);
+  const isPausedForReviveRef = useRef(false);
+  const reviveUsedRef = useRef(false);
+  const adWatchedRef = useRef(false);
+  const showMandatoryAdRef = useRef(false);
+  const showAdFreeModalRef = useRef(false);
+
+  // Getters for current values
+  const showContinueButton = showContinueButtonRef.current;
+  const isPausedForRevive = isPausedForReviveRef.current;
+  const reviveUsed = reviveUsedRef.current;
+  const adWatched = adWatchedRef.current;
+  const showMandatoryAd = showMandatoryAdRef.current;
+  const showAdFreeModal = showAdFreeModalRef.current;
+
+  // Setters that update refs
+  const setShowContinueButton = useCallback((show: boolean) => {
+    showContinueButtonRef.current = show;
+  }, []);
+
+  const setIsPausedForRevive = useCallback((paused: boolean) => {
+    isPausedForReviveRef.current = paused;
+  }, []);
+
+  const setReviveUsed = useCallback((used: boolean) => {
+    reviveUsedRef.current = used;
+  }, []);
+
+  const setAdWatched = useCallback((watched: boolean) => {
+    adWatchedRef.current = watched;
+  }, []);
+
+  const setShowMandatoryAd = useCallback((show: boolean) => {
+    showMandatoryAdRef.current = show;
+  }, []);
+
+  const setShowAdFreeModal = useCallback((show: boolean) => {
+    showAdFreeModalRef.current = show;
+  }, []);
 
   const { handleGameOver } = useGameOverHandler({
     level,
@@ -100,7 +133,7 @@ export const useGameEvents = ({
     resetCollisionLock();
     setShowMandatoryAd(false);
     handleGameOver(score);
-  }, [handleGameOver, score, resetCollisionLock]);
+  }, [handleGameOver, score, resetCollisionLock, setShowMandatoryAd]);
 
   // MASTER RESET - Fixes all restart issues
   const resetGameEventStates = useCallback(() => {
@@ -109,13 +142,13 @@ export const useGameEvents = ({
     // Reset collision system
     resetCollisionLock();
     
-    // Reset ALL UI states
-    setShowContinueButton(false);
-    setIsPausedForRevive(false);
-    setReviveUsed(false);
-    setAdWatched(false);
-    setShowMandatoryAd(false);
-    setShowAdFreeModal(false);
+    // Reset ALL UI states using refs
+    showContinueButtonRef.current = false;
+    isPausedForReviveRef.current = false;
+    reviveUsedRef.current = false;
+    adWatchedRef.current = false;
+    showMandatoryAdRef.current = false;
+    showAdFreeModalRef.current = false;
     
     console.log('✅ All game event states cleared for fresh start');
   }, [resetCollisionLock]);

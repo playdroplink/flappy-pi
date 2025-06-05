@@ -34,6 +34,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const gameLoopRef = useRef<number>();
   const [canvasReady, setCanvasReady] = useState(false);
   const previousGameStateRef = useRef(gameState);
+  const inputHandlersAttachedRef = useRef(false);
 
   useBackgroundMusic({ musicEnabled, gameState });
 
@@ -59,14 +60,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     gameMode 
   });
 
-  // MASTER GAME LOOP - Fixed for all restart scenarios
+  // IMPROVED GAME LOOP - Better performance and error handling
   const gameLoop = useCallback(() => {
     try {
       // Always render to prevent blank screen
       draw();
       
       // Run physics only when playing and ready
-      if (gameState === 'playing' && canvasReady && gameStateRef.current?.canvasReady && !gameStateRef.current?.gameOver) {
+      if (gameState === 'playing' && 
+          canvasReady && 
+          gameStateRef.current?.canvasReady && 
+          gameStateRef.current?.isInitialized &&
+          !gameStateRef.current?.gameOver) {
         updateGame();
       }
       
@@ -92,31 +97,46 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   }, [continueGame, onContinueGameRef]);
 
-  // FIXED INPUT HANDLING - Works after restart
+  // FIXED INPUT HANDLING - Proper cleanup and attachment
   useEffect(() => {
-    const handleInput = (e: MouseEvent | KeyboardEvent) => {
+    const handleInput = (e: MouseEvent | TouchEvent | KeyboardEvent) => {
       e.preventDefault();
-      if (gameState === 'playing') {
+      if (gameState === 'playing' && gameStateRef.current?.isInitialized) {
+        console.log('🎯 Input detected - attempting jump');
         jump();
       }
     };
     
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
+      if (e.code === 'Space' || e.key === ' ') {
         handleInput(e);
       }
     };
 
-    // Add event listeners
-    document.addEventListener('click', handleInput);
+    // Clean up existing listeners first
+    if (inputHandlersAttachedRef.current) {
+      document.removeEventListener('click', handleInput);
+      document.removeEventListener('touchstart', handleInput);
+      document.removeEventListener('keydown', handleKeyPress);
+      inputHandlersAttachedRef.current = false;
+    }
+
+    // Add new listeners
+    document.addEventListener('click', handleInput, { passive: false });
+    document.addEventListener('touchstart', handleInput, { passive: false });
     document.addEventListener('keydown', handleKeyPress);
+    inputHandlersAttachedRef.current = true;
+
+    console.log('🎮 Input handlers attached for game state:', gameState);
 
     return () => {
       // CRITICAL: Always cleanup listeners
       document.removeEventListener('click', handleInput);
+      document.removeEventListener('touchstart', handleInput);
       document.removeEventListener('keydown', handleKeyPress);
+      inputHandlersAttachedRef.current = false;
     };
-  }, [jump, gameState]);
+  }, [jump, gameState, gameStateRef]);
 
   // CANVAS INITIALIZATION - Improved reliability
   useEffect(() => {
@@ -163,13 +183,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           try {
             await resetGame();
             
-            // Start game loop after reset
+            // Start game loop after reset with delay
             setTimeout(() => {
-              if (gameState === 'playing') {
+              if (gameState === 'playing' && canvasReady) {
                 console.log('🚀 Starting game loop after reset');
                 gameLoopRef.current = requestAnimationFrame(gameLoop);
               }
-            }, 100);
+            }, 150);
             
           } catch (error) {
             console.error('❌ Game start error:', error);
@@ -200,7 +220,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       style={{ 
         touchAction: 'none',
         userSelect: 'none',
-        WebkitUserSelect: 'none'
+        WebkitUserSelect: 'none',
+        zIndex: 10
       }}
     />
   );
