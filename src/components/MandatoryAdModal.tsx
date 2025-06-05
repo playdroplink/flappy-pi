@@ -46,7 +46,7 @@ const MandatoryAdModal: React.FC<MandatoryAdModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="max-w-sm border-0 p-0 bg-transparent shadow-none" hideCloseButton>
+      <DialogContent className="max-w-sm border-0 p-0 bg-transparent shadow-none [&>button]:hidden">
         <div className="relative bg-white rounded-2xl p-6 text-gray-800 shadow-2xl border border-gray-200">
           {/* Header */}
           <div className="text-center mb-6">
