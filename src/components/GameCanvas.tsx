@@ -32,9 +32,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number>();
-  const [score, setScore] = useState(0);
-  const gameStartedRef = useRef(false);
-  const canvasInitializedRef = useRef(false);
+  const [canvasReady, setCanvasReady] = useState(false);
+  const gameInitializedRef = useRef(false);
 
   // Add background music
   useBackgroundMusic({ musicEnabled, gameState });
@@ -62,8 +61,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   });
 
   const gameLoop = useCallback(() => {
-    // Only update game if actually playing and not in game over state
-    if (gameState === 'playing' && !gameStateRef.current.gameOver) {
+    // Only update game if canvas is ready and game is playing
+    if (canvasReady && gameState === 'playing' && !gameStateRef.current.gameOver) {
       updateGame();
     }
     draw();
@@ -71,9 +70,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     if (gameState === 'playing') {
       gameLoopRef.current = requestAnimationFrame(gameLoop);
     }
-  }, [updateGame, draw, gameState]);
+  }, [updateGame, draw, gameState, canvasReady]);
 
-  // Expose continueGame function to parent through callback
+  // Expose continueGame function to parent
   useEffect(() => {
     if (onContinueGameRef) {
       onContinueGameRef(continueGame);
@@ -82,7 +81,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Handle input
   useEffect(() => {
-    const handleClick = () => jump();
+    const handleClick = (e: MouseEvent) => {
+      e.preventDefault();
+      jump();
+    };
+    
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
         e.preventDefault();
@@ -90,78 +93,84 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
     };
 
-    if (gameState === 'playing') {
-      window.addEventListener('click', handleClick);
-      window.addEventListener('keydown', handleKeyPress);
+    if (gameState === 'playing' && canvasReady) {
+      document.addEventListener('click', handleClick);
+      document.addEventListener('keydown', handleKeyPress);
     }
 
     return () => {
-      window.removeEventListener('click', handleClick);
-      window.removeEventListener('keydown', handleKeyPress);
+      document.removeEventListener('click', handleClick);
+      document.removeEventListener('keydown', handleKeyPress);
     };
-  }, [jump, gameState]);
+  }, [jump, gameState, canvasReady]);
 
-  // Canvas resize
+  // Canvas initialization and resize
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const resizeCanvas = () => {
+    const initializeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      console.log('Canvas resized to:', canvas.width, 'x', canvas.height);
-      canvasInitializedRef.current = true;
+      console.log('🖥️ Canvas initialized:', canvas.width, 'x', canvas.height);
+      
+      // Mark canvas as ready after a brief delay to ensure dimensions are set
+      setTimeout(() => {
+        setCanvasReady(true);
+      }, 50);
     };
 
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    initializeCanvas();
+    window.addEventListener('resize', initializeCanvas);
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('resize', initializeCanvas);
     };
   }, []);
 
-  // Game loop management - improved reset logic
+  // Game state management
   useEffect(() => {
-    if (gameState === 'playing') {
-      // Wait for canvas to be properly initialized before starting
-      if (!canvasInitializedRef.current) {
-        console.log('Canvas not initialized yet, waiting...');
-        return;
-      }
-
-      // Only reset if this is truly a new game (not a resume)
-      if (!gameStartedRef.current || gameStateRef.current.frameCount === 0) {
-        console.log('Starting new game, resetting state after canvas is ready');
-        // Small delay to ensure canvas dimensions are properly set
+    if (gameState === 'playing' && canvasReady) {
+      // Only reset if this is a genuinely new game
+      if (!gameInitializedRef.current || gameStateRef.current.frameCount === 0) {
+        console.log('🎮 Starting new game session');
+        gameInitializedRef.current = true;
+        
+        // Small delay to ensure canvas is fully ready
         setTimeout(() => {
           resetGame();
-          gameStartedRef.current = true;
-        }, 50);
+        }, 100);
       }
       
-      gameLoopRef.current = requestAnimationFrame(gameLoop);
-    } else {
-      if (gameState === 'gameOver' || gameState === 'menu') {
-        console.log('Game ended, allowing reset on next game');
-        gameStartedRef.current = false; // Allow reset on next game
+      // Start the game loop
+      if (!gameLoopRef.current) {
+        gameLoopRef.current = requestAnimationFrame(gameLoop);
       }
+    } else {
+      // Stop the game loop
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
+        gameLoopRef.current = undefined;
+      }
+      
+      // Reset initialization flag when leaving game
+      if (gameState === 'menu' || gameState === 'gameOver') {
+        gameInitializedRef.current = false;
       }
     }
 
     return () => {
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
+        gameLoopRef.current = undefined;
       }
     };
-  }, [gameState, gameLoop, resetGame, canvasInitializedRef.current]);
+  }, [gameState, canvasReady, gameLoop, resetGame]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 w-full h-full bg-gradient-to-b from-sky-400 to-sky-600 touch-none"
+      className="fixed inset-0 w-full h-full bg-gradient-to-b from-sky-400 to-sky-600 touch-none cursor-pointer"
       style={{ 
         touchAction: 'none',
         userSelect: 'none',
