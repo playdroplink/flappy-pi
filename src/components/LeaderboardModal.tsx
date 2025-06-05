@@ -1,8 +1,10 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
-import { Trophy, Medal, Award, Crown } from 'lucide-react';
+import { Trophy, Medal, Award, Crown, Loader2, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useLeaderboard } from '@/hooks/useLeaderboard';
 
 interface LeaderboardModalProps {
   isOpen: boolean;
@@ -10,19 +12,7 @@ interface LeaderboardModalProps {
 }
 
 const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose }) => {
-  // Mock leaderboard data
-  const leaderboardData = [
-    { rank: 1, username: 'PiMaster2024', score: 1250, avatar: '👑' },
-    { rank: 2, username: 'SkyFlyer', score: 1100, avatar: '🥈' },
-    { rank: 3, username: 'BirdLegend', score: 980, avatar: '🥉' },
-    { rank: 4, username: 'PiPlayer', score: 850, avatar: '🐦' },
-    { rank: 5, username: 'CloudChaser', score: 750, avatar: '☁️' },
-    { rank: 6, username: 'WingMaster', score: 680, avatar: '🪶' },
-    { rank: 7, username: 'PiExplorer', score: 620, avatar: '🔍' },
-    { rank: 8, username: 'SkyDancer', score: 580, avatar: '💃' },
-    { rank: 9, username: 'FlightPro', score: 520, avatar: '✈️' },
-    { rank: 10, username: 'PiNinja', score: 480, avatar: '🥷' },
-  ];
+  const { leaderboard, loading, fetchLeaderboard } = useLeaderboard();
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -50,58 +40,108 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose }) 
     }
   };
 
+  const getPlayerAvatar = (rank: number) => {
+    const avatars = ['👑', '🥈', '🥉', '🐦', '☁️', '🪶', '🔍', '💃', '✈️', '🥷'];
+    return avatars[rank - 1] || '🎮';
+  };
+
+  const getRankLabel = (rank: number) => {
+    if (rank === 1) return 'Champion';
+    if (rank === 2) return 'Runner-up';
+    if (rank === 3) return 'Third Place';
+    return '';
+  };
+
+  // Refresh leaderboard when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchLeaderboard();
+    }
+  }, [isOpen]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto bg-white border-gray-300">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl text-gray-800 flex items-center justify-center space-x-2">
-            <Trophy className="h-6 w-6 text-yellow-500" />
-            <span>Pi Leaderboard</span>
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-center text-2xl text-gray-800 flex items-center justify-center space-x-2">
+              <Trophy className="h-6 w-6 text-yellow-500" />
+              <span>Pi Leaderboard</span>
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={fetchLeaderboard}
+              disabled={loading}
+              className="h-8 w-8 p-0"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
           <p className="text-center text-gray-600 text-sm">
-            Top flyers this week
+            Top flyers worldwide
           </p>
         </DialogHeader>
 
-        <div className="space-y-3">
-          {leaderboardData.map((player) => (
-            <Card 
-              key={player.rank} 
-              className={`p-4 bg-gradient-to-r ${getRankColor(player.rank)} border`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2">
-                    {getRankIcon(player.rank)}
-                    <span className="font-bold text-gray-800 text-lg">
-                      #{player.rank}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-2xl">{player.avatar}</span>
-                    <div>
-                      <div className="font-semibold text-gray-800">
-                        {player.username}
-                      </div>
-                      {player.rank <= 3 && (
-                        <div className="text-xs text-gray-600">
-                          {player.rank === 1 ? 'Champion' : 
-                           player.rank === 2 ? 'Runner-up' : 'Third Place'}
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            <span className="ml-2 text-gray-600">Loading leaderboard...</span>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {leaderboard.length === 0 ? (
+              <Card className="p-6 text-center">
+                <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">No scores yet!</p>
+                <p className="text-sm text-gray-500">Be the first to set a high score!</p>
+              </Card>
+            ) : (
+              leaderboard.map((player, index) => {
+                const rank = index + 1;
+                return (
+                  <Card 
+                    key={player.id} 
+                    className={`p-4 bg-gradient-to-r ${getRankColor(rank)} border`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2">
+                          {getRankIcon(rank)}
+                          <span className="font-bold text-gray-800 text-lg">
+                            #{rank}
+                          </span>
                         </div>
-                      )}
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">{getPlayerAvatar(rank)}</span>
+                          <div>
+                            <div className="font-semibold text-gray-800">
+                              {player.username}
+                            </div>
+                            {rank <= 3 && (
+                              <div className="text-xs text-gray-600">
+                                {getRankLabel(rank)}
+                              </div>
+                            )}
+                            <div className="text-xs text-gray-500">
+                              {player.total_games} games played
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-gray-800 text-lg">
+                          {player.highest_score.toLocaleString()}
+                        </div>
+                        <div className="text-gray-600 text-sm">points</div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-bold text-gray-800 text-lg">
-                    {player.score.toLocaleString()}
-                  </div>
-                  <div className="text-gray-600 text-sm">points</div>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+                  </Card>
+                );
+              })
+            )}
+          </div>
+        )}
 
         <div className="mt-6 text-center">
           <Card className="p-4 bg-gradient-to-r from-green-100 to-emerald-100 border-green-300">

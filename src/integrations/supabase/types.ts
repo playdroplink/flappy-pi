@@ -9,13 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      user_scores: {
+        Row: {
+          created_at: string
+          highest_score: number
+          id: string
+          pi_user_id: string
+          total_games: number
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          highest_score?: number
+          id?: string
+          pi_user_id: string
+          total_games?: number
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          highest_score?: number
+          id?: string
+          pi_user_id?: string
+          total_games?: number
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_user_score: {
+        Args: { p_pi_user_id: string; p_username: string; p_score: number }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

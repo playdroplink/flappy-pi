@@ -1,6 +1,7 @@
 
 import { useToast } from '@/hooks/use-toast';
 import { useRef, useCallback, useState } from 'react';
+import { useLeaderboard } from '@/hooks/useLeaderboard';
 
 interface UseGameEventsProps {
   score: number;
@@ -30,9 +31,22 @@ export const useGameEvents = ({
   continueGame
 }: UseGameEventsProps) => {
   const { toast } = useToast();
+  const { submitScore } = useLeaderboard();
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [isPausedForRevive, setIsPausedForRevive] = useState(false);
   const [reviveUsed, setReviveUsed] = useState(false);
+
+  // Generate a mock Pi user ID and username for demo purposes
+  // In a real app, this would come from Pi Network authentication
+  const generateMockPiUser = () => {
+    const usernames = ['PiFlyer', 'SkyMaster', 'BirdLegend', 'CloudChaser', 'WingCommander', 'PiExplorer'];
+    const randomUsername = usernames[Math.floor(Math.random() * usernames.length)];
+    const randomId = Math.random().toString(36).substr(2, 9);
+    return {
+      piUserId: `pi_user_${randomId}`,
+      username: `${randomUsername}_${randomId.substr(0, 4)}`
+    };
+  };
 
   const handleCollision = () => {
     console.log('Collision detected - pausing for revive option');
@@ -47,11 +61,21 @@ export const useGameEvents = ({
     }
   };
 
-  const handleGameOver = (finalScore: number) => {
+  const handleGameOver = async (finalScore: number) => {
     console.log('Game over with final score:', finalScore);
     setGameState('gameOver');
     setScore(finalScore);
     setIsPausedForRevive(false);
+    
+    // Submit score to leaderboard if it's a decent score (> 0)
+    if (finalScore > 0) {
+      const mockUser = generateMockPiUser();
+      try {
+        await submitScore(mockUser.piUserId, mockUser.username, finalScore);
+      } catch (error) {
+        console.error('Failed to submit score:', error);
+      }
+    }
     
     // Add coins based on score and level
     const earnedCoins = Math.floor(finalScore / 3) + (level * 2);
