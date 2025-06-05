@@ -4,6 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import ShopHeader from './shop/ShopHeader';
 import BirdSkinCard from './shop/BirdSkinCard';
 import ShopInfoSection from './shop/ShopInfoSection';
+import { gameBackendService } from '@/services/gameBackendService';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useToast } from '@/hooks/use-toast';
 
 interface ShopModalProps {
   isOpen: boolean;
@@ -22,6 +25,9 @@ const ShopModal: React.FC<ShopModalProps> = ({
   selectedBirdSkin,
   setSelectedBirdSkin
 }) => {
+  const { profile, refreshProfile } = useUserProfile();
+  const { toast } = useToast();
+
   const birdSkins = [
     { 
       id: 'default', 
@@ -53,46 +59,134 @@ const ShopModal: React.FC<ShopModalProps> = ({
   ];
 
   const handlePiPayment = async (skin: any) => {
+    if (!profile) {
+      toast({
+        title: "Error",
+        description: "User profile not available",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       console.log(`Initiating Pi payment for ${skin.name} - ${skin.piPrice} Pi`);
       
-      setTimeout(() => {
-        setSelectedBirdSkin(skin.id);
-        localStorage.setItem('flappypi-skin', skin.id);
-        
-        const ownedSkins = JSON.parse(localStorage.getItem('flappypi-owned-skins') || '["default"]');
-        if (!ownedSkins.includes(skin.id)) {
-          ownedSkins.push(skin.id);
-          localStorage.setItem('flappypi-owned-skins', JSON.stringify(ownedSkins));
+      // Simulate Pi payment process
+      setTimeout(async () => {
+        try {
+          // Record purchase in backend
+          const result = await gameBackendService.makePurchase(
+            profile.pi_user_id,
+            'bird_skin',
+            skin.id,
+            0, // Pi payments don't deduct coins
+            `pi_tx_${Date.now()}` // Mock Pi transaction ID
+          );
+
+          if (result.success) {
+            setSelectedBirdSkin(skin.id);
+            localStorage.setItem('flappypi-skin', skin.id);
+            
+            const ownedSkins = JSON.parse(localStorage.getItem('flappypi-owned-skins') || '["default"]');
+            if (!ownedSkins.includes(skin.id)) {
+              ownedSkins.push(skin.id);
+              localStorage.setItem('flappypi-owned-skins', JSON.stringify(ownedSkins));
+            }
+            
+            await refreshProfile(); // Refresh profile data
+            
+            toast({
+              title: "Purchase Successful! 🎉",
+              description: `Successfully purchased ${skin.name} with Pi!`
+            });
+          } else {
+            toast({
+              title: "Purchase Failed",
+              description: result.error || "Failed to complete Pi purchase",
+              variant: "destructive"
+            });
+          }
+        } catch (error) {
+          console.error('Error processing Pi payment:', error);
+          toast({
+            title: "Payment Error",
+            description: "Failed to process Pi payment",
+            variant: "destructive"
+          });
         }
-        
-        alert(`Successfully purchased ${skin.name} with Pi! 🎉`);
       }, 1500);
       
     } catch (error) {
       console.error('Pi payment failed:', error);
-      alert('Payment failed. Please try again.');
+      toast({
+        title: "Payment Failed",
+        description: "Pi payment could not be processed",
+        variant: "destructive"
+      });
     }
   };
 
-  const handleCoinPurchase = (skin: any) => {
+  const handleCoinPurchase = async (skin: any) => {
+    if (!profile) {
+      toast({
+        title: "Error",
+        description: "User profile not available",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (coins >= skin.coinPrice) {
-      const newCoins = coins - skin.coinPrice;
-      setCoins(newCoins);
-      localStorage.setItem('flappypi-coins', newCoins.toString());
-      
-      setSelectedBirdSkin(skin.id);
-      localStorage.setItem('flappypi-skin', skin.id);
-      
-      const ownedSkins = JSON.parse(localStorage.getItem('flappypi-owned-skins') || '["default"]');
-      if (!ownedSkins.includes(skin.id)) {
-        ownedSkins.push(skin.id);
-        localStorage.setItem('flappypi-owned-skins', JSON.stringify(ownedSkins));
+      try {
+        // Make purchase through backend
+        const result = await gameBackendService.makePurchase(
+          profile.pi_user_id,
+          'bird_skin',
+          skin.id,
+          skin.coinPrice
+        );
+
+        if (result.success) {
+          // Update local state
+          setCoins(result.remaining_coins || 0);
+          localStorage.setItem('flappypi-coins', (result.remaining_coins || 0).toString());
+          
+          setSelectedBirdSkin(skin.id);
+          localStorage.setItem('flappypi-skin', skin.id);
+          
+          const ownedSkins = JSON.parse(localStorage.getItem('flappypi-owned-skins') || '["default"]');
+          if (!ownedSkins.includes(skin.id)) {
+            ownedSkins.push(skin.id);
+            localStorage.setItem('flappypi-owned-skins', JSON.stringify(ownedSkins));
+          }
+          
+          await refreshProfile(); // Refresh profile data
+          
+          toast({
+            title: "Purchase Successful! 🎉",
+            description: `Successfully purchased ${skin.name} with coins!`
+          });
+        } else {
+          toast({
+            title: "Purchase Failed",
+            description: result.error || "Failed to complete purchase",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error making coin purchase:', error);
+        toast({
+          title: "Purchase Error",
+          description: "Failed to process coin purchase",
+          variant: "destructive"
+        });
       }
-      
-      alert(`Successfully purchased ${skin.name} with coins! 🎉`);
     } else {
-      alert(`Not enough coins! You need ${skin.coinPrice - coins} more coins.`);
+      toast({
+        title: "Insufficient Coins",
+        description: `You need ${skin.coinPrice - coins} more coins.`,
+        variant: "destructive"
+      });
     }
   };
 

@@ -9,6 +9,213 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ad_watches: {
+        Row: {
+          ad_type: string
+          id: string
+          pi_user_id: string
+          reward_given: string | null
+          watched_at: string | null
+        }
+        Insert: {
+          ad_type: string
+          id?: string
+          pi_user_id: string
+          reward_given?: string | null
+          watched_at?: string | null
+        }
+        Update: {
+          ad_type?: string
+          id?: string
+          pi_user_id?: string
+          reward_given?: string | null
+          watched_at?: string | null
+        }
+        Relationships: []
+      }
+      daily_rewards: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_claimed_date: string | null
+          pi_user_id: string
+          reward_day: number
+          streak_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_claimed_date?: string | null
+          pi_user_id: string
+          reward_day: number
+          streak_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_claimed_date?: string | null
+          pi_user_id?: string
+          reward_day?: number
+          streak_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      game_sessions: {
+        Row: {
+          coins_earned: number
+          created_at: string | null
+          final_score: number
+          game_mode: Database["public"]["Enums"]["game_mode"]
+          id: string
+          level_reached: number
+          pi_user_id: string
+          session_duration: number | null
+        }
+        Insert: {
+          coins_earned?: number
+          created_at?: string | null
+          final_score?: number
+          game_mode: Database["public"]["Enums"]["game_mode"]
+          id?: string
+          level_reached?: number
+          pi_user_id: string
+          session_duration?: number | null
+        }
+        Update: {
+          coins_earned?: number
+          created_at?: string | null
+          final_score?: number
+          game_mode?: Database["public"]["Enums"]["game_mode"]
+          id?: string
+          level_reached?: number
+          pi_user_id?: string
+          session_duration?: number | null
+        }
+        Relationships: []
+      }
+      purchases: {
+        Row: {
+          cost_coins: number
+          created_at: string | null
+          id: string
+          item_id: string
+          item_type: Database["public"]["Enums"]["item_type"]
+          pi_transaction_id: string | null
+          pi_user_id: string
+        }
+        Insert: {
+          cost_coins: number
+          created_at?: string | null
+          id?: string
+          item_id: string
+          item_type: Database["public"]["Enums"]["item_type"]
+          pi_transaction_id?: string | null
+          pi_user_id: string
+        }
+        Update: {
+          cost_coins?: number
+          created_at?: string | null
+          id?: string
+          item_id?: string
+          item_type?: Database["public"]["Enums"]["item_type"]
+          pi_transaction_id?: string | null
+          pi_user_id?: string
+        }
+        Relationships: []
+      }
+      user_inventory: {
+        Row: {
+          created_at: string | null
+          id: string
+          item_id: string
+          item_type: Database["public"]["Enums"]["item_type"]
+          pi_user_id: string
+          quantity: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          item_id: string
+          item_type: Database["public"]["Enums"]["item_type"]
+          pi_user_id: string
+          quantity?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          item_id?: string
+          item_type?: Database["public"]["Enums"]["item_type"]
+          pi_user_id?: string
+          quantity?: number | null
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          id: string
+          music_enabled: boolean | null
+          pi_user_id: string
+          selected_bird_skin: string | null
+          total_coins: number | null
+          updated_at: string | null
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          music_enabled?: boolean | null
+          pi_user_id: string
+          selected_bird_skin?: string | null
+          total_coins?: number | null
+          updated_at?: string | null
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          music_enabled?: boolean | null
+          pi_user_id?: string
+          selected_bird_skin?: string | null
+          total_coins?: number | null
+          updated_at?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      user_rewards: {
+        Row: {
+          claimed_at: string | null
+          description: string | null
+          id: string
+          pi_user_id: string
+          reward_amount: number
+          reward_type: Database["public"]["Enums"]["reward_type"]
+        }
+        Insert: {
+          claimed_at?: string | null
+          description?: string | null
+          id?: string
+          pi_user_id: string
+          reward_amount: number
+          reward_type: Database["public"]["Enums"]["reward_type"]
+        }
+        Update: {
+          claimed_at?: string | null
+          description?: string | null
+          id?: string
+          pi_user_id?: string
+          reward_amount?: number
+          reward_type?: Database["public"]["Enums"]["reward_type"]
+        }
+        Relationships: []
+      }
       user_scores: {
         Row: {
           created_at: string
@@ -44,13 +251,48 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_daily_reward: {
+        Args: { p_pi_user_id: string }
+        Returns: Json
+      }
+      complete_game_session: {
+        Args: {
+          p_pi_user_id: string
+          p_game_mode: Database["public"]["Enums"]["game_mode"]
+          p_final_score: number
+          p_level_reached: number
+          p_coins_earned: number
+          p_session_duration?: number
+        }
+        Returns: Json
+      }
+      make_purchase: {
+        Args: {
+          p_pi_user_id: string
+          p_item_type: Database["public"]["Enums"]["item_type"]
+          p_item_id: string
+          p_cost_coins: number
+          p_pi_transaction_id?: string
+        }
+        Returns: Json
+      }
       update_user_score: {
         Args: { p_pi_user_id: string; p_username: string; p_score: number }
         Returns: undefined
       }
+      watch_ad_reward: {
+        Args: {
+          p_pi_user_id: string
+          p_ad_type: string
+          p_reward_amount?: number
+        }
+        Returns: Json
+      }
     }
     Enums: {
-      [_ in never]: never
+      game_mode: "classic" | "endless" | "challenge"
+      item_type: "bird_skin" | "power_up" | "life" | "coins"
+      reward_type: "daily" | "weekly_leaderboard" | "ad_watch" | "achievement"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -165,6 +407,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      game_mode: ["classic", "endless", "challenge"],
+      item_type: ["bird_skin", "power_up", "life", "coins"],
+      reward_type: ["daily", "weekly_leaderboard", "ad_watch", "achievement"],
+    },
   },
 } as const

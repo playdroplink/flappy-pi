@@ -2,6 +2,8 @@
 import { useToast } from '@/hooks/use-toast';
 import { useRef, useCallback, useState } from 'react';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
+import { gameBackendService } from '@/services/gameBackendService';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 interface UseGameEventsProps {
   score: number;
@@ -32,34 +34,21 @@ export const useGameEvents = ({
 }: UseGameEventsProps) => {
   const { toast } = useToast();
   const { submitScore } = useLeaderboard();
+  const { profile, refreshProfile } = useUserProfile();
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [isPausedForRevive, setIsPausedForRevive] = useState(false);
   const [reviveUsed, setReviveUsed] = useState(false);
-  const [adWatched, setAdWatched] = useState(false); // Prevent multiple ad triggers
-
-  // Generate a mock Pi user ID and username for demo purposes
-  // In a real app, this would come from Pi Network authentication
-  const generateMockPiUser = () => {
-    const usernames = ['PiFlyer', 'SkyMaster', 'BirdLegend', 'CloudChaser', 'WingCommander', 'PiExplorer'];
-    const randomUsername = usernames[Math.floor(Math.random() * usernames.length)];
-    const randomId = Math.random().toString(36).substr(2, 9);
-    return {
-      piUserId: `pi_user_${randomId}`,
-      username: `${randomUsername}_${randomId.substr(0, 4)}`
-    };
-  };
+  const [adWatched, setAdWatched] = useState(false);
 
   const handleCollision = () => {
     console.log('Collision detected - pausing for revive option');
     
-    // Only allow revive if not used in this session
     if (!reviveUsed) {
       setIsPausedForRevive(true);
       setGameState('paused');
-      setAdWatched(false); // Reset ad watched state for new collision
-      setShowContinueButton(false); // Reset continue button
+      setAdWatched(false);
+      setShowContinueButton(false);
     } else {
-      // Go directly to game over if revive already used
       handleGameOver(score);
     }
   };
@@ -69,39 +58,77 @@ export const useGameEvents = ({
     setGameState('gameOver');
     setScore(finalScore);
     setIsPausedForRevive(false);
-    setShowContinueButton(false); // Reset continue button
-    setAdWatched(false); // Reset ad state
+    setShowContinueButton(false);
+    setAdWatched(false);
     
+    if (!profile) {
+      console.warn('No user profile available for game over handling');
+      return;
+    }
+    
+    try {
+      // Complete game session in backend
+      const sessionResult = await gameBackendService.completeGameSession(
+        profile.pi_user_id,
+        'classic', // Default to classic mode
+        finalScore,
+        level,
+        Math.floor(finalScore / 3) + (level * 2) // Coins earned calculation
+      );
+      
+      if (sessionResult) {
+        // Update local state with backend results
+        setCoins(sessionResult.total_coins);
+        localStorage.setItem('flappypi-coins', sessionResult.total_coins.toString());
+        
+        if (sessionResult.is_high_score) {
+          setHighScore(finalScore);
+          localStorage.setItem('flappypi-highscore', finalScore.toString());
+          toast({
+            title: "🎉 New High Score!",
+            description: `Amazing! You scored ${finalScore} points and earned ${sessionResult.coins_earned} coins!`
+          });
+        } else {
+          toast({
+            title: "Game Over! 🎮",
+            description: `You scored ${finalScore} points and earned ${sessionResult.coins_earned} coins!`
+          });
+        }
+        
+        // Refresh user profile to get updated data
+        await refreshProfile();
+      }
+    } catch (error) {
+      console.error('Error handling game over:', error);
+      // Fallback to local handling
+      const earnedCoins = Math.floor(finalScore / 3) + (level * 2);
+      const newCoins = coins + earnedCoins;
+      setCoins(newCoins);
+      localStorage.setItem('flappypi-coins', newCoins.toString());
+      
+      if (finalScore > highScore) {
+        setHighScore(finalScore);
+        localStorage.setItem('flappypi-highscore', finalScore.toString());
+        toast({
+          title: "🎉 New High Score!",
+          description: `Amazing! You scored ${finalScore} points!`
+        });
+      }
+    }
+
     // Submit score to leaderboard if it's a decent score (> 0)
-    if (finalScore > 0) {
-      const mockUser = generateMockPiUser();
+    if (finalScore > 0 && profile) {
       try {
-        await submitScore(mockUser.piUserId, mockUser.username, finalScore);
+        await submitScore(profile.pi_user_id, profile.username, finalScore);
       } catch (error) {
         console.error('Failed to submit score:', error);
       }
-    }
-    
-    // Add coins based on score and level
-    const earnedCoins = Math.floor(finalScore / 3) + (level * 2);
-    const newCoins = coins + earnedCoins;
-    setCoins(newCoins);
-    localStorage.setItem('flappypi-coins', newCoins.toString());
-    
-    // Update high score
-    if (finalScore > highScore) {
-      setHighScore(finalScore);
-      localStorage.setItem('flappypi-highscore', finalScore.toString());
-      toast({
-        title: "🎉 New High Score!",
-        description: `Amazing! You scored ${finalScore} points!`
-      });
     }
 
     // Reset for next game
     setLives(1);
     setLevel(1);
-    setReviveUsed(false); // Reset revive for next game
+    setReviveUsed(false);
   };
 
   const handleCoinEarned = (coinAmount: number) => {
@@ -113,16 +140,14 @@ export const useGameEvents = ({
   const handleContinueClick = useCallback(() => {
     console.log('Continue button clicked - resuming game');
     setShowContinueButton(false);
-    setReviveUsed(true); // Mark revive as used
+    setReviveUsed(true);
     setIsPausedForRevive(false);
-    setAdWatched(false); // Reset ad watched state
+    setAdWatched(false);
     
-    // Continue the game at current position with preserved score
     if (continueGame) {
       continueGame();
     }
     
-    // Set game state to playing
     setGameState('playing');
     
     toast({
@@ -132,18 +157,51 @@ export const useGameEvents = ({
     });
   }, [continueGame, setGameState, toast]);
 
-  const handleAdWatch = (adType: 'continue' | 'coins' | 'life') => {
-    switch (adType) {
-      case 'continue':
-        // Only show continue button if ad hasn't been watched yet for this collision
-        if (!adWatched && isPausedForRevive) {
-          console.log('Ad watched - showing continue button');
-          setShowContinueButton(true);
-          setAdWatched(true); // Mark ad as watched to prevent multiple triggers
-        }
-        break;
-        
-      case 'coins':
+  const handleAdWatch = async (adType: 'continue' | 'coins' | 'life') => {
+    if (!profile) {
+      console.warn('No user profile available for ad reward');
+      return;
+    }
+
+    try {
+      switch (adType) {
+        case 'continue':
+          if (!adWatched && isPausedForRevive) {
+            console.log('Ad watched - showing continue button');
+            setShowContinueButton(true);
+            setAdWatched(true);
+            
+            // Record ad watch in backend
+            await gameBackendService.watchAdReward(profile.pi_user_id, 'continue', 0);
+          }
+          break;
+          
+        case 'coins':
+          const coinsResult = await gameBackendService.watchAdReward(profile.pi_user_id, 'coins', 25);
+          if (coinsResult) {
+            setCoins(coins + coinsResult.reward_amount);
+            localStorage.setItem('flappypi-coins', (coins + coinsResult.reward_amount).toString());
+            await refreshProfile(); // Refresh to get updated backend data
+            toast({
+              title: "Bonus Pi Coins! 🪙",
+              description: `You earned ${coinsResult.reward_amount} Pi coins!`
+            });
+          }
+          break;
+          
+        case 'life':
+          await gameBackendService.watchAdReward(profile.pi_user_id, 'life', 0);
+          setLives(1);
+          toast({
+            title: "Extra Life! ❤️",
+            description: "You earned an extra life!"
+          });
+          break;
+      }
+    } catch (error) {
+      console.error('Error handling ad watch:', error);
+      // Fallback to local handling for coins
+      if (adType === 'coins') {
         const bonusCoins = 25;
         setCoins(coins + bonusCoins);
         localStorage.setItem('flappypi-coins', (coins + bonusCoins).toString());
@@ -151,15 +209,7 @@ export const useGameEvents = ({
           title: "Bonus Pi Coins! 🪙",
           description: `You earned ${bonusCoins} Pi coins!`
         });
-        break;
-        
-      case 'life':
-        setLives(1);
-        toast({
-          title: "Extra Life! ❤️",
-          description: "You earned an extra life!"
-        });
-        break;
+      }
     }
   };
 
