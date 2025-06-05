@@ -1,4 +1,3 @@
-
 import React from 'react';
 import SplashScreen from '../components/SplashScreen';
 import WelcomeScreen from '../components/WelcomeScreen';
@@ -13,6 +12,9 @@ const Index = () => {
   const gameState = useGameState();
   const modals = useModals();
   
+  // Create a ref to store the continue game function
+  const continueGameRef = React.useRef<(() => void) | null>(null);
+  
   const gameEvents = useGameEvents({
     score: gameState.score,
     coins: gameState.coins,
@@ -23,7 +25,12 @@ const Index = () => {
     setLives: gameState.setLives,
     setLevel: gameState.setLevel,
     setHighScore: gameState.setHighScore,
-    setCoins: gameState.setCoins
+    setCoins: gameState.setCoins,
+    continueGame: () => {
+      if (continueGameRef.current) {
+        continueGameRef.current();
+      }
+    }
   });
 
   if (gameState.showSplash) {
@@ -89,6 +96,9 @@ const Index = () => {
         onCoinEarned={gameEvents.handleCoinEarned}
         birdSkin={gameState.selectedBirdSkin}
         musicEnabled={gameState.musicEnabled}
+        onContinueGameRef={(fn) => {
+          continueGameRef.current = fn;
+        }}
       />
       
       <GameUI 

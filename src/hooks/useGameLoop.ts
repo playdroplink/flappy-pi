@@ -68,10 +68,20 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   const continueGame = useCallback(() => {
     console.log('Continuing game with current score:', gameStateRef.current.score);
     // Reset only the bird position and game over flag, keep score and pipes
-    gameStateRef.current.bird.y = 300;
+    const canvas = document.querySelector('canvas');
+    const safeY = canvas ? Math.max(100, canvas.height / 2) : 300;
+    
+    gameStateRef.current.bird.y = safeY;
     gameStateRef.current.bird.velocity = 0;
     gameStateRef.current.bird.rotation = 0;
     gameStateRef.current.gameOver = false;
+    
+    // Clear nearby pipes to give player a chance
+    gameStateRef.current.pipes = gameStateRef.current.pipes.filter(pipe => 
+      pipe.x > gameStateRef.current.bird.x + 200
+    );
+    
+    console.log('Bird reset to position:', safeY, 'Game over flag:', gameStateRef.current.gameOver);
   }, []);
 
   const jump = useCallback(() => {

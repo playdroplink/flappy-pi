@@ -15,6 +15,7 @@ interface GameCanvasProps {
   onCoinEarned: (coins: number) => void;
   birdSkin: string;
   musicEnabled: boolean;
+  onContinueGameRef?: (fn: () => void) => void;
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({
@@ -26,7 +27,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   onScoreUpdate,
   onCoinEarned,
   birdSkin,
-  musicEnabled
+  musicEnabled,
+  onContinueGameRef
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number>();
@@ -69,6 +71,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       gameLoopRef.current = requestAnimationFrame(gameLoop);
     }
   }, [updateGame, draw, gameState]);
+
+  // Expose continueGame function to parent through callback
+  useEffect(() => {
+    if (onContinueGameRef) {
+      onContinueGameRef(continueGame);
+    }
+  }, [continueGame, onContinueGameRef]);
 
   // Handle input
   useEffect(() => {
@@ -138,13 +147,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       window.removeEventListener('resize', resizeCanvas);
     };
   }, []);
-
-  // Expose continueGame function to parent
-  useEffect(() => {
-    if (window) {
-      (window as any).continueGame = continueGame;
-    }
-  }, [continueGame]);
 
   return (
     <canvas
