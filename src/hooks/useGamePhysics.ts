@@ -25,11 +25,11 @@ export const useGamePhysics = ({
 
     const state = gameStateRef.current;
     
-    // Don't update physics if game is not actively playing
+    // Don't update physics if game is not actively playing or already over
     if (!state || state.gameOver) return;
     
     const difficulty = getDifficulty(state.score, gameMode);
-    const GRAVITY = 0.35; // Slightly reduced gravity
+    const GRAVITY = 0.35;
     const PIPE_WIDTH = 120;
 
     // Apply wind effect if enabled
@@ -38,12 +38,12 @@ export const useGamePhysics = ({
       horizontalForce = Math.sin(state.frameCount * 0.02) * difficulty.windStrength;
     }
 
-    // Update bird physics with improved mechanics
+    // Update bird physics
     state.bird.velocity += GRAVITY;
     state.bird.y += state.bird.velocity;
-    state.bird.x += horizontalForce; // Wind effect
+    state.bird.x += horizontalForce;
     
-    // Improved rotation that's less extreme
+    // Improved rotation
     state.bird.rotation = Math.min(Math.max(state.bird.velocity * 2.5, -25), 70);
 
     // Keep bird within horizontal bounds when wind is active
@@ -51,10 +51,10 @@ export const useGamePhysics = ({
       state.bird.x = Math.max(50, Math.min(state.bird.x, canvas.width - 150));
     }
 
-    // Spawn new pipes based on difficulty - improved spacing
-    const spawnThreshold = Math.max(difficulty.spawnRate, 80); // Minimum spacing
+    // Spawn new pipes based on difficulty
+    const spawnThreshold = Math.max(difficulty.spawnRate, 100); // Increased minimum spacing for easier continue
     if (state.frameCount - state.lastPipeSpawn > spawnThreshold) {
-      const minHeight = 60;
+      const minHeight = 80; // Increased minimum for easier gameplay
       const maxHeight = canvas.height - difficulty.pipeGap - minHeight;
       const pipeHeight = Math.random() * (maxHeight - minHeight) + minHeight;
       
@@ -93,13 +93,13 @@ export const useGamePhysics = ({
         pipe.topHeight += moveAmount;
         pipe.bottomY += moveAmount;
         
-        // Reverse direction if hitting bounds with margins
+        // Reverse direction if hitting bounds
         if (pipe.topHeight <= 60 || pipe.bottomY >= canvas.height - 60) {
           pipe.verticalDirection *= -1;
         }
       }
       
-      // Score when bird passes the pipe completely (more generous scoring)
+      // Score when bird passes the pipe completely
       if (!pipe.passed && state.bird.x > pipe.x + PIPE_WIDTH) {
         pipe.passed = true;
         state.score++;
@@ -122,7 +122,7 @@ export const useGamePhysics = ({
     // Check collisions AFTER updating positions - only if game is active
     if (!state.gameOver && checkCollisions(canvas)) {
       console.log(`Collision detected in ${gameMode} mode! Final score: ${state.score}`);
-      state.gameOver = true; // Set game over flag to prevent further collision checks
+      state.gameOver = true; // Immediately set game over flag
       onCollision();
       return;
     }

@@ -1,3 +1,4 @@
+
 import { useRef, useCallback } from 'react';
 
 interface Bird {
@@ -42,7 +43,7 @@ interface UseGameLoopProps {
 
 export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLoopProps) => {
   const gameStateRef = useRef<GameLoopState>({
-    bird: { x: 100, y: 300, velocity: 0, rotation: 0 }, // Better starting position
+    bird: { x: 100, y: 300, velocity: 0, rotation: 0 },
     pipes: [],
     clouds: [],
     frameCount: 0,
@@ -53,8 +54,9 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
 
   const resetGame = useCallback((canvasHeight: number) => {
     console.log('Resetting game with canvas height:', canvasHeight);
+    const safeY = Math.max(100, canvasHeight / 2);
     gameStateRef.current = {
-      bird: { x: 100, y: Math.max(100, canvasHeight / 2), velocity: 0, rotation: 0 },
+      bird: { x: 100, y: safeY, velocity: 0, rotation: 0 },
       pipes: [],
       clouds: [],
       frameCount: 0,
@@ -66,27 +68,35 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   }, [onScoreUpdate]);
 
   const continueGame = useCallback(() => {
-    console.log('Continuing game with current score:', gameStateRef.current.score);
-    // Reset only the bird position and game over flag, keep score and pipes
+    console.log('Continuing game - preserving score:', gameStateRef.current.score);
     const canvas = document.querySelector('canvas');
-    const safeY = canvas ? Math.max(100, canvas.height / 2) : 300;
+    const safeY = canvas ? Math.max(150, canvas.height / 2) : 300;
     
-    gameStateRef.current.bird.y = safeY;
-    gameStateRef.current.bird.velocity = 0;
-    gameStateRef.current.bird.rotation = 0;
+    // Reset bird position and physics only
+    gameStateRef.current.bird = {
+      x: 100,
+      y: safeY,
+      velocity: 0,
+      rotation: 0
+    };
+    
+    // Clear game over flag
     gameStateRef.current.gameOver = false;
     
-    // Clear nearby pipes to give player a chance
+    // Clear pipes that are too close to bird to give player a fair chance
     gameStateRef.current.pipes = gameStateRef.current.pipes.filter(pipe => 
-      pipe.x > gameStateRef.current.bird.x + 200
+      pipe.x > gameStateRef.current.bird.x + 250
     );
     
-    console.log('Bird reset to position:', safeY, 'Game over flag:', gameStateRef.current.gameOver);
+    // Reset spawn timer to prevent immediate pipe spawn
+    gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount;
+    
+    console.log('Bird reset to safe position:', safeY, 'Score preserved:', gameStateRef.current.score);
   }, []);
 
   const jump = useCallback(() => {
     if (gameState === 'playing' && !gameStateRef.current.gameOver) {
-      gameStateRef.current.bird.velocity = -7; // Slightly reduced jump force
+      gameStateRef.current.bird.velocity = -7;
       console.log('Bird jumped! Velocity:', gameStateRef.current.bird.velocity);
     }
   }, [gameState]);
@@ -97,7 +107,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     // Don't check collisions if game is already over
     if (gameOver) return false;
     
-    const BIRD_SIZE = 25; // Even smaller for easier gameplay
+    const BIRD_SIZE = 25;
     const PIPE_WIDTH = 120;
     
     // Ground collision - more forgiving
@@ -112,14 +122,12 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       return true;
     }
     
-    // Pipe collisions - much more forgiving
+    // Pipe collisions - more forgiving
     for (const pipe of pipes) {
-      // Check if bird is within pipe's x range (smaller collision box)
       if (
         bird.x + BIRD_SIZE - 8 > pipe.x &&
         bird.x + 8 < pipe.x + PIPE_WIDTH
       ) {
-        // Check collision with top pipe or bottom pipe (larger margins)
         if (bird.y + 8 < pipe.topHeight || bird.y + BIRD_SIZE - 8 > pipe.bottomY) {
           console.log('Bird hit pipe! Bird Y:', bird.y, 'Top height:', pipe.topHeight, 'Bottom Y:', pipe.bottomY);
           return true;

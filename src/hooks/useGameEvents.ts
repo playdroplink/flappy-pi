@@ -1,6 +1,6 @@
 
 import { useToast } from '@/hooks/use-toast';
-import { useRef } from 'react';
+import { useRef, useCallback } from 'react';
 
 interface UseGameEventsProps {
   score: number;
@@ -30,7 +30,8 @@ export const useGameEvents = ({
   continueGame
 }: UseGameEventsProps) => {
   const { toast } = useToast();
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isCountingDownRef = useRef(false);
 
   const handleCollision = () => {
     console.log('Collision handled, setting game over');
@@ -43,7 +44,7 @@ export const useGameEvents = ({
     setGameState('gameOver');
     setScore(finalScore);
     
-    // Add coins based on score and level (already earned during gameplay)
+    // Add coins based on score and level
     const earnedCoins = Math.floor(finalScore / 3) + (level * 2);
     const newCoins = coins + earnedCoins;
     setCoins(newCoins);
@@ -70,49 +71,62 @@ export const useGameEvents = ({
     localStorage.setItem('flappypi-coins', newCoins.toString());
   };
 
+  const startContinueCountdown = useCallback(() => {
+    if (isCountingDownRef.current) return; // Prevent multiple countdowns
+    
+    isCountingDownRef.current = true;
+    let countdownValue = 3;
+
+    const doCountdown = () => {
+      if (countdownValue > 0) {
+        console.log('Continue countdown:', countdownValue);
+        toast({
+          title: `Get Ready! ${countdownValue}`,
+          description: "Prepare to continue flying!",
+          duration: 1000
+        });
+        
+        countdownValue--;
+        countdownTimerRef.current = setTimeout(doCountdown, 1000);
+      } else {
+        // Countdown finished - continue the game
+        console.log('Countdown finished, continuing game');
+        isCountingDownRef.current = false;
+        
+        // Reset bird and continue with current score
+        setLives(1);
+        
+        // Continue the game with preserved score
+        if (continueGame) {
+          continueGame();
+        }
+        
+        // Set game state to playing
+        setGameState('playing');
+        
+        toast({
+          title: "Continue! 🚀",
+          description: "Thanks for watching the Pi Ad! Keep flying!",
+          duration: 2000
+        });
+      }
+    };
+
+    doCountdown();
+  }, [continueGame, setLives, setGameState, toast]);
+
   const handleAdWatch = (adType: 'continue' | 'coins' | 'life') => {
+    // Clear any existing countdown
+    if (countdownTimerRef.current) {
+      clearTimeout(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+    isCountingDownRef.current = false;
+
     switch (adType) {
       case 'continue':
-        // Clear any existing countdown
-        if (countdownRef.current) {
-          clearTimeout(countdownRef.current);
-        }
-
-        // Start the countdown with proper state management
-        let countdown = 3;
-        
-        const runCountdown = () => {
-          if (countdown > 0) {
-            console.log('Countdown:', countdown);
-            toast({
-              title: `Get Ready! ${countdown}`,
-              description: "Prepare to continue flying!"
-            });
-            countdown--;
-            
-            // Schedule next countdown or continue game
-            countdownRef.current = setTimeout(() => {
-              if (countdown === 0) {
-                // Countdown finished, continue the game
-                setLives(1);
-                if (continueGame) {
-                  console.log('Countdown finished, continuing game');
-                  continueGame();
-                }
-                setGameState('playing');
-                toast({
-                  title: "Continue! 🚀",
-                  description: "Thanks for watching the Pi Ad! Keep flying!"
-                });
-              } else {
-                runCountdown();
-              }
-            }, 1000);
-          }
-        };
-        
-        // Start the countdown
-        runCountdown();
+        console.log('Starting continue game process after ad watch');
+        startContinueCountdown();
         break;
         
       case 'coins':
@@ -122,6 +136,14 @@ export const useGameEvents = ({
         toast({
           title: "Bonus Pi Coins! 🪙",
           description: `You earned ${bonusCoins} Pi coins!`
+        });
+        break;
+        
+      case 'life':
+        setLives(1);
+        toast({
+          title: "Extra Life! ❤️",
+          description: "You earned an extra life!"
         });
         break;
     }
