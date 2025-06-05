@@ -52,9 +52,30 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     gameOver: false
   });
 
-  const resetGame = useCallback((canvasHeight: number) => {
-    console.log('Resetting game with canvas height:', canvasHeight);
-    const safeY = Math.max(100, canvasHeight / 2);
+  const resetGame = useCallback(() => {
+    console.log('Resetting game - getting current canvas dimensions');
+    const canvas = document.querySelector('canvas');
+    
+    if (!canvas) {
+      console.warn('Canvas not found during reset, using default values');
+      gameStateRef.current = {
+        bird: { x: 100, y: 300, velocity: 0, rotation: 0 },
+        pipes: [],
+        clouds: [],
+        frameCount: 0,
+        score: 0,
+        lastPipeSpawn: 0,
+        gameOver: false
+      };
+      onScoreUpdate(0);
+      return;
+    }
+
+    const canvasHeight = canvas.height;
+    const safeY = Math.max(150, canvasHeight / 2);
+    
+    console.log('Resetting game with canvas height:', canvasHeight, 'Bird Y:', safeY);
+    
     gameStateRef.current = {
       bird: { x: 100, y: safeY, velocity: 0, rotation: 0 },
       pipes: [],
