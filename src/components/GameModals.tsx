@@ -4,12 +4,20 @@ import ShopModal from './ShopModal';
 import LeaderboardModal from './LeaderboardModal';
 import AdPopup from './AdPopup';
 import ShareScoreModal from './ShareScoreModal';
+import PrivacyModal from './PrivacyModal';
+import TermsModal from './TermsModal';
+import ContactModal from './ContactModal';
+import HelpModal from './HelpModal';
 
 interface GameModalsProps {
   showShop: boolean;
   showLeaderboard: boolean;
   showAdPopup: boolean;
   showShareScore: boolean;
+  showPrivacy: boolean;
+  showTerms: boolean;
+  showContact: boolean;
+  showHelp: boolean;
   coins: number;
   score: number;
   level: number;
@@ -20,6 +28,10 @@ interface GameModalsProps {
   setShowLeaderboard: (show: boolean) => void;
   setShowAdPopup: (show: boolean) => void;
   setShowShareScore: (show: boolean) => void;
+  setShowPrivacy: (show: boolean) => void;
+  setShowTerms: (show: boolean) => void;
+  setShowContact: (show: boolean) => void;
+  setShowHelp: (show: boolean) => void;
   setCoins: (coins: number) => void;
   setSelectedBirdSkin: (skin: string) => void;
   onWatchAd: (adType: 'continue' | 'coins' | 'life') => void;
@@ -30,6 +42,10 @@ const GameModals: React.FC<GameModalsProps> = ({
   showLeaderboard,
   showAdPopup,
   showShareScore,
+  showPrivacy,
+  showTerms,
+  showContact,
+  showHelp,
   coins,
   score,
   level,
@@ -40,6 +56,10 @@ const GameModals: React.FC<GameModalsProps> = ({
   setShowLeaderboard,
   setShowAdPopup,
   setShowShareScore,
+  setShowPrivacy,
+  setShowTerms,
+  setShowContact,
+  setShowHelp,
   setCoins,
   setSelectedBirdSkin,
   onWatchAd
@@ -78,6 +98,26 @@ const GameModals: React.FC<GameModalsProps> = ({
         score={score}
         level={level}
         highScore={highScore}
+      />
+
+      <PrivacyModal
+        isOpen={showPrivacy}
+        onClose={() => setShowPrivacy(false)}
+      />
+
+      <TermsModal
+        isOpen={showTerms}
+        onClose={() => setShowTerms(false)}
+      />
+
+      <ContactModal
+        isOpen={showContact}
+        onClose={() => setShowContact(false)}
+      />
+
+      <HelpModal
+        isOpen={showHelp}
+        onClose={() => setShowHelp(false)}
       />
     </>
   );

@@ -10,6 +10,10 @@ interface WelcomeScreenProps {
   onStartGame: (mode: GameMode) => void;
   onOpenShop: () => void;
   onOpenLeaderboard: () => void;
+  onOpenPrivacy: () => void;
+  onOpenTerms: () => void;
+  onOpenContact: () => void;
+  onOpenHelp: () => void;
   coins: number;
   musicEnabled: boolean;
   onToggleMusic: (enabled: boolean) => void;
@@ -19,6 +23,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onStartGame,
   onOpenShop,
   onOpenLeaderboard,
+  onOpenPrivacy,
+  onOpenTerms,
+  onOpenContact,
+  onOpenHelp,
   coins,
   musicEnabled,
   onToggleMusic
@@ -103,7 +111,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             
             <Button 
               onClick={() => onStartGame('challenge')}
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
+              className="w-full bg-gradient-to-r from-white to-gray-100 hover:from-gray-100 hover:to-gray-200 text-gray-800 shadow-lg transform hover:scale-105 transition-all duration-200 border border-gray-300"
             >
               <Play className="mr-2 h-5 w-5" />
               Challenge Mode
@@ -140,6 +148,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             <Button 
               variant="ghost" 
               size="sm" 
+              onClick={onOpenPrivacy}
               className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2"
             >
               <Shield className="h-4 w-4" />
@@ -148,6 +157,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             <Button 
               variant="ghost" 
               size="sm" 
+              onClick={onOpenTerms}
               className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2"
             >
               <FileText className="h-4 w-4" />
@@ -156,6 +166,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             <Button 
               variant="ghost" 
               size="sm" 
+              onClick={onOpenContact}
               className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2"
             >
               <Mail className="h-4 w-4" />
@@ -164,6 +175,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             <Button 
               variant="ghost" 
               size="sm" 
+              onClick={onOpenHelp}
               className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2"
             >
               <HelpCircle className="h-4 w-4" />
@@ -171,8 +183,8 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             </Button>
           </div>
           <div className="text-center mt-3 pt-3 border-t border-gray-200">
-            <p className="text-gray-600 text-xs">
-              Powered by Pi Network • mrwain organization
+            <p className="text-gray-800 text-lg font-bold">
+              Powered by Pi Network • MRWAIN ORGANIZATION
             </p>
           </div>
         </Card>

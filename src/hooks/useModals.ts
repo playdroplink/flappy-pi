@@ -6,6 +6,10 @@ export const useModals = () => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showAdPopup, setShowAdPopup] = useState(false);
   const [showShareScore, setShowShareScore] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showContact, setShowContact] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const handleShareScore = () => {
     setShowShareScore(true);
@@ -16,10 +20,18 @@ export const useModals = () => {
     showLeaderboard,
     showAdPopup,
     showShareScore,
+    showPrivacy,
+    showTerms,
+    showContact,
+    showHelp,
     setShowShop,
     setShowLeaderboard,
     setShowAdPopup,
     setShowShareScore,
+    setShowPrivacy,
+    setShowTerms,
+    setShowContact,
+    setShowHelp,
     handleShareScore
   };
 };

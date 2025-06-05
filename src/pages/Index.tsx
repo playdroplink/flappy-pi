@@ -32,14 +32,48 @@ const Index = () => {
 
   if (gameState.showWelcome) {
     return (
-      <WelcomeScreen 
-        onStartGame={gameState.startGame}
-        onOpenShop={() => modals.setShowShop(true)}
-        onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
-        coins={gameState.coins}
-        musicEnabled={gameState.musicEnabled}
-        onToggleMusic={gameState.setMusicEnabled}
-      />
+      <>
+        <WelcomeScreen 
+          onStartGame={gameState.startGame}
+          onOpenShop={() => modals.setShowShop(true)}
+          onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
+          onOpenPrivacy={() => modals.setShowPrivacy(true)}
+          onOpenTerms={() => modals.setShowTerms(true)}
+          onOpenContact={() => modals.setShowContact(true)}
+          onOpenHelp={() => modals.setShowHelp(true)}
+          coins={gameState.coins}
+          musicEnabled={gameState.musicEnabled}
+          onToggleMusic={gameState.setMusicEnabled}
+        />
+        
+        <GameModals
+          showShop={modals.showShop}
+          showLeaderboard={modals.showLeaderboard}
+          showAdPopup={modals.showAdPopup}
+          showShareScore={modals.showShareScore}
+          showPrivacy={modals.showPrivacy}
+          showTerms={modals.showTerms}
+          showContact={modals.showContact}
+          showHelp={modals.showHelp}
+          coins={gameState.coins}
+          score={gameState.score}
+          level={gameState.level}
+          highScore={gameState.highScore}
+          selectedBirdSkin={gameState.selectedBirdSkin}
+          gameState={gameState.gameState}
+          setShowShop={modals.setShowShop}
+          setShowLeaderboard={modals.setShowLeaderboard}
+          setShowAdPopup={modals.setShowAdPopup}
+          setShowShareScore={modals.setShowShareScore}
+          setShowPrivacy={modals.setShowPrivacy}
+          setShowTerms={modals.setShowTerms}
+          setShowContact={modals.setShowContact}
+          setShowHelp={modals.setShowHelp}
+          setCoins={gameState.setCoins}
+          setSelectedBirdSkin={gameState.setSelectedBirdSkin}
+          onWatchAd={gameEvents.handleAdWatch}
+        />
+      </>
     );
   }
 
@@ -76,6 +110,10 @@ const Index = () => {
         showLeaderboard={modals.showLeaderboard}
         showAdPopup={modals.showAdPopup}
         showShareScore={modals.showShareScore}
+        showPrivacy={modals.showPrivacy}
+        showTerms={modals.showTerms}
+        showContact={modals.showContact}
+        showHelp={modals.showHelp}
         coins={gameState.coins}
         score={gameState.score}
         level={gameState.level}
@@ -86,6 +124,10 @@ const Index = () => {
         setShowLeaderboard={modals.setShowLeaderboard}
         setShowAdPopup={modals.setShowAdPopup}
         setShowShareScore={modals.setShowShareScore}
+        setShowPrivacy={modals.setShowPrivacy}
+        setShowTerms={modals.setShowTerms}
+        setShowContact={modals.setShowContact}
+        setShowHelp={modals.setShowHelp}
         setCoins={gameState.setCoins}
         setSelectedBirdSkin={gameState.setSelectedBirdSkin}
         onWatchAd={gameEvents.handleAdWatch}
