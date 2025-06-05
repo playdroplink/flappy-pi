@@ -32,11 +32,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number>();
-  const inputHandlersRef = useRef<{
-    handleClick?: (e: MouseEvent) => void;
-    handleKeyPress?: (e: KeyboardEvent) => void;
-  }>({});
+  const [score, setScore] = useState(0);
+  const gameStartedRef = useRef(false);
 
+  // Add background music
   useBackgroundMusic({ musicEnabled, gameState });
 
   const { gameStateRef, resetGame, continueGame, jump, checkCollisions } = useGameLoop({
@@ -62,6 +61,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   });
 
   const gameLoop = useCallback(() => {
+    // Only update game if actually playing and not in game over state
     if (gameState === 'playing' && !gameStateRef.current.gameOver) {
       updateGame();
     }
@@ -72,73 +72,59 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   }, [updateGame, draw, gameState]);
 
-  // Expose continueGame function to parent
+  // Expose continueGame function to parent through callback
   useEffect(() => {
     if (onContinueGameRef) {
       onContinueGameRef(continueGame);
     }
   }, [continueGame, onContinueGameRef]);
 
-  // Input handlers
+  // Handle input
   useEffect(() => {
-    // Clean up existing handlers
-    if (inputHandlersRef.current.handleClick) {
-      window.removeEventListener('click', inputHandlersRef.current.handleClick);
-    }
-    if (inputHandlersRef.current.handleKeyPress) {
-      window.removeEventListener('keydown', inputHandlersRef.current.handleKeyPress);
-    }
-
-    if (gameState === 'playing') {
-      const handleClick = (e: MouseEvent) => {
+    const handleClick = () => jump();
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
         e.preventDefault();
         jump();
-      };
-      
-      const handleKeyPress = (e: KeyboardEvent) => {
-        if (e.code === 'Space') {
-          e.preventDefault();
-          jump();
-        }
-      };
+      }
+    };
 
-      inputHandlersRef.current = { handleClick, handleKeyPress };
+    if (gameState === 'playing') {
       window.addEventListener('click', handleClick);
       window.addEventListener('keydown', handleKeyPress);
-    } else {
-      inputHandlersRef.current = {};
     }
 
     return () => {
-      if (inputHandlersRef.current.handleClick) {
-        window.removeEventListener('click', inputHandlersRef.current.handleClick);
-      }
-      if (inputHandlersRef.current.handleKeyPress) {
-        window.removeEventListener('keydown', inputHandlersRef.current.handleKeyPress);
-      }
+      window.removeEventListener('click', handleClick);
+      window.removeEventListener('keydown', handleKeyPress);
     };
   }, [jump, gameState]);
 
-  // Game state management
+  // Game loop management - improved reset logic
   useEffect(() => {
-    if (gameLoopRef.current) {
-      cancelAnimationFrame(gameLoopRef.current);
-      gameLoopRef.current = undefined;
-    }
-
     if (gameState === 'playing') {
       const canvas = canvasRef.current;
-      if (canvas && !gameStateRef.current.initialized) {
-        console.log('Starting new game');
-        resetGame(canvas.height);
+      if (canvas) {
+        // Only reset if this is truly a new game (not a resume)
+        if (!gameStartedRef.current || gameStateRef.current.frameCount === 0) {
+          console.log('Starting new game, resetting state');
+          resetGame(canvas.height);
+          gameStartedRef.current = true;
+        }
       }
       gameLoopRef.current = requestAnimationFrame(gameLoop);
+    } else {
+      if (gameState === 'gameOver' || gameState === 'menu') {
+        gameStartedRef.current = false; // Allow reset on next game
+      }
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+      }
     }
 
     return () => {
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
-        gameLoopRef.current = undefined;
       }
     };
   }, [gameState, gameLoop, resetGame]);

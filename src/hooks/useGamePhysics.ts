@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { getDifficulty } from '../utils/gameDifficulty';
 
@@ -24,7 +25,8 @@ export const useGamePhysics = ({
 
     const state = gameStateRef.current;
     
-    if (!state || state.gameOver || !state.initialized) return;
+    // Don't update physics if game is not actively playing or already over
+    if (!state || state.gameOver) return;
     
     const difficulty = getDifficulty(state.score, gameMode);
     const GRAVITY = 0.35;
@@ -41,7 +43,7 @@ export const useGamePhysics = ({
     state.bird.y += state.bird.velocity;
     state.bird.x += horizontalForce;
     
-    // Bird rotation based on velocity
+    // Improved rotation
     state.bird.rotation = Math.min(Math.max(state.bird.velocity * 2.5, -25), 70);
 
     // Keep bird within horizontal bounds when wind is active
@@ -49,10 +51,10 @@ export const useGamePhysics = ({
       state.bird.x = Math.max(50, Math.min(state.bird.x, canvas.width - 150));
     }
 
-    // Spawn new pipes
-    const spawnThreshold = Math.max(difficulty.spawnRate, 120);
+    // Spawn new pipes based on difficulty
+    const spawnThreshold = Math.max(difficulty.spawnRate, 100); // Increased minimum spacing for easier continue
     if (state.frameCount - state.lastPipeSpawn > spawnThreshold) {
-      const minHeight = 80;
+      const minHeight = 80; // Increased minimum for easier gameplay
       const maxHeight = canvas.height - difficulty.pipeGap - minHeight;
       const pipeHeight = Math.random() * (maxHeight - minHeight) + minHeight;
       
@@ -67,7 +69,7 @@ export const useGamePhysics = ({
       };
       state.pipes.push(newPipe);
       state.lastPipeSpawn = state.frameCount;
-      console.log('New pipe spawned. Total pipes:', state.pipes.length);
+      console.log('New pipe spawned at frame:', state.frameCount);
     }
 
     // Spawn clouds if enabled
@@ -91,16 +93,17 @@ export const useGamePhysics = ({
         pipe.topHeight += moveAmount;
         pipe.bottomY += moveAmount;
         
+        // Reverse direction if hitting bounds
         if (pipe.topHeight <= 60 || pipe.bottomY >= canvas.height - 60) {
           pipe.verticalDirection *= -1;
         }
       }
       
-      // Score when bird passes pipe completely
-      if (!pipe.passed && state.bird.x > (pipe.x + PIPE_WIDTH)) {
+      // Score when bird passes the pipe completely
+      if (!pipe.passed && state.bird.x > pipe.x + PIPE_WIDTH) {
         pipe.passed = true;
         state.score++;
-        console.log(`SCORE! Bird passed pipe. New score: ${state.score}`);
+        console.log(`Score: ${state.score} (${gameMode} mode) - Pipe passed!`);
         onScoreUpdate(state.score);
         onCoinEarned(1);
       }
@@ -116,10 +119,10 @@ export const useGamePhysics = ({
       });
     }
 
-    // Check collisions
-    if (checkCollisions(canvas)) {
-      console.log(`Collision! Game over. Final score: ${state.score}`);
-      state.gameOver = true;
+    // Check collisions AFTER updating positions - only if game is active
+    if (!state.gameOver && checkCollisions(canvas)) {
+      console.log(`Collision detected in ${gameMode} mode! Final score: ${state.score}`);
+      state.gameOver = true; // Immediately set game over flag
       onCollision();
       return;
     }
