@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useCallback } from 'react';
 
 interface Pipe {
@@ -36,7 +35,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     x: 100,
     y: 200,
     velocity: 0,
-    rotation: 0
+    rotation: 0,
+    bounceOffset: 0,
+    bounceSpeed: 0.05
   });
   const pipesRef = useRef<Pipe[]>([]);
   const scoreRef = useRef(0);
@@ -44,6 +45,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const tapIndicatorsRef = useRef<Array<{x: number, y: number, time: number}>>([]);
   const coinAnimationsRef = useRef<Array<{x: number, y: number, time: number}>>([]);
   const birdImageRef = useRef<HTMLImageElement | null>(null);
+  const gameStartTimeRef = useRef<number>(0);
+  const lastAdTimeRef = useRef<number>(0);
+  const backgroundOffsetRef = useRef(0);
 
   const BIRD_SIZE = 35;
   const PIPE_WIDTH = 65;
@@ -51,6 +55,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const GRAVITY = 0.6;
   const FLAP_STRENGTH = -10;
   const BASE_PIPE_SPEED = 2.5;
+  const AD_INTERVAL = 8000; // 8 seconds
+  const PIPE_SPAWN_DELAY = 2000; // 2 seconds before first pipe
 
   // Load bird character image
   useEffect(() => {
@@ -85,11 +91,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   }, [gameMode, level]);
 
   const resetGame = useCallback(() => {
-    birdRef.current = { x: 100, y: 200, velocity: 0, rotation: 0 };
+    birdRef.current = { x: 100, y: 200, velocity: 0, rotation: 0, bounceOffset: 0, bounceSpeed: 0.05 };
     pipesRef.current = [];
     scoreRef.current = 0;
     tapIndicatorsRef.current = [];
     coinAnimationsRef.current = [];
+    gameStartTimeRef.current = Date.now();
+    lastAdTimeRef.current = Date.now();
+    backgroundOffsetRef.current = 0;
     onScoreUpdate(0);
   }, [onScoreUpdate]);
 
@@ -101,7 +110,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       audio.volume = 0.3;
       backgroundMusicRef.current = audio;
       
-      // Play music when game starts
       if (gameState === 'playing') {
         audio.play().catch(console.log);
       }
@@ -160,13 +168,215 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const checkPipeCollision = (bird: typeof birdRef.current, pipe: Pipe) => {
     const { pipeGap } = getDifficulty();
     
-    // Check collision with pipe
     if (bird.x + BIRD_SIZE > pipe.x && bird.x < pipe.x + PIPE_WIDTH) {
       if (bird.y < pipe.y || bird.y + BIRD_SIZE > pipe.y + pipeGap) {
         return true;
       }
     }
     return false;
+  };
+
+  const drawScrollingBackground = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+    // Sky gradient background
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#87CEEB');  // Sky blue
+    gradient.addColorStop(0.3, '#87CEFA');
+    gradient.addColorStop(0.7, '#4682B4');
+    gradient.addColorStop(1, '#1e40af');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Scrolling clouds
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    for (let i = 0; i < 8; i++) {
+      const x = (i * 200 + backgroundOffsetRef.current * 0.2) % (canvas.width + 120);
+      const y = 30 + i * 20;
+      ctx.beginPath();
+      ctx.arc(x, y, 20, 0, Math.PI * 2);
+      ctx.arc(x + 15, y, 25, 0, Math.PI * 2);
+      ctx.arc(x + 30, y, 18, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Scrolling mountain silhouettes
+    ctx.fillStyle = 'rgba(34, 139, 34, 0.3)';
+    ctx.beginPath();
+    for (let x = 0; x < canvas.width + 100; x += 50) {
+      const offsetX = x - (backgroundOffsetRef.current * 0.1) % (canvas.width + 100);
+      const mountainHeight = 100 + Math.sin(x * 0.01) * 50;
+      ctx.lineTo(offsetX, canvas.height - 60 - mountainHeight);
+    }
+    ctx.lineTo(canvas.width, canvas.height - 60);
+    ctx.lineTo(0, canvas.height - 60);
+    ctx.closePath();
+    ctx.fill();
+  };
+
+  const drawEnhancedGround = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+    // Ground with texture
+    const groundGradient = ctx.createLinearGradient(0, canvas.height - 60, 0, canvas.height);
+    groundGradient.addColorStop(0, '#8FBC8F');
+    groundGradient.addColorStop(0.3, '#228B22');
+    groundGradient.addColorStop(0.7, '#006400');
+    groundGradient.addColorStop(1, '#013220');
+    
+    ctx.fillStyle = groundGradient;
+    ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
+    
+    // Scrolling grass texture
+    ctx.fillStyle = '#32CD32';
+    for (let i = 0; i < canvas.width; i += 10) {
+      const offsetX = i - (backgroundOffsetRef.current * 0.5) % 20;
+      const grassHeight = Math.random() * 12 + 4;
+      ctx.fillRect(offsetX, canvas.height - 60, 3, -grassHeight);
+      ctx.fillRect(offsetX + 5, canvas.height - 60, 2, -(grassHeight * 0.7));
+    }
+
+    // Small flowers
+    for (let i = 0; i < canvas.width; i += 80) {
+      const offsetX = i - (backgroundOffsetRef.current * 0.3) % 100;
+      ctx.fillStyle = '#FF69B4';
+      ctx.beginPath();
+      ctx.arc(offsetX, canvas.height - 50, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  };
+
+  const drawEnhancedPipes = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, pipes: Pipe[]) => {
+    const { pipeGap } = getDifficulty();
+    
+    pipes.forEach(pipe => {
+      // 3D pipe effect with multiple gradients
+      const pipeGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH, 0);
+      pipeGradient.addColorStop(0, '#228B22');
+      pipeGradient.addColorStop(0.3, '#32CD32');
+      pipeGradient.addColorStop(0.7, '#228B22');
+      pipeGradient.addColorStop(1, '#006400');
+      
+      // Shadow effect
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.fillRect(pipe.x + 3, 3, PIPE_WIDTH, pipe.y);
+      ctx.fillRect(pipe.x + 3, pipe.y + pipeGap + 3, PIPE_WIDTH, canvas.height - pipe.y - pipeGap - 60);
+      
+      // Main pipe body
+      ctx.fillStyle = pipeGradient;
+      ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.y);
+      ctx.fillRect(pipe.x, pipe.y + pipeGap, PIPE_WIDTH, canvas.height - pipe.y - pipeGap - 60);
+      
+      // Pipe borders
+      ctx.strokeStyle = '#006400';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(pipe.x, 0, PIPE_WIDTH, pipe.y);
+      ctx.strokeRect(pipe.x, pipe.y + pipeGap, PIPE_WIDTH, canvas.height - pipe.y - pipeGap - 60);
+
+      // Enhanced pipe caps with 3D effect
+      const capGradient = ctx.createLinearGradient(pipe.x - 8, 0, pipe.x + PIPE_WIDTH + 8, 0);
+      capGradient.addColorStop(0, '#006400');
+      capGradient.addColorStop(0.3, '#32CD32');
+      capGradient.addColorStop(0.7, '#228B22');
+      capGradient.addColorStop(1, '#013220');
+      
+      ctx.fillStyle = capGradient;
+      // Top cap
+      ctx.fillRect(pipe.x - 8, pipe.y - 30, PIPE_WIDTH + 16, 30);
+      ctx.strokeRect(pipe.x - 8, pipe.y - 30, PIPE_WIDTH + 16, 30);
+      // Bottom cap
+      ctx.fillRect(pipe.x - 8, pipe.y + pipeGap, PIPE_WIDTH + 16, 30);
+      ctx.strokeRect(pipe.x - 8, pipe.y + pipeGap, PIPE_WIDTH + 16, 30);
+
+      // Pipe texture lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 3; i++) {
+        const lineX = pipe.x + (PIPE_WIDTH / 4) * (i + 1);
+        ctx.beginPath();
+        ctx.moveTo(lineX, 0);
+        ctx.lineTo(lineX, pipe.y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(lineX, pipe.y + pipeGap);
+        ctx.lineTo(lineX, canvas.height - 60);
+        ctx.stroke();
+      }
+    });
+  };
+
+  const drawBouncyBird = (ctx: CanvasRenderingContext2D) => {
+    ctx.save();
+    
+    // Update bouncy motion when not playing or when steady
+    if (gameState !== 'playing' || birdRef.current.velocity === 0) {
+      birdRef.current.bounceOffset += birdRef.current.bounceSpeed;
+      if (birdRef.current.bounceOffset > 1 || birdRef.current.bounceOffset < -1) {
+        birdRef.current.bounceSpeed *= -1;
+      }
+    }
+    
+    const bounceY = gameState === 'playing' ? 0 : Math.sin(Date.now() * 0.003) * 8;
+    const centerX = birdRef.current.x + BIRD_SIZE / 2;
+    const centerY = birdRef.current.y + BIRD_SIZE / 2 + bounceY;
+    
+    ctx.translate(centerX, centerY);
+    ctx.rotate(birdRef.current.rotation);
+    
+    // Bird shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(3, 3, BIRD_SIZE / 2, BIRD_SIZE / 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Wing flap animation
+    const wingFlap = Math.sin(Date.now() * 0.02) * 0.3;
+    
+    if (birdImageRef.current) {
+      ctx.scale(1 + wingFlap * 0.1, 1);
+      ctx.drawImage(
+        birdImageRef.current,
+        -BIRD_SIZE / 2,
+        -BIRD_SIZE / 2,
+        BIRD_SIZE,
+        BIRD_SIZE
+      );
+    } else {
+      // Fallback enhanced bird
+      const birdGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, BIRD_SIZE / 2);
+      birdGradient.addColorStop(0, '#FFD700');
+      birdGradient.addColorStop(0.7, '#FFA500');
+      birdGradient.addColorStop(1, '#FF8C00');
+      
+      // Body
+      ctx.fillStyle = birdGradient;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, BIRD_SIZE / 2, BIRD_SIZE / 2.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Wing
+      ctx.fillStyle = '#FF6347';
+      ctx.beginPath();
+      ctx.ellipse(-8, -2, 12, 8, wingFlap, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Eye
+      ctx.fillStyle = 'white';
+      ctx.beginPath();
+      ctx.arc(5, -5, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'black';
+      ctx.beginPath();
+      ctx.arc(6, -5, 2, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Beak
+      ctx.fillStyle = '#FFA500';
+      ctx.beginPath();
+      ctx.moveTo(15, 0);
+      ctx.lineTo(8, -3);
+      ctx.lineTo(8, 3);
+      ctx.closePath();
+      ctx.fill();
+    }
+    
+    ctx.restore();
   };
 
   const gameLoop = useCallback(() => {
@@ -177,15 +387,26 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     if (!ctx) return;
 
     const { pipeSpeed, pipeGap } = getDifficulty();
+    const currentTime = Date.now();
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (gameState === 'playing') {
-      // Update bird
+      // Update background scroll
+      backgroundOffsetRef.current += pipeSpeed;
+
+      // Update bird physics
       birdRef.current.velocity += GRAVITY;
       birdRef.current.y += birdRef.current.velocity;
       birdRef.current.rotation = Math.min(birdRef.current.rotation + 0.08, 0.6);
+
+      // Check for ad display (every 8 seconds)
+      if (currentTime - lastAdTimeRef.current > AD_INTERVAL) {
+        console.log('Show ad overlay for 3 seconds');
+        lastAdTimeRef.current = currentTime;
+        // In a real implementation, this would trigger an ad overlay
+      }
 
       // Check ground/ceiling collision (game over)
       if (checkGroundCeilingCollision(birdRef.current, canvas)) {
@@ -225,110 +446,31 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       // Remove off-screen pipes
       pipesRef.current = pipesRef.current.filter(pipe => pipe.x + PIPE_WIDTH > 0);
 
-      // Add new pipes
-      if (pipesRef.current.length === 0 || pipesRef.current[pipesRef.current.length - 1].x < canvas.width - 250) {
-        pipesRef.current.push(createPipe(canvas.width));
+      // Add new pipes (with 2-second delay after game start)
+      const timeSinceStart = currentTime - gameStartTimeRef.current;
+      if (timeSinceStart > PIPE_SPAWN_DELAY) {
+        if (pipesRef.current.length === 0 || pipesRef.current[pipesRef.current.length - 1].x < canvas.width - 300) {
+          pipesRef.current.push(createPipe(canvas.width));
+        }
       }
     }
 
-    // Draw sky gradient background
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, '#0ea5e9');  // Sky blue
-    gradient.addColorStop(0.3, '#0284c7');
-    gradient.addColorStop(0.7, '#0369a1');
-    gradient.addColorStop(1, '#075985');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Draw enhanced background
+    drawScrollingBackground(ctx, canvas);
 
-    // Draw floating clouds
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-    for (let i = 0; i < 6; i++) {
-      const x = (i * 180 + Date.now() * 0.03) % (canvas.width + 120);
-      const y = 40 + i * 25;
-      ctx.beginPath();
-      ctx.arc(x, y, 18, 0, Math.PI * 2);
-      ctx.arc(x + 12, y, 22, 0, Math.PI * 2);
-      ctx.arc(x + 24, y, 16, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    // Draw enhanced pipes
+    drawEnhancedPipes(ctx, canvas, pipesRef.current);
 
-    // Draw enhanced pipes with 3D effect
-    pipesRef.current.forEach(pipe => {
-      // Pipe gradient
-      const pipeGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH, 0);
-      pipeGradient.addColorStop(0, '#16a34a');
-      pipeGradient.addColorStop(0.5, '#22c55e');
-      pipeGradient.addColorStop(1, '#15803d');
-      
-      ctx.fillStyle = pipeGradient;
-      ctx.strokeStyle = '#14532d';
-      ctx.lineWidth = 3;
-      
-      // Top pipe with shadow
-      ctx.fillRect(pipe.x + 2, 2, PIPE_WIDTH, pipe.y);
-      ctx.fillStyle = '#16a34a';
-      ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.y);
-      ctx.strokeRect(pipe.x, 0, PIPE_WIDTH, pipe.y);
-      
-      // Bottom pipe with shadow
-      ctx.fillStyle = pipeGradient;
-      ctx.fillRect(pipe.x + 2, pipe.y + pipeGap + 2, PIPE_WIDTH, canvas.height - pipe.y - pipeGap - 60);
-      ctx.fillStyle = '#16a34a';
-      ctx.fillRect(pipe.x, pipe.y + pipeGap, PIPE_WIDTH, canvas.height - pipe.y - pipeGap - 60);
-      ctx.strokeRect(pipe.x, pipe.y + pipeGap, PIPE_WIDTH, canvas.height - pipe.y - pipeGap - 60);
+    // Draw bouncy bird
+    drawBouncyBird(ctx);
 
-      // Enhanced pipe caps with 3D effect
-      const capGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH + 10, 0);
-      capGradient.addColorStop(0, '#22c55e');
-      capGradient.addColorStop(0.5, '#16a34a');
-      capGradient.addColorStop(1, '#15803d');
-      
-      ctx.fillStyle = capGradient;
-      ctx.fillRect(pipe.x - 6, pipe.y - 25, PIPE_WIDTH + 12, 25);
-      ctx.strokeRect(pipe.x - 6, pipe.y - 25, PIPE_WIDTH + 12, 25);
-      ctx.fillRect(pipe.x - 6, pipe.y + pipeGap, PIPE_WIDTH + 12, 25);
-      ctx.strokeRect(pipe.x - 6, pipe.y + pipeGap, PIPE_WIDTH + 12, 25);
-    });
-
-    // Draw your custom bird character
-    ctx.save();
-    ctx.translate(birdRef.current.x + BIRD_SIZE / 2, birdRef.current.y + BIRD_SIZE / 2);
-    ctx.rotate(birdRef.current.rotation);
-    
-    // Bird shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-    ctx.beginPath();
-    ctx.ellipse(2, 2, BIRD_SIZE / 2, BIRD_SIZE / 2.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Draw your custom bird image if loaded
-    if (birdImageRef.current) {
-      ctx.drawImage(
-        birdImageRef.current,
-        -BIRD_SIZE / 2,
-        -BIRD_SIZE / 2,
-        BIRD_SIZE,
-        BIRD_SIZE
-      );
-    } else {
-      // Fallback bird drawing
-      const birdGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, BIRD_SIZE / 2);
-      birdGradient.addColorStop(0, '#0ea5e9');
-      birdGradient.addColorStop(0.7, '#0284c7');
-      birdGradient.addColorStop(1, '#0369a1');
-      
-      ctx.fillStyle = birdGradient;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, BIRD_SIZE / 2, BIRD_SIZE / 2.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    
-    ctx.restore();
+    // Draw enhanced ground
+    drawEnhancedGround(ctx, canvas);
 
     // Draw tap indicators
-    const currentTime = Date.now();
+    const currentTimeForAnimations = Date.now();
     tapIndicatorsRef.current = tapIndicatorsRef.current.filter(tap => {
-      const age = currentTime - tap.time;
+      const age = currentTimeForAnimations - tap.time;
       if (age > 800) return false;
       
       const alpha = 1 - (age / 800);
@@ -339,14 +481,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       ctx.translate(tap.x, tap.y);
       ctx.scale(scale, scale);
       
-      // Ripple effect
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.arc(0, 0, 20, 0, Math.PI * 2);
       ctx.stroke();
       
-      // TAP text
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 12px Arial';
       ctx.textAlign = 'center';
@@ -358,7 +498,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
     // Draw coin animations
     coinAnimationsRef.current = coinAnimationsRef.current.filter(coin => {
-      const age = currentTime - coin.time;
+      const age = currentTimeForAnimations - coin.time;
       if (age > 1000) return false;
       
       const alpha = 1 - (age / 1000);
@@ -375,30 +515,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       return true;
     });
 
-    // Draw enhanced ground with grass texture
-    const groundGradient = ctx.createLinearGradient(0, canvas.height - 60, 0, canvas.height);
-    groundGradient.addColorStop(0, '#16a34a');
-    groundGradient.addColorStop(0.5, '#15803d');
-    groundGradient.addColorStop(1, '#14532d');
-    
-    ctx.fillStyle = groundGradient;
-    ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
-    
-    // Grass details
-    ctx.fillStyle = '#22c55e';
-    for (let i = 0; i < canvas.width; i += 15) {
-      const grassHeight = Math.random() * 8 + 4;
-      ctx.fillRect(i, canvas.height - 60, 2, -grassHeight);
-    }
-
-    // Show tap instruction for new players
-    if (gameState === 'playing' && scoreRef.current === 0) {
+    if (gameState === 'playing' && scoreRef.current === 0 && Date.now() - gameStartTimeRef.current < PIPE_SPAWN_DELAY) {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
       ctx.font = 'bold 20px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('TAP TO FLY! 🐦', canvas.width / 2, canvas.height / 2 - 50);
       
-      // Animated hand pointer
       const handY = canvas.height / 2 + Math.sin(Date.now() * 0.005) * 10;
       ctx.font = '30px Arial';
       ctx.fillText('👆', canvas.width / 2, handY);
