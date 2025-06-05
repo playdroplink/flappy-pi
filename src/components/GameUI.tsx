@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Trophy, ShoppingCart, Play, Home, Zap, Heart, Star, Award, Coins } from 'lucide-react';
+import { Trophy, ShoppingCart, Play, Home, Zap, Heart, Star, Award, Coins, Pause, RotateCcw } from 'lucide-react';
 
 interface GameUIProps {
   gameState: 'menu' | 'playing' | 'gameOver' | 'paused';
@@ -33,115 +33,136 @@ const GameUI: React.FC<GameUIProps> = ({
 }) => {
   return (
     <div className="absolute inset-0 pointer-events-none">
-      {/* Enhanced Top HUD */}
-      <div className="absolute top-4 left-4 right-4 flex justify-between items-center pointer-events-auto">
-        <div className="flex items-center space-x-2">
-          <Card className="px-4 py-2 bg-gradient-to-r from-sky-500/90 to-sky-600/90 backdrop-blur-sm border-sky-300/50 shadow-lg">
+      {/* Modern Top HUD */}
+      <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-auto z-10">
+        <div className="flex flex-col space-y-2">
+          {/* Score Display */}
+          <Card className="px-4 py-2 bg-white/10 backdrop-blur-md border-white/20 shadow-lg rounded-xl">
             <div className="flex items-center space-x-2">
-              <Star className="h-4 w-4 text-yellow-300" />
-              <p className="text-sm font-bold text-white">{score}</p>
+              <Star className="h-4 w-4 text-yellow-400" />
+              <div className="text-white">
+                <p className="text-xs opacity-80">Score</p>
+                <p className="text-lg font-bold leading-none">{score}</p>
+              </div>
             </div>
           </Card>
-          <Card className="px-4 py-2 bg-gradient-to-r from-blue-500/90 to-indigo-600/90 backdrop-blur-sm border-blue-300/50 shadow-lg">
+          
+          {/* Level Display */}
+          <Card className="px-4 py-2 bg-white/10 backdrop-blur-md border-white/20 shadow-lg rounded-xl">
             <div className="flex items-center space-x-2">
-              <Award className="h-4 w-4 text-blue-200" />
-              <p className="text-sm font-bold text-white">L{level}</p>
-            </div>
-          </Card>
-          <Card className="px-4 py-2 bg-gradient-to-r from-red-500/90 to-pink-600/90 backdrop-blur-sm border-red-300/50 shadow-lg">
-            <div className="flex items-center space-x-1">
-              {[...Array(3)].map((_, i) => (
-                <Heart 
-                  key={i} 
-                  className={`h-4 w-4 ${i < lives ? 'text-red-300 fill-red-300' : 'text-gray-400'}`} 
-                />
-              ))}
+              <Award className="h-4 w-4 text-sky-400" />
+              <div className="text-white">
+                <p className="text-xs opacity-80">Level</p>
+                <p className="text-lg font-bold leading-none">{level}</p>
+              </div>
             </div>
           </Card>
         </div>
         
-        <div className="flex items-center space-x-2">
-          <Card className="px-4 py-2 bg-gradient-to-r from-yellow-500/90 to-orange-500/90 backdrop-blur-sm border-yellow-300/50 shadow-lg">
+        <div className="flex flex-col items-end space-y-2">
+          {/* Lives Display */}
+          <Card className="px-4 py-2 bg-white/10 backdrop-blur-md border-white/20 shadow-lg rounded-xl">
             <div className="flex items-center space-x-2">
-              <Coins className="h-4 w-4 text-yellow-200" />
-              <p className="text-sm font-bold text-white">{coins}</p>
+              <div className="flex space-x-1">
+                {[...Array(3)].map((_, i) => (
+                  <Heart 
+                    key={i} 
+                    className={`h-4 w-4 ${i < lives ? 'text-red-400 fill-red-400' : 'text-gray-500'}`} 
+                  />
+                ))}
+              </div>
+              <div className="text-white">
+                <p className="text-xs opacity-80">Lives</p>
+                <p className="text-lg font-bold leading-none">{lives}</p>
+              </div>
             </div>
           </Card>
-          <Button
-            onClick={onShowAd}
-            size="sm"
-            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-0 shadow-lg rounded-full h-10 w-10 p-0"
-          >
-            <Zap className="h-4 w-4" />
-          </Button>
+          
+          {/* Coins Display */}
+          <Card className="px-4 py-2 bg-white/10 backdrop-blur-md border-white/20 shadow-lg rounded-xl">
+            <div className="flex items-center space-x-2">
+              <Coins className="h-4 w-4 text-yellow-400" />
+              <div className="text-white">
+                <p className="text-xs opacity-80">Coins</p>
+                <p className="text-lg font-bold leading-none">{coins}</p>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
 
-      {/* Enhanced Game Over Screen */}
+      {/* Game Over Screen */}
       {gameState === 'gameOver' && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-          <Card className="relative p-8 max-w-md w-full mx-4 bg-gradient-to-br from-sky-600/95 to-sky-700/95 backdrop-blur-sm border-sky-300/50 shadow-2xl rounded-2xl">
-            <div className="text-center space-y-6 text-white">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-auto z-20">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+          <Card className="relative p-8 max-w-sm w-full mx-4 bg-white/95 backdrop-blur-md border-white/30 shadow-2xl rounded-3xl">
+            <div className="text-center space-y-6">
+              {/* Game Over Header */}
               <div>
-                <div className="text-6xl mb-4">😵</div>
-                <h2 className="text-3xl font-bold text-sky-100 mb-3 animate-pulse">Game Over!</h2>
-                
-                <div className="bg-white/10 rounded-xl p-4 mb-4 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg">Final Score:</span>
-                    <span className="text-2xl font-bold text-sky-200">{score}</span>
+                <div className="text-6xl mb-4 animate-bounce">💥</div>
+                <h2 className="text-3xl font-bold text-gray-800 mb-2">Game Over!</h2>
+                <p className="text-gray-600">Better luck next time, pilot!</p>
+              </div>
+              
+              {/* Stats Display */}
+              <div className="bg-gradient-to-r from-sky-50 to-sky-100 rounded-2xl p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 mb-1">Final Score</p>
+                    <p className="text-2xl font-bold text-sky-600">{score}</p>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg">Level Reached:</span>
-                    <span className="text-xl font-bold text-sky-300">{level}</span>
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 mb-1">Level Reached</p>
+                    <p className="text-2xl font-bold text-sky-600">{level}</p>
                   </div>
-                  {score === highScore && score > 0 && (
-                    <div className="bg-sky-400/20 rounded-lg p-2 animate-pulse">
-                      <p className="text-sky-200 font-bold">🎉 NEW HIGH SCORE! 🎉</p>
-                    </div>
-                  )}
                 </div>
                 
-                <div className="bg-green-500/20 rounded-lg p-3 border border-green-400/30">
-                  <p className="text-green-300 font-bold">
+                {score === highScore && score > 0 && (
+                  <div className="bg-yellow-100 border border-yellow-300 rounded-xl p-3 animate-pulse">
+                    <p className="text-yellow-800 font-bold text-sm">🎉 NEW HIGH SCORE! 🎉</p>
+                  </div>
+                )}
+                
+                <div className="bg-green-100 border border-green-300 rounded-xl p-3">
+                  <p className="text-green-800 font-bold text-sm">
                     💰 +{Math.floor(score / 3) + (level * 2)} Pi Coins Earned!
                   </p>
                 </div>
               </div>
               
+              {/* Action Buttons */}
               <div className="space-y-3">
                 <Button 
                   onClick={onStartGame}
-                  className="w-full bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white py-4 text-lg font-bold border-0 shadow-lg rounded-xl transform hover:scale-105 transition-all duration-200"
+                  className="w-full bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white py-4 text-lg font-bold border-0 shadow-lg rounded-2xl transform hover:scale-105 transition-all duration-200"
                   size="lg"
                 >
-                  <Play className="mr-2 h-6 w-6" />
-                  🚀 Fly Again!
+                  <RotateCcw className="mr-2 h-5 w-5" />
+                  Try Again
                 </Button>
                 
-                <div className="flex space-x-3">
+                <div className="grid grid-cols-2 gap-3">
                   <Button
                     onClick={onOpenShop}
-                    className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white border-0 shadow-lg rounded-xl py-3"
+                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white border-0 shadow-lg rounded-xl py-3"
                   >
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Pi Shop
+                    <ShoppingCart className="mr-1 h-4 w-4" />
+                    Shop
                   </Button>
                   
                   <Button
                     onClick={onShowAd}
-                    className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 shadow-lg rounded-xl py-3"
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 shadow-lg rounded-xl py-3"
                   >
-                    <Zap className="mr-2 h-4 w-4" />
-                    Watch Ad
+                    <Zap className="mr-1 h-4 w-4" />
+                    Ad
                   </Button>
                 </div>
                 
                 <Button
                   onClick={onBackToMenu}
                   variant="outline"
-                  className="w-full border-white/30 text-white hover:bg-white/20 rounded-xl py-3"
+                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl py-3"
                 >
                   <Home className="mr-2 h-4 w-4" />
                   Back to Menu
@@ -152,22 +173,25 @@ const GameUI: React.FC<GameUIProps> = ({
         </div>
       )}
 
-      {/* Enhanced Playing State Instructions */}
+      {/* Playing State Instructions */}
       {gameState === 'playing' && score === 0 && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-          <Card className="px-6 py-3 bg-white/90 backdrop-blur-sm rounded-full border-sky-300/50 shadow-lg animate-bounce">
-            <p className="text-lg font-bold text-sky-600 animate-pulse">
-              👆 TAP TO FLY! 🐦
-            </p>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+          <Card className="px-6 py-4 bg-white/90 backdrop-blur-md rounded-2xl border-white/50 shadow-lg animate-bounce">
+            <div className="text-center">
+              <p className="text-lg font-bold text-sky-600 mb-1">👆 TAP TO FLY</p>
+              <p className="text-sm text-gray-600">Avoid the pipes!</p>
+            </div>
           </Card>
         </div>
       )}
 
       {/* Score milestone celebrations */}
       {gameState === 'playing' && score > 0 && score % 10 === 0 && (
-        <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 pointer-events-none">
-          <div className="text-4xl font-bold text-sky-200 animate-bounce">
-            🌟 AMAZING! 🌟
+        <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 pointer-events-none z-10">
+          <div className="text-center animate-bounce">
+            <div className="text-4xl font-bold text-white mb-2">🌟</div>
+            <p className="text-xl font-bold text-white">AMAZING!</p>
+            <p className="text-sm text-sky-200">Keep going!</p>
           </div>
         </div>
       )}
