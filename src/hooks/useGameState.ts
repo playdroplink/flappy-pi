@@ -15,7 +15,7 @@ export const useGameState = () => {
   const [lives, setLives] = useState(1);
   const [highScore, setHighScore] = useState(0);
   const [selectedBirdSkin, setSelectedBirdSkin] = useState('default');
-  const [coins, setCoins] = useState(100);
+  const [coins, setCoins] = useState(0); // Changed from 100 to 0
   const [musicEnabled, setMusicEnabled] = useState(true);
   const { toast } = useToast();
 
