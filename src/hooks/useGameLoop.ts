@@ -42,7 +42,7 @@ interface UseGameLoopProps {
 
 export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLoopProps) => {
   const gameStateRef = useRef<GameLoopState>({
-    bird: { x: 100, y: 200, velocity: 0, rotation: 0 },
+    bird: { x: 100, y: 300, velocity: 0, rotation: 0 }, // Better starting position
     pipes: [],
     clouds: [],
     frameCount: 0,
@@ -51,8 +51,9 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   });
 
   const resetGame = useCallback((canvasHeight: number) => {
+    console.log('Resetting game with canvas height:', canvasHeight);
     gameStateRef.current = {
-      bird: { x: 100, y: canvasHeight / 2, velocity: 0, rotation: 0 },
+      bird: { x: 100, y: Math.max(100, canvasHeight / 2), velocity: 0, rotation: 0 },
       pipes: [],
       clouds: [],
       frameCount: 0,
@@ -64,37 +65,38 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
 
   const jump = useCallback(() => {
     if (gameState === 'playing') {
-      gameStateRef.current.bird.velocity = -8; // JUMP_FORCE
+      gameStateRef.current.bird.velocity = -7; // Slightly reduced jump force
+      console.log('Bird jumped! Velocity:', gameStateRef.current.bird.velocity);
     }
   }, [gameState]);
 
   const checkCollisions = useCallback((canvas: HTMLCanvasElement) => {
     const { bird, pipes } = gameStateRef.current;
-    const BIRD_SIZE = 30; // Reduced from 40 to make it easier
+    const BIRD_SIZE = 25; // Even smaller for easier gameplay
     const PIPE_WIDTH = 120;
     
-    // Ground collision - bird hits the bottom (with some margin)
-    if (bird.y + BIRD_SIZE >= canvas.height - 25) { // Added 5px margin
-      console.log('Bird hit ground!');
+    // Ground collision - more forgiving
+    if (bird.y + BIRD_SIZE >= canvas.height - 30) {
+      console.log('Bird hit ground! Bird Y:', bird.y, 'Canvas height:', canvas.height);
       return true;
     }
 
-    // Ceiling collision - bird hits the top (with some margin)
-    if (bird.y <= 5) { // Added 5px margin from top
-      console.log('Bird hit ceiling!');
+    // Ceiling collision - more forgiving
+    if (bird.y <= 10) {
+      console.log('Bird hit ceiling! Bird Y:', bird.y);
       return true;
     }
     
-    // Pipe collisions - more forgiving collision detection
+    // Pipe collisions - much more forgiving
     for (const pipe of pipes) {
-      // Check if bird is within pipe's x range (with smaller collision box)
+      // Check if bird is within pipe's x range (smaller collision box)
       if (
-        bird.x + BIRD_SIZE - 5 > pipe.x &&
-        bird.x + 5 < pipe.x + PIPE_WIDTH
+        bird.x + BIRD_SIZE - 8 > pipe.x &&
+        bird.x + 8 < pipe.x + PIPE_WIDTH
       ) {
-        // Check collision with top pipe or bottom pipe (with margin)
-        if (bird.y + 5 < pipe.topHeight || bird.y + BIRD_SIZE - 5 > pipe.bottomY) {
-          console.log('Bird hit pipe!');
+        // Check collision with top pipe or bottom pipe (larger margins)
+        if (bird.y + 8 < pipe.topHeight || bird.y + BIRD_SIZE - 8 > pipe.bottomY) {
+          console.log('Bird hit pipe! Bird Y:', bird.y, 'Top height:', pipe.topHeight, 'Bottom Y:', pipe.bottomY);
           return true;
         }
       }

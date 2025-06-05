@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
@@ -29,6 +30,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number>();
   const [score, setScore] = useState(0);
+  const gameStartedRef = useRef(false);
 
   const { gameStateRef, resetGame, jump, checkCollisions } = useGameLoop({
     gameState,
@@ -82,16 +84,23 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
   }, [jump, gameState]);
 
-  // Game loop management - FIXED: only reset when starting new game
+  // Game loop management - improved reset logic
   useEffect(() => {
     if (gameState === 'playing') {
       const canvas = canvasRef.current;
-      if (canvas && gameStateRef.current.frameCount === 0) {
-        // Only reset if this is a fresh start
-        resetGame(canvas.height);
+      if (canvas) {
+        // Only reset if this is truly a new game (not a resume)
+        if (!gameStartedRef.current || gameStateRef.current.frameCount === 0) {
+          console.log('Starting new game, resetting state');
+          resetGame(canvas.height);
+          gameStartedRef.current = true;
+        }
       }
       gameLoopRef.current = requestAnimationFrame(gameLoop);
     } else {
+      if (gameState === 'gameOver' || gameState === 'menu') {
+        gameStartedRef.current = false; // Allow reset on next game
+      }
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
       }
@@ -112,6 +121,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      console.log('Canvas resized to:', canvas.width, 'x', canvas.height);
     };
 
     resizeCanvas();
