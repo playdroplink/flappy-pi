@@ -2,12 +2,9 @@
 import React from 'react';
 import SplashScreen from '../components/SplashScreen';
 import WelcomeScreen from '../components/WelcomeScreen';
-import NewGameCanvas from '../components/NewGameCanvas';
+import GameCanvas from '../components/GameCanvas';
 import GameUI from '../components/GameUI';
 import GameModals from '../components/GameModals';
-import GameContinueOverlay from '../components/GameContinueOverlay';
-import MandatoryAdModal from '../components/MandatoryAdModal';
-import AdFreeSubscriptionModal from '../components/AdFreeSubscriptionModal';
 import { useGameState } from '../hooks/useGameState';
 import { useGameEvents } from '../hooks/useGameEvents';
 import { useModals } from '../hooks/useModals';
@@ -26,11 +23,7 @@ const Index = () => {
     setLives: gameState.setLives,
     setLevel: gameState.setLevel,
     setHighScore: gameState.setHighScore,
-    setCoins: gameState.setCoins,
-    continueGame: () => {
-      // New implementation doesn't need continue function
-      console.log('Continue game called');
-    }
+    setCoins: gameState.setCoins
   });
 
   if (gameState.showSplash) {
@@ -62,7 +55,6 @@ const Index = () => {
           showTerms={modals.showTerms}
           showContact={modals.showContact}
           showHelp={modals.showHelp}
-          adType={modals.adType}
           coins={gameState.coins}
           score={gameState.score}
           level={gameState.level}
@@ -87,12 +79,16 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-400 to-sky-600 relative overflow-hidden">
-      <NewGameCanvas 
+      <GameCanvas 
         gameState={gameState.gameState}
         gameMode={gameState.gameMode}
+        level={gameState.level}
         onCollision={gameEvents.handleCollision}
+        onGameOver={gameEvents.handleGameOver}
         onScoreUpdate={gameState.handleScoreUpdate}
+        onCoinEarned={gameEvents.handleCoinEarned}
         birdSkin={gameState.selectedBirdSkin}
+        musicEnabled={gameState.musicEnabled}
       />
       
       <GameUI 
@@ -107,29 +103,8 @@ const Index = () => {
         onBackToMenu={gameState.backToMenu}
         onOpenShop={() => modals.setShowShop(true)}
         onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
-        onShowAd={() => modals.handleShowAd('continue')}
+        onShowAd={() => modals.setShowAdPopup(true)}
         onShareScore={modals.handleShareScore}
-        isPausedForRevive={gameEvents.isPausedForRevive}
-      />
-
-      <GameContinueOverlay
-        showContinueButton={gameEvents.showContinueButton}
-        onContinue={gameEvents.handleContinueClick}
-      />
-
-      <MandatoryAdModal
-        isOpen={gameEvents.showMandatoryAd}
-        onWatchAd={gameEvents.handleMandatoryAdWatch}
-        onUpgradeToPremium={() => gameEvents.setShowAdFreeModal(true)}
-        canUpgrade={true}
-      />
-
-      <AdFreeSubscriptionModal
-        isOpen={gameEvents.showAdFreeModal}
-        onClose={() => gameEvents.setShowAdFreeModal(false)}
-        onPurchase={gameEvents.adSystem.purchaseAdFree}
-        isAdFree={gameEvents.adSystem.isAdFree}
-        adFreeTimeRemaining={gameEvents.adSystem.adFreeTimeRemaining}
       />
 
       <GameModals
@@ -141,7 +116,6 @@ const Index = () => {
         showTerms={modals.showTerms}
         showContact={modals.showContact}
         showHelp={modals.showHelp}
-        adType={modals.adType}
         coins={gameState.coins}
         score={gameState.score}
         level={gameState.level}
