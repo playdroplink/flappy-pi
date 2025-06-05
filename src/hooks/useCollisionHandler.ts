@@ -1,6 +1,5 @@
 
-import { useRef, useCallback } from 'react';
-import { useAdSystem } from '@/hooks/useAdSystem';
+import { useCallback, useRef } from 'react';
 
 interface UseCollisionHandlerProps {
   reviveUsed: boolean;
@@ -23,50 +22,25 @@ export const useCollisionHandler = ({
   setShowMandatoryAd,
   onGameOver
 }: UseCollisionHandlerProps) => {
-  const adSystem = useAdSystem();
-  const collisionHandledRef = useRef(false);
+  const collisionLockRef = useRef(false);
 
   const handleCollision = useCallback(() => {
-    // Prevent multiple collision handling
-    if (collisionHandledRef.current) {
-      console.log('Collision already handled, ignoring...');
+    // Prevent multiple collision triggers
+    if (collisionLockRef.current) {
+      console.log('⚠️ Collision ignored - already processing');
       return;
     }
-    
-    collisionHandledRef.current = true;
-    console.log('Collision detected - checking ad system');
-    
-    // Check if user can continue without ad (Premium subscription)
-    if (adSystem.canContinueWithoutAd && !reviveUsed) {
-      console.log('User has Premium - allowing continue without ad');
-      setIsPausedForRevive(true);
-      setGameState('paused');
-      setShowContinueButton(true);
-      setAdWatched(false);
-      return;
-    }
-    
-    // Check if this is a mandatory ad game over
-    if (adSystem.shouldShowMandatoryAd) {
-      console.log('Showing mandatory ad');
-      setShowMandatoryAd(true);
-      setGameState('paused');
-      return;
-    }
-    
-    // Normal revive flow (optional ad)
-    if (!reviveUsed) {
-      setIsPausedForRevive(true);
-      setGameState('paused');
-      setAdWatched(false);
-      setShowContinueButton(false);
-    } else {
-      onGameOver(score);
-    }
-  }, [adSystem.canContinueWithoutAd, adSystem.shouldShowMandatoryAd, reviveUsed, score, setGameState, setIsPausedForRevive, setShowContinueButton, setAdWatched, setShowMandatoryAd, onGameOver]);
+
+    collisionLockRef.current = true;
+    console.log('Collision detected - processing game over immediately');
+
+    // Directly go to game over without any ad checks
+    onGameOver(score);
+  }, [score, onGameOver]);
 
   const resetCollisionLock = useCallback(() => {
-    collisionHandledRef.current = false;
+    console.log('🔓 Resetting collision lock');
+    collisionLockRef.current = false;
   }, []);
 
   return {

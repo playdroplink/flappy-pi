@@ -1,6 +1,5 @@
 
 import { useCallback, useState } from 'react';
-import { useAdSystem } from '@/hooks/useAdSystem';
 import { useCollisionHandler } from '@/hooks/useCollisionHandler';
 import { useGameOverHandler } from '@/hooks/useGameOverHandler';
 import { useAdRewardHandler } from '@/hooks/useAdRewardHandler';
@@ -33,7 +32,6 @@ export const useGameEvents = ({
   setCoins,
   continueGame
 }: UseGameEventsProps) => {
-  const adSystem = useAdSystem();
   
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [isPausedForRevive, setIsPausedForRevive] = useState(false);
@@ -96,17 +94,17 @@ export const useGameEvents = ({
     localStorage.setItem('flappypi-coins', newCoins.toString());
   }, [coins, setCoins]);
 
+  // Remove automatic mandatory ad handling
   const handleMandatoryAdWatch = useCallback(() => {
-    console.log('Mandatory ad watched - resetting counter and ending game');
+    console.log('Skipping mandatory ad - going straight to game over');
     resetCollisionLock();
-    adSystem.resetAdCounter();
     setShowMandatoryAd(false);
     handleGameOver(score);
-  }, [adSystem, setShowMandatoryAd, handleGameOver, score, resetCollisionLock]);
+  }, [setShowMandatoryAd, handleGameOver, score, resetCollisionLock]);
 
   // Reset all game event states for new game
   const resetGameEventStates = useCallback(() => {
-    console.log('Resetting all game event states for new game');
+    console.log('🔄 Resetting all game event states for new game');
     resetCollisionLock();
     setShowContinueButton(false);
     setIsPausedForRevive(false);
@@ -125,9 +123,15 @@ export const useGameEvents = ({
     handleContinueClick,
     isPausedForRevive,
     reviveUsed,
-    showMandatoryAd,
+    showMandatoryAd: false, // Disable mandatory ads
     showAdFreeModal,
-    adSystem,
+    adSystem: { 
+      isAdFree: true, // Always ad-free to prevent issues
+      purchaseAdFree: () => Promise.resolve(true),
+      adFreeTimeRemaining: null,
+      resetAdCounter: () => {},
+      incrementGameCount: () => {}
+    },
     handleMandatoryAdWatch,
     setShowAdFreeModal,
     resetGameEventStates
