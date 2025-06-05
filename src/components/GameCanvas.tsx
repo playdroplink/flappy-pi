@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
 interface GameCanvasProps {
@@ -104,18 +103,21 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const { bird, pipes } = gameStateRef.current;
     
     // Ground and ceiling collision
-    if (bird.y + BIRD_SIZE > canvas.height || bird.y < 0) {
+    if (bird.y + BIRD_SIZE >= canvas.height - 20 || bird.y <= 0) {
       return true;
     }
 
-    // Pipe collisions
+    // Pipe collisions - more precise collision detection
     for (const pipe of pipes) {
+      // Check if bird is within pipe's x range
       if (
         bird.x + BIRD_SIZE > pipe.x &&
-        bird.x < pipe.x + PIPE_WIDTH &&
-        (bird.y < pipe.topHeight || bird.y + BIRD_SIZE > pipe.bottomY)
+        bird.x < pipe.x + PIPE_WIDTH
       ) {
-        return true;
+        // Check collision with top pipe or bottom pipe
+        if (bird.y < pipe.topHeight || bird.y + BIRD_SIZE > pipe.bottomY) {
+          return true;
+        }
       }
     }
 
@@ -149,23 +151,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       state.lastPipeSpawn = state.frameCount;
     }
 
-    // Update pipes
+    // Update pipes and check for scoring
     state.pipes = state.pipes.filter(pipe => {
       pipe.x -= difficulty.pipeSpeed;
       
-      // Score when passing pipe
-      if (!pipe.passed && pipe.x + PIPE_WIDTH < state.bird.x) {
+      // Score when bird passes the center of the pipe
+      if (!pipe.passed && bird.x > pipe.x + PIPE_WIDTH / 2) {
         pipe.passed = true;
         state.score++;
         setScore(state.score);
         onScoreUpdate(state.score);
+        console.log('Score updated:', state.score);
       }
       
       return pipe.x > -PIPE_WIDTH;
     });
 
-    // Check collisions
+    // Check collisions AFTER updating positions
     if (checkCollisions(canvas)) {
+      console.log('Collision detected! Game Over');
       onCollision();
       return;
     }

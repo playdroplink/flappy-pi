@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import SplashScreen from '../components/SplashScreen';
 import WelcomeScreen from '../components/WelcomeScreen';
@@ -7,6 +6,7 @@ import ShopModal from '../components/ShopModal';
 import LeaderboardModal from '../components/LeaderboardModal';
 import GameUI from '../components/GameUI';
 import AdPopup from '../components/AdPopup';
+import ShareScoreModal from '../components/ShareScoreModal';
 import { useToast } from '@/hooks/use-toast';
 
 type GameMode = 'classic' | 'endless' | 'challenge';
@@ -23,6 +23,7 @@ const Index = () => {
   const [showShop, setShowShop] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showAdPopup, setShowAdPopup] = useState(false);
+  const [showShareScore, setShowShareScore] = useState(false);
   const [selectedBirdSkin, setSelectedBirdSkin] = useState('default');
   const [coins, setCoins] = useState(100);
   const [musicEnabled, setMusicEnabled] = useState(true);
@@ -50,12 +51,13 @@ const Index = () => {
   }, []);
 
   const handleCollision = () => {
-    // Game over immediately on collision (no multiple lives)
+    console.log('Collision handled, setting game over');
     setGameState('gameOver');
     handleGameOver(score);
   };
 
   const handleGameOver = (finalScore: number) => {
+    console.log('Game over with score:', finalScore);
     setGameState('gameOver');
     setScore(finalScore);
     
@@ -81,6 +83,7 @@ const Index = () => {
   };
 
   const startGame = (mode: GameMode) => {
+    console.log('Starting game with mode:', mode);
     setGameMode(mode);
     setGameState('playing');
     setScore(0);
@@ -102,8 +105,8 @@ const Index = () => {
           setLives(1);
           setGameState('playing');
           toast({
-            title: "Continue!",
-            description: "You got a second chance!"
+            title: "Continue! 🚀",
+            description: "Thanks for watching the Pi Ad! Keep flying!"
           });
           break;
         case 'coins':
@@ -111,22 +114,31 @@ const Index = () => {
           setCoins(coins + bonusCoins);
           localStorage.setItem('flappypi-coins', (coins + bonusCoins).toString());
           toast({
-            title: "Bonus Coins!",
-            description: `You earned ${bonusCoins} coins!`
+            title: "Bonus Pi Coins! 🪙",
+            description: `You earned ${bonusCoins} Pi coins!`
           });
           break;
       }
       setShowAdPopup(false);
-    }, 2000); // Reduced ad time to 2 seconds
+    }, 3000); // 3 second ad
   };
 
   const handleScoreUpdate = (newScore: number) => {
+    console.log('Score updated to:', newScore);
     setScore(newScore);
-    // Level up every 50 points
-    const newLevel = Math.floor(newScore / 50) + 1;
+    // Level up every 5 points for better progression
+    const newLevel = Math.floor(newScore / 5) + 1;
     if (newLevel > level) {
       setLevel(newLevel);
+      toast({
+        title: `Level ${newLevel}! 🎯`,
+        description: "Getting harder now!"
+      });
     }
+  };
+
+  const handleShareScore = () => {
+    setShowShareScore(true);
   };
 
   if (showSplash) {
@@ -171,6 +183,7 @@ const Index = () => {
         onOpenShop={() => setShowShop(true)}
         onOpenLeaderboard={() => setShowLeaderboard(true)}
         onShowAd={() => setShowAdPopup(true)}
+        onShareScore={handleShareScore}
       />
 
       <ShopModal 
@@ -191,12 +204,20 @@ const Index = () => {
         isOpen={showAdPopup}
         onClose={() => {
           setShowAdPopup(false);
-          if (gameState === 'paused') {
-            handleGameOver(score);
+          if (gameState === 'gameOver') {
+            // Stay on game over screen if ad is closed without watching
           }
         }}
         onWatchAd={handleAdWatch}
         adType="continue"
+      />
+
+      <ShareScoreModal
+        isOpen={showShareScore}
+        onClose={() => setShowShareScore(false)}
+        score={score}
+        level={level}
+        highScore={highScore}
       />
     </div>
   );

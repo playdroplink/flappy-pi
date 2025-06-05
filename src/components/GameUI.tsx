@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Play, Home, Trophy, ShoppingCart, Coins, Zap } from 'lucide-react';
+import { Play, Home, Trophy, ShoppingCart, Coins, Share2, PlayCircle } from 'lucide-react';
 
 interface GameUIProps {
   gameState: 'menu' | 'playing' | 'gameOver' | 'paused';
@@ -16,6 +15,7 @@ interface GameUIProps {
   onOpenShop: () => void;
   onOpenLeaderboard: () => void;
   onShowAd: () => void;
+  onShareScore?: () => void;
 }
 
 const GameUI: React.FC<GameUIProps> = ({
@@ -28,7 +28,8 @@ const GameUI: React.FC<GameUIProps> = ({
   onBackToMenu,
   onOpenShop,
   onOpenLeaderboard,
-  onShowAd
+  onShowAd,
+  onShareScore
 }) => {
   if (gameState === 'playing') {
     return (
@@ -57,7 +58,7 @@ const GameUI: React.FC<GameUIProps> = ({
   if (gameState === 'gameOver') {
     return (
       <div className="fixed inset-0 bg-black/70 backdrop-blur-lg flex items-center justify-center z-50 p-4">
-        <Card className="p-8 max-w-sm w-full text-center shadow-2xl bg-white/95 backdrop-blur-sm border-gray-200">
+        <Card className="p-8 max-w-sm w-full text-center shadow-2xl bg-white border-gray-200">
           <div className="text-6xl mb-4">💥</div>
           <h2 className="text-3xl font-bold text-gray-800 mb-4">
             Game Over!
@@ -82,6 +83,15 @@ const GameUI: React.FC<GameUIProps> = ({
           </div>
           
           <div className="space-y-4">
+            {/* Continue with Ad button */}
+            <Button 
+              onClick={onShowAd}
+              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
+            >
+              <PlayCircle className="mr-2 h-5 w-5" />
+              Continue (Watch Pi Ad)
+            </Button>
+
             <Button 
               onClick={onStartGame}
               className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
@@ -89,6 +99,17 @@ const GameUI: React.FC<GameUIProps> = ({
               <Play className="mr-2 h-5 w-5" />
               Try Again
             </Button>
+            
+            {/* Share Score button */}
+            {onShareScore && (
+              <Button 
+                onClick={onShareScore}
+                className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
+              >
+                <Share2 className="mr-2 h-5 w-5" />
+                Share Your Score
+              </Button>
+            )}
             
             <div className="grid grid-cols-2 gap-3">
               <Button 
@@ -126,7 +147,7 @@ const GameUI: React.FC<GameUIProps> = ({
   if (gameState === 'paused') {
     return (
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <Card className="p-8 max-w-sm w-full text-center shadow-2xl bg-white/95 backdrop-blur-sm border-gray-200">
+        <Card className="p-8 max-w-sm w-full text-center shadow-2xl bg-white border-gray-200">
           <div className="text-4xl mb-4">⏸️</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Game Paused</h2>
           
