@@ -34,7 +34,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const gameLoopRef = useRef<number>();
   const [canvasReady, setCanvasReady] = useState(false);
   const previousGameStateRef = useRef(gameState);
-  const initializationRef = useRef(false);
 
   useBackgroundMusic({ musicEnabled, gameState });
 
@@ -60,29 +59,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     gameMode 
   });
 
-  // Improved game loop with error handling
+  // MASTER GAME LOOP - Fixed for all restart scenarios
   const gameLoop = useCallback(() => {
-    if (!canvasReady || !gameStateRef.current?.canvasReady) {
-      // Still render even if not ready to avoid blank screen
-      draw();
-      if (gameState === 'playing') {
-        gameLoopRef.current = requestAnimationFrame(gameLoop);
-      }
-      return;
-    }
-
     try {
-      if (gameState === 'playing' && !gameStateRef.current?.gameOver) {
-        updateGame();
-      }
+      // Always render to prevent blank screen
       draw();
       
+      // Run physics only when playing and ready
+      if (gameState === 'playing' && canvasReady && gameStateRef.current?.canvasReady && !gameStateRef.current?.gameOver) {
+        updateGame();
+      }
+      
+      // Continue loop if playing
       if (gameState === 'playing') {
         gameLoopRef.current = requestAnimationFrame(gameLoop);
       }
+      
     } catch (error) {
       console.error('❌ Game loop error:', error);
-      // Stop the loop on error to prevent cascading issues
+      // Stop loop on critical error
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
         gameLoopRef.current = undefined;
@@ -90,49 +85,40 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   }, [updateGame, draw, gameState, canvasReady, gameStateRef]);
 
-  // Expose continueGame function
+  // Expose continue function for ads/revive
   useEffect(() => {
     if (onContinueGameRef) {
       onContinueGameRef(continueGame);
     }
   }, [continueGame, onContinueGameRef]);
 
-  // Input handling with improved error handling
+  // FIXED INPUT HANDLING - Works after restart
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
+    const handleInput = (e: MouseEvent | KeyboardEvent) => {
       e.preventDefault();
       if (gameState === 'playing') {
-        try {
-          jump();
-        } catch (error) {
-          console.error('❌ Jump error:', error);
-        }
+        jump();
       }
     };
     
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
-        e.preventDefault();
-        if (gameState === 'playing') {
-          try {
-            jump();
-          } catch (error) {
-            console.error('❌ Jump error:', error);
-          }
-        }
+        handleInput(e);
       }
     };
 
-    document.addEventListener('click', handleClick);
+    // Add event listeners
+    document.addEventListener('click', handleInput);
     document.addEventListener('keydown', handleKeyPress);
 
     return () => {
-      document.removeEventListener('click', handleClick);
+      // CRITICAL: Always cleanup listeners
+      document.removeEventListener('click', handleInput);
       document.removeEventListener('keydown', handleKeyPress);
     };
   }, [jump, gameState]);
 
-  // Canvas initialization with better error handling
+  // CANVAS INITIALIZATION - Improved reliability
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -144,8 +130,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         console.log('🖥️ Canvas initialized:', canvas.width, 'x', canvas.height);
         setCanvasReady(true);
       } catch (error) {
-        console.error('❌ Canvas initialization error:', error);
-        // Retry after a short delay
+        console.error('❌ Canvas init error:', error);
         setTimeout(initializeCanvas, 100);
       }
     };
@@ -158,45 +143,42 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
   }, []);
 
-  // Enhanced game state management
+  // MASTER STATE MANAGEMENT - Fixed for all modes
   useEffect(() => {
     const prevState = previousGameStateRef.current;
     previousGameStateRef.current = gameState;
 
     const handleStateChange = async () => {
+      // Stop any existing game loop
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+        gameLoopRef.current = undefined;
+      }
+
       if (gameState === 'playing' && canvasReady) {
-        // Stop any existing loop
-        if (gameLoopRef.current) {
-          cancelAnimationFrame(gameLoopRef.current);
-          gameLoopRef.current = undefined;
-        }
-        
         if (prevState !== 'playing') {
-          console.log('🎮 Starting fresh game session');
-          initializationRef.current = true;
+          // FRESH START - Complete reset
+          console.log('🎮 FRESH START - Resetting everything');
           
           try {
             await resetGame();
-            // Small delay to ensure state is ready
+            
+            // Start game loop after reset
             setTimeout(() => {
               if (gameState === 'playing') {
+                console.log('🚀 Starting game loop after reset');
                 gameLoopRef.current = requestAnimationFrame(gameLoop);
               }
-              initializationRef.current = false;
-            }, 150);
+            }, 100);
+            
           } catch (error) {
-            console.error('❌ Game reset error:', error);
-            initializationRef.current = false;
+            console.error('❌ Game start error:', error);
           }
-        } else if (!gameLoopRef.current && !initializationRef.current) {
-          // Resume if paused
+          
+        } else {
+          // RESUME - Just restart loop
+          console.log('▶️ Resuming game loop');
           gameLoopRef.current = requestAnimationFrame(gameLoop);
-        }
-      } else {
-        // Stop game loop when not playing
-        if (gameLoopRef.current) {
-          cancelAnimationFrame(gameLoopRef.current);
-          gameLoopRef.current = undefined;
         }
       }
     };
