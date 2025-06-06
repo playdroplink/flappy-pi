@@ -1,4 +1,3 @@
-
 interface PiUser {
   uid: string;
   username: string;
@@ -166,7 +165,7 @@ class PiNetworkService {
         },
         onReadyForServerCompletion: (paymentId: string, txid: string) => {
           console.log('Payment ready for server completion:', paymentId, txid);
-          this.completePayment(paymentId, txid)
+          this.completePayment(paymentId, txid, paymentData.metadata)
             .then(() => {
               console.log('Payment completed successfully:', paymentId);
               resolve(paymentId);
@@ -192,62 +191,48 @@ class PiNetworkService {
 
   private async approvePayment(paymentId: string): Promise<void> {
     try {
-      // In a real implementation, this would call your backend
-      // For demo purposes, we'll simulate the approval
-      console.log('Simulating payment approval for:', paymentId);
+      console.log('Calling approve payment endpoint for:', paymentId);
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In production, you would make this call:
-      /*
-      const response = await fetch('/api/payments/approve', {
+      const response = await fetch('https://fwfefplvruawsbspwpxh.supabase.co/functions/v1/pi-approve-payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${window.piAccessToken}`
         },
         body: JSON.stringify({ paymentId })
       });
       
-      if (!response.ok) {
-        throw new Error('Payment approval failed');
-      }
-      */
+      const result = await response.json();
       
-      console.log('Payment approval simulated successfully');
+      if (!result.success) {
+        throw new Error(`Payment approval failed: ${result.error}`);
+      }
+      
+      console.log('Payment approval successful:', result);
     } catch (error) {
       console.error('Payment approval error:', error);
       throw error;
     }
   }
 
-  private async completePayment(paymentId: string, txid: string): Promise<void> {
+  private async completePayment(paymentId: string, txid: string, metadata?: any): Promise<void> {
     try {
-      // In a real implementation, this would call your backend
-      // For demo purposes, we'll simulate the completion
-      console.log('Simulating payment completion for:', paymentId, txid);
+      console.log('Calling complete payment endpoint for:', paymentId, txid);
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In production, you would make this call:
-      /*
-      const response = await fetch('/api/payments/complete', {
+      const response = await fetch('https://fwfefplvruawsbspwpxh.supabase.co/functions/v1/pi-complete-payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${window.piAccessToken}`
         },
-        body: JSON.stringify({ paymentId, txid })
+        body: JSON.stringify({ paymentId, txid, metadata })
       });
       
-      if (!response.ok) {
-        throw new Error('Payment completion failed');
-      }
-      */
+      const result = await response.json();
       
-      console.log('Payment completion simulated successfully');
+      if (!result.success) {
+        throw new Error(`Payment completion failed: ${result.error}`);
+      }
+      
+      console.log('Payment completion successful:', result);
     } catch (error) {
       console.error('Payment completion error:', error);
       throw error;
