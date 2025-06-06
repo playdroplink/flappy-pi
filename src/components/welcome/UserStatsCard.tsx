@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { Coins, Music, MusicOff, Crown, ShoppingBag, Calendar } from 'lucide-react';
+import { Coins, Music, MicOff, Crown, ShoppingBag, Calendar } from 'lucide-react';
 
 interface UserStatsCardProps {
   coins: number;
@@ -66,7 +65,7 @@ const UserStatsCard: React.FC<UserStatsCardProps> = ({
             {musicEnabled ? (
               <Music className="h-4 w-4 text-blue-600" />
             ) : (
-              <MusicOff className="h-4 w-4 text-gray-600" />
+              <MicOff className="h-4 w-4 text-gray-600" />
             )}
             <span className="text-sm">
               {musicEnabled ? 'Music On' : 'Music Off'}
