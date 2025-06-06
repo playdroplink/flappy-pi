@@ -1,6 +1,6 @@
 
-// Pi SDK Loader
-// Ensures the Pi SDK is loaded properly before use
+// Pi SDK Loader with Auto Environment Detection
+// Ensures the Pi SDK is loaded properly with correct environment settings
 
 export const loadPiSdk = (): Promise<boolean> => {
   return new Promise((resolve) => {
@@ -42,4 +42,21 @@ export const loadPiSdk = (): Promise<boolean> => {
     // Add to document
     document.head.appendChild(script);
   });
+};
+
+// Auto-detect environment for Pi SDK configuration
+export const detectEnvironment = () => {
+  const hostname = window.location.hostname;
+  const isDevelopment = 
+    hostname === 'localhost' || 
+    hostname === '127.0.0.1' || 
+    hostname.includes('dev') || 
+    hostname.includes('staging') ||
+    hostname.includes('preview') ||
+    hostname.includes('lovable.app'); // Lovable preview URLs
+
+  return {
+    isDevelopment,
+    sandbox: isDevelopment
+  };
 };

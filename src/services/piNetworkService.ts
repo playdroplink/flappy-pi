@@ -50,13 +50,13 @@ declare global {
   }
 }
 
-import { loadPiSdk } from './piSdkLoader';
+import { loadPiSdk, detectEnvironment } from './piSdkLoader';
 
 class PiNetworkService {
   private isInitialized = false;
   private currentUser: PiUser | null = null;
   private readonly APP_ID = 'flappypi';
-  private readonly SANDBOX = true; // Change to false for production
+  private readonly environment = detectEnvironment();
   private paymentCallbacks: Map<string, Function> = new Map();
 
   async initialize(): Promise<void> {
@@ -75,13 +75,14 @@ class PiNetworkService {
         throw new Error('Pi SDK not available');
       }
 
+      // Initialize with auto-detected environment
       await window.Pi.init({ 
         version: "2.0", 
-        sandbox: this.SANDBOX 
+        sandbox: this.environment.sandbox 
       });
       
       this.isInitialized = true;
-      console.log('Pi Network SDK initialized successfully');
+      console.log(`Pi Network SDK initialized successfully in ${this.environment.isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION'} mode (sandbox: ${this.environment.sandbox})`);
     } catch (error) {
       console.error('Failed to initialize Pi SDK:', error);
       throw error;
@@ -145,7 +146,8 @@ class PiNetworkService {
           ...metadata,
           app_id: this.APP_ID,
           user_id: this.currentUser?.uid || 'guest',
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          environment: this.environment.isDevelopment ? 'development' : 'production'
         }
       };
 
@@ -287,6 +289,10 @@ class PiNetworkService {
 
   isUserAuthenticated(): boolean {
     return this.currentUser !== null;
+  }
+
+  getEnvironment() {
+    return this.environment;
   }
 }
 
