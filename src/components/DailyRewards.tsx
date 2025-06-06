@@ -117,7 +117,7 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ isOpen, onClose, onClaimRew
                       className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white border-0 shadow-lg py-3 rounded-xl transform hover:scale-105 transition-all duration-200"
                     >
                       <Gift className="mr-2 h-5 w-5" />
-                      Claim Day {reward.day} - {reward.coins} Coins!
+                      Claim Day {reward.day} - {reward.coins} Flappy Coins!
                     </Button>
                   ))}
               </div>

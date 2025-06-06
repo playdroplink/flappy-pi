@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Coins, Trophy, Heart, Star, Play, Home, Menu } from 'lucide-react';
 import { Button } from './ui/button';
@@ -107,7 +108,7 @@ const GameUI: React.FC<GameUIProps> = ({
               <span className="font-bold text-yellow-600">{highScore}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Coins Earned:</span>
+              <span className="text-gray-600">Flappy Coins Earned:</span>
               <div className="flex items-center gap-1">
                 <Coins className="w-4 h-4 text-yellow-400" />
                 <span className="font-bold">{Math.floor(score / 3) + level * 2}</span>
