@@ -89,9 +89,9 @@ export const useAdSystem = () => {
           try {
             // Record purchase in backend
             const result = await gameBackendService.makePurchase(
-              profile.pi_user_id,
               "power_up" as const,
-              'ad_free_month'
+              'ad_free_month',
+              10
             );
 
             if (result.success) {
