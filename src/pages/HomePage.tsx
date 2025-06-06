@@ -5,6 +5,7 @@ import { useSoundEffects } from '../hooks/useSoundEffects';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 import { useNavigate } from 'react-router-dom';
 import EnhancedFooter from '../components/EnhancedFooter';
+import NavigationMenu from '../components/NavigationMenu';
 import { ScrollArea } from '../components/ui/scroll-area';
 import HomeHeader from '../components/home/HomeHeader';
 import UserStatsSection from '../components/home/UserStatsSection';
@@ -35,6 +36,9 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="fixed inset-0 w-full h-full flex flex-col">
+      {/* Navigation Menu */}
+      <NavigationMenu />
+      
       {/* Scrollable Content Area */}
       <ScrollArea className="flex-1">
         <div className="min-h-screen bg-gradient-to-br from-sky-400 via-cyan-400 to-blue-500">
