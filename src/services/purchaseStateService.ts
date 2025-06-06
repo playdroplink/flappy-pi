@@ -16,6 +16,27 @@ export interface PurchaseUpdate {
   permanent?: boolean;
 }
 
+// Type guard to check if value is a string array
+function isStringArray(value: any): value is string[] {
+  return Array.isArray(value) && value.every(item => typeof item === 'string');
+}
+
+// Helper function to safely parse owned_skins from Supabase Json type
+function parseOwnedSkins(ownedSkins: any): string[] {
+  if (isStringArray(ownedSkins)) {
+    return ownedSkins;
+  }
+  if (typeof ownedSkins === 'string') {
+    try {
+      const parsed = JSON.parse(ownedSkins);
+      return isStringArray(parsed) ? parsed : ['default'];
+    } catch {
+      return ['default'];
+    }
+  }
+  return ['default'];
+}
+
 class PurchaseStateService {
   private cachedState: PurchaseState | null = null;
 
@@ -40,7 +61,7 @@ class PurchaseStateService {
       const state: PurchaseState = {
         hasPremium,
         isAdFree: profile?.ad_free_permanent || hasPremium,
-        ownedSkins: profile?.owned_skins || ['default'],
+        ownedSkins: parseOwnedSkins(profile?.owned_skins),
         premiumExpiresAt: profile?.premium_expires_at || null
       };
 
@@ -87,7 +108,7 @@ class PurchaseStateService {
               .eq('pi_user_id', piUserId)
               .single();
 
-            const currentSkins = currentProfile?.owned_skins || ['default'];
+            const currentSkins = parseOwnedSkins(currentProfile?.owned_skins);
             if (!currentSkins.includes(purchase.itemId)) {
               updates.owned_skins = [...currentSkins, purchase.itemId];
             }
