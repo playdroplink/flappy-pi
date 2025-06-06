@@ -29,6 +29,7 @@ export const useGamePhysics = ({
     onHeartCollected: livesSystem.addLife
   });
   const flashTimer = useRef<number>(0);
+  const redFlashTimer = useRef<number>(0);
 
   const getDifficultyOptimized = useCallback((score: number) => {
     if (difficultyCache.current && difficultyCache.current.score === score) {
@@ -40,6 +41,30 @@ export const useGamePhysics = ({
     return difficulty;
   }, [gameMode, userDifficulty]);
 
+  const triggerBumpEffect = useCallback((canvas: HTMLCanvasElement) => {
+    console.log('💥 Bump effect triggered! Lives remaining:', livesSystem.currentLives - 1);
+    
+    // Trigger red screen flash
+    redFlashTimer.current = 20; // Flash for 20 frames
+    
+    // Clean respawn at center with proper physics reset
+    const centerY = canvas.height / 2;
+    const safeY = Math.max(100, Math.min(canvas.height - 100, centerY));
+    
+    gameStateRef.current.bird = {
+      x: 80,
+      y: safeY,
+      velocity: -2, // Small upward velocity for natural feel
+      rotation: 0
+    };
+    
+    // Pause briefly for effect
+    setTimeout(() => {
+      console.log('✅ Bump effect complete - bird respawned safely');
+    }, 100);
+    
+  }, [livesSystem.currentLives]);
+
   const handleCollisionWithLives = useCallback((canvas: HTMLCanvasElement) => {
     if (livesSystem.isInvulnerable) return false;
     
@@ -49,28 +74,13 @@ export const useGamePhysics = ({
     console.log('💥 Collision detected! Current lives:', livesSystem.currentLives);
     
     if (livesSystem.useLife()) {
-      console.log('❤️ Life used! Respawning bird. Lives remaining:', livesSystem.currentLives - 1);
-      
-      flashTimer.current = 30;
-      
-      // Clean respawn at center with proper physics reset
-      const centerY = canvas.height / 2;
-      const safeY = Math.max(100, Math.min(canvas.height - 100, centerY));
-      
-      gameStateRef.current.bird = {
-        x: 80,
-        y: safeY,
-        velocity: -3, // Small upward velocity for natural feel
-        rotation: 0
-      };
-      
-      console.log('✅ Bird respawned cleanly at center Y:', safeY);
-      return false;
+      triggerBumpEffect(canvas);
+      return false; // Continue game
     } else {
       console.log('💀 No lives left - game over');
-      return true;
+      return true; // Game over
     }
-  }, [checkCollisions, livesSystem]);
+  }, [checkCollisions, livesSystem, triggerBumpEffect]);
 
   const updateGame = useCallback(() => {
     const canvas = document.querySelector('canvas') as HTMLCanvasElement;
@@ -147,13 +157,17 @@ export const useGamePhysics = ({
     state.backgroundOffset += difficulty.backgroundScrollSpeed * 0.5;
     state.foregroundOffset += difficulty.backgroundScrollSpeed * 0.8;
 
-    // Update hearts system
+    // Update hearts system with score-based spawning
+    heartsSystem.spawnHeartOnScore(state.score, canvas.width, canvas.height);
     heartsSystem.spawnHeart(canvas.width, canvas.height, state.frameCount);
     heartsSystem.updateHearts(state.bird, livesSystem.maxLives, livesSystem.currentLives);
 
-    // Update flash timer for invulnerability
+    // Update flash timers
     if (flashTimer.current > 0) {
       flashTimer.current--;
+    }
+    if (redFlashTimer.current > 0) {
+      redFlashTimer.current--;
     }
 
     // Spawn pipes with proper spacing
@@ -249,6 +263,7 @@ export const useGamePhysics = ({
     livesSystem.resetLives();
     heartsSystem.resetHearts();
     flashTimer.current = 0;
+    redFlashTimer.current = 0;
     difficultyCache.current = null;
     
     console.log('✅ All game systems reset and ready');
@@ -259,6 +274,7 @@ export const useGamePhysics = ({
     resetGameWithLives,
     livesSystem,
     heartsSystem,
-    flashTimer
+    flashTimer,
+    redFlashTimer
   };
 };

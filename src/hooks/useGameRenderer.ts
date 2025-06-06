@@ -82,10 +82,10 @@ export const useGameRenderer = ({
     // Apply background effects (shake, etc.)
     applyBackgroundEffects(ctx, canvas);
     
-    // Apply flash effect if active
+    // Apply red flash effect if active (for bump effect)
     if (flashTimer && flashTimer.current > 0) {
       ctx.save();
-      ctx.globalAlpha = 0.3;
+      ctx.globalAlpha = Math.max(0.1, flashTimer.current / 20) * 0.4;
       ctx.fillStyle = '#ff0000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.restore();
@@ -101,16 +101,24 @@ export const useGameRenderer = ({
     // Render pipes
     renderPipes(ctx, canvas, state.pipes, difficulty, state.gameStarted);
     
-    // Render floating hearts (if hearts system available)
-    if (heartsSystem && state.level >= 5) {
+    // Render floating hearts (enhanced system)
+    if (heartsSystem && state.level >= 3) {
       heartsSystem.renderHearts(ctx);
     }
     
     // Render level visual particles
     renderParticles(ctx);
     
-    // Render bird
-    renderBird(ctx, state.bird, state.frameCount, state.gameStarted, difficulty);
+    // Render bird with invulnerability flashing
+    if (livesSystem?.isInvulnerable) {
+      const flickerAlpha = Math.sin(Date.now() * 0.02) * 0.5 + 0.5;
+      ctx.save();
+      ctx.globalAlpha = flickerAlpha;
+      renderBird(ctx, state.bird, state.frameCount, state.gameStarted, difficulty);
+      ctx.restore();
+    } else {
+      renderBird(ctx, state.bird, state.frameCount, state.gameStarted, difficulty);
+    }
     
     // Render "Tap to Start" overlay
     renderTapToStart(ctx, canvas, state.gameStarted, state.initialized, state.frameCount, difficulty);
@@ -122,20 +130,22 @@ export const useGameRenderer = ({
     // Render level text overlay
     renderLevelText(ctx, canvas, currentLevel, state.frameCount);
     
-    // Render lives UI (hearts in corner)
+    // Render lives UI (enhanced hearts in corner)
     if (livesSystem) {
       livesSystem.renderLivesUI(ctx, canvas);
     }
     
-    // Show heart collection message at level 5
-    if (state.level === 5 && state.gameStarted && state.frameCount % 180 < 90) {
+    // Show heart collection message at level 3
+    if (state.level === 3 && state.gameStarted && state.frameCount % 240 < 120) {
       ctx.save();
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(canvas.width / 2 - 150, canvas.height / 2 - 30, 300, 60);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.fillRect(canvas.width / 2 - 180, canvas.height / 2 - 40, 360, 80);
       ctx.fillStyle = '#fff';
-      ctx.font = 'bold 16px Arial';
+      ctx.font = 'bold 18px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText('❤️ Hearts unlocked! Collect for extra lives!', canvas.width / 2, canvas.height / 2);
+      ctx.fillText('❤️ Hearts System Activated!', canvas.width / 2, canvas.height / 2 - 10);
+      ctx.font = 'bold 14px Arial';
+      ctx.fillText('Collect hearts for extra lives! Score every 10 points!', canvas.width / 2, canvas.height / 2 + 15);
       ctx.restore();
     }
 

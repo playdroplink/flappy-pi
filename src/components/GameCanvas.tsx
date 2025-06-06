@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
@@ -61,7 +60,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   // Track the last game state to detect state changes
   const lastGameStateRef = React.useRef(gameState);
 
-  const { updateGame, resetGameWithLives, livesSystem, heartsSystem, flashTimer } = useGamePhysics({
+  const { updateGame, resetGameWithLives, livesSystem, heartsSystem, flashTimer, redFlashTimer } = useGamePhysics({
     gameStateRef,
     onScoreUpdate: (score) => {
       console.log('Physics score update:', score);
@@ -90,7 +89,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     userDifficulty,
     livesSystem,
     heartsSystem,
-    flashTimer
+    flashTimer: redFlashTimer // Use red flash timer for bump effects
   });
 
   useGameInputHandlers({
