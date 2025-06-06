@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -25,11 +24,11 @@ export const useGameState = () => {
   const gameData = useGameData();
 
   useEffect(() => {
-    // Hide splash screen after 3 seconds and show welcome
+    // Hide splash screen after 1 second and show welcome
     const timer = setTimeout(() => {
       setShowSplash(false);
       setShowWelcome(true);
-    }, 3000);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, []);
