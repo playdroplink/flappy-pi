@@ -10,6 +10,7 @@ interface AdSystemState {
   adFreeUntil: string | null;
   showMandatoryAd: boolean;
   canContinueWithoutAd: boolean;
+  lastAdTime: number | null;
 }
 
 export const useAdSystem = () => {
@@ -17,7 +18,8 @@ export const useAdSystem = () => {
     gameCount: 0,
     adFreeUntil: null,
     showMandatoryAd: false,
-    canContinueWithoutAd: false
+    canContinueWithoutAd: false,
+    lastAdTime: null
   });
   const { profile, updateProfile } = useUserProfile();
   const { toast } = useToast();
@@ -48,17 +50,25 @@ export const useAdSystem = () => {
     return new Date() < new Date(adSystemState.adFreeUntil);
   };
 
+  // Check if cooldown period has passed (3 minutes)
+  const isCooldownPassed = () => {
+    if (!adSystemState.lastAdTime) return true;
+    const timeDiff = Date.now() - adSystemState.lastAdTime;
+    return timeDiff > 180000; // 3 minutes
+  };
+
   // Increment game count and check for mandatory ads
   const incrementGameCount = () => {
     if (isAdFree()) return;
 
     const newGameCount = adSystemState.gameCount + 1;
-    const showMandatoryAd = newGameCount % 2 === 0; // Show ad every 2 games
+    // Changed from every 2 games to every 3 games
+    const shouldShowAd = newGameCount % 3 === 0 && isCooldownPassed();
 
     saveAdSystemState({
       ...adSystemState,
       gameCount: newGameCount,
-      showMandatoryAd,
+      showMandatoryAd: shouldShowAd,
       canContinueWithoutAd: isAdFree()
     });
   };
@@ -67,7 +77,8 @@ export const useAdSystem = () => {
   const resetAdCounter = () => {
     saveAdSystemState({
       ...adSystemState,
-      showMandatoryAd: false
+      showMandatoryAd: false,
+      lastAdTime: Date.now() // Update last ad time
     });
   };
 
@@ -133,8 +144,8 @@ export const useAdSystem = () => {
         });
         
         toast({
-          title: "Ad-Free Subscription Activated! 🎉",
-          description: "No ads for 1 month with coin payment!"
+          title: "🌟 Pi Premium Activated! 🎉",
+          description: "No more ads for 1 month! Enjoy unlimited gameplay!"
         });
         
         return true;

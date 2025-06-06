@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Play, ShoppingCart, Trophy, Coins, Volume2, VolumeX, Shield, FileText, HelpCircle, Mail, BookOpen } from 'lucide-react';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
+import BannerAd from './BannerAd';
+import PiPremiumPerks from './PiPremiumPerks';
 
 type GameMode = 'classic' | 'endless' | 'challenge';
 
@@ -37,8 +39,16 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   // Add background music
   useBackgroundMusic({ musicEnabled, gameState: 'menu' });
 
+  const handlePiPremiumUpgrade = () => {
+    // This could open the shop or a dedicated Pi Premium modal
+    onOpenShop();
+  };
+
   return (
     <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-sky-400 via-cyan-400 to-blue-500 flex flex-col overflow-hidden">
+      {/* Banner Ad */}
+      <BannerAd position="bottom" autoHide={true} hideDelay={8000} />
+
       {/* Animated background elements */}
       <div className="absolute inset-0 pointer-events-none">
         {/* Floating clouds */}
@@ -94,7 +104,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-800">{coins}</div>
-                <div className="text-sm text-gray-600">Pi Coins</div>
+                <div className="text-sm text-gray-600">Flappy Coins</div>
               </div>
             </div>
             <Button
@@ -107,6 +117,11 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             </Button>
           </div>
         </Card>
+
+        {/* Pi Premium Perks - Show occasionally */}
+        <div className="w-full mb-4 animate-fade-in" style={{ animationDelay: '0.25s' }}>
+          <PiPremiumPerks onUpgrade={handlePiPremiumUpgrade} />
+        </div>
 
         {/* New Player Tutorial Button */}
         <div className="w-full mb-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>

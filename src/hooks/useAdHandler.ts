@@ -38,8 +38,15 @@ export const useAdHandler = ({
     console.log('Mandatory ad watched - resetting counter and ending game');
     adSystem.resetAdCounter();
     setShowMandatoryAd(false);
+    
+    // Enhanced messaging for mandatory ads
+    toast({
+      title: "🎉 Thanks for watching!",
+      description: "Ads help us reward top players with real Pi weekly! Keep flying!"
+    });
+    
     onGameOver(score);
-  }, [adSystem, setShowMandatoryAd, onGameOver, score]);
+  }, [adSystem, setShowMandatoryAd, onGameOver, score, toast]);
 
   const handleAdWatch = useCallback(async (adType: 'continue' | 'coins' | 'life') => {
     if (!profile) {
@@ -55,6 +62,11 @@ export const useAdHandler = ({
             setShowContinueButton(true);
             setAdWatched(true);
             
+            toast({
+              title: "🔄 Revive Earned!",
+              description: "You're back in the game! Keep flying high!"
+            });
+            
             await gameBackendService.watchAdReward(profile.pi_user_id, 'continue', 0);
           }
           break;
@@ -66,8 +78,8 @@ export const useAdHandler = ({
             localStorage.setItem('flappypi-coins', (coins + coinsResult.reward_amount).toString());
             await refreshProfile();
             toast({
-              title: "Bonus Pi Coins! 🪙",
-              description: `You earned ${coinsResult.reward_amount} Pi coins!`
+              title: "🎉 You've earned 25 Flappy Coins! 🪙",
+              description: "Keep flying to convert them to Pi soon! Top players win real Pi weekly!"
             });
           }
           break;
@@ -76,8 +88,8 @@ export const useAdHandler = ({
           await gameBackendService.watchAdReward(profile.pi_user_id, 'life', 0);
           setLives(1);
           toast({
-            title: "Extra Life! ❤️",
-            description: "You earned an extra life!"
+            title: "❤️ Extra Life Earned!",
+            description: "🔥 Watch ads to earn coins — top players win real Pi weekly!"
           });
           break;
       }
@@ -88,8 +100,8 @@ export const useAdHandler = ({
         setCoins(coins + bonusCoins);
         localStorage.setItem('flappypi-coins', (coins + bonusCoins).toString());
         toast({
-          title: "Bonus Pi Coins! 🪙",
-          description: `You earned ${bonusCoins} Pi coins!`
+          title: "🎉 You've earned 25 Flappy Coins! 🪙",
+          description: "Keep flying to convert them to Pi soon! Top players win real Pi weekly!"
         });
       }
     }
