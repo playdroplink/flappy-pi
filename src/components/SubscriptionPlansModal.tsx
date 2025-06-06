@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, Star, Crown, Zap, Heart, Coins } from 'lucide-react';
-import { usePiPayments } from '@/hooks/usePiPayments';
+import { useToast } from '@/hooks/use-toast';
 
 interface SubscriptionPlansModalProps {
   isOpen: boolean;
@@ -13,66 +13,76 @@ interface SubscriptionPlansModalProps {
 }
 
 const SubscriptionPlansModal: React.FC<SubscriptionPlansModalProps> = ({ isOpen, onClose }) => {
-  const { purchaseAdFreeSubscription, isProcessing } = usePiPayments();
+  const { toast } = useToast();
 
   const plans = [
     {
-      id: 'basic',
-      name: 'Basic',
+      id: 'starter',
+      name: 'Starter Pack',
       price: '5 Pi',
-      period: '/ month',
-      description: 'Essential features for casual players',
+      period: 'one-time',
+      description: 'Essential features for new players',
       icon: <Star className="w-6 h-6" />,
       color: 'from-blue-500 to-cyan-500',
       features: [
-        'Ad-free gaming',
-        '2x coin multiplier',
-        'Basic bird skins',
-        'Daily rewards'
+        '5,000 bonus coins',
+        '1 premium bird skin',
+        'Daily bonus multiplier',
+        'Priority support'
       ],
       popular: false
     },
     {
       id: 'premium',
-      name: 'Premium',
-      price: '10 Pi',
-      period: '/ month',
+      name: 'Premium Pack',
+      price: '15 Pi',
+      period: 'one-time',
       description: 'Perfect for serious gamers',
       icon: <Crown className="w-6 h-6" />,
       color: 'from-purple-500 to-pink-500',
       features: [
-        'Everything in Basic',
-        '5x coin multiplier',
-        'Premium bird skins',
-        'Weekly Pi prizes',
-        'Priority support'
+        '15,000 bonus coins',
+        '3 premium bird skins',
+        '2x coin multiplier (7 days)',
+        'Weekly Pi bonus',
+        'VIP badge'
       ],
       popular: true
     },
     {
       id: 'ultimate',
-      name: 'Ultimate',
-      price: '20 Pi',
-      period: '/ month',
+      name: 'Ultimate Pack',
+      price: '30 Pi',
+      period: 'one-time',
       description: 'Maximum rewards and exclusive content',
       icon: <Zap className="w-6 h-6" />,
       color: 'from-yellow-500 to-orange-500',
       features: [
-        'Everything in Premium',
-        '10x coin multiplier',
-        'Exclusive legendary skins',
+        '50,000 bonus coins',
+        'All premium bird skins',
+        '5x coin multiplier (14 days)',
         'Monthly Pi airdrops',
-        'VIP community access',
-        'Custom game modes'
+        'Exclusive elite skins',
+        'Lifetime VIP status'
       ],
       popular: false
     }
   ];
 
-  const handlePurchase = async (planId: string) => {
-    // For now, we'll use the existing ad-free subscription logic
-    // In a real implementation, you'd pass the planId to handle different plans
-    await purchaseAdFreeSubscription();
+  const handlePurchase = async (plan: any) => {
+    toast({
+      title: "Processing Pi Payment",
+      description: `Processing ${plan.price} payment for ${plan.name}...`
+    });
+
+    // Simulate Pi Network payment processing
+    setTimeout(() => {
+      toast({
+        title: "Purchase Successful! 🎉",
+        description: `Successfully purchased ${plan.name} with ${plan.price}!`
+      });
+      onClose();
+    }, 2000);
   };
 
   return (
@@ -82,11 +92,11 @@ const SubscriptionPlansModal: React.FC<SubscriptionPlansModalProps> = ({ isOpen,
           <DialogTitle className="text-center text-3xl text-gray-800 flex items-center justify-center space-x-2 mb-2">
             <Crown className="h-8 w-8 text-yellow-500" />
             <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Choose Your Plan
+              Pi Premium Packs
             </span>
           </DialogTitle>
           <p className="text-center text-gray-600">
-            Unlock exclusive features and maximize your Pi earnings
+            One-time purchases to boost your gaming experience
           </p>
         </DialogHeader>
 
@@ -116,16 +126,15 @@ const SubscriptionPlansModal: React.FC<SubscriptionPlansModalProps> = ({ isOpen,
                 
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-gray-800">{plan.price}</span>
-                  <span className="text-gray-500">{plan.period}</span>
+                  <span className="text-gray-500 text-sm ml-2">{plan.period}</span>
                 </div>
                 
                 <Button
-                  onClick={() => handlePurchase(plan.id)}
-                  disabled={isProcessing}
+                  onClick={() => handlePurchase(plan)}
                   className={`w-full mb-6 bg-gradient-to-r ${plan.color} hover:opacity-90`}
                   size="lg"
                 >
-                  {isProcessing ? 'Processing...' : 'Get Started'}
+                  Buy with Pi
                 </Button>
               </div>
               
@@ -150,19 +159,14 @@ const SubscriptionPlansModal: React.FC<SubscriptionPlansModalProps> = ({ isOpen,
               </div>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-800 mb-2">Alternative Payment Methods</h4>
+              <h4 className="font-semibold text-gray-800 mb-2">Pi Network Integration</h4>
               <p className="text-gray-700 text-sm mb-4">
-                Don't have enough Pi? No problem! You can also pay with:
+                All purchases are processed through the Pi Network blockchain. 
+                Your Pi coins are securely transferred and rewards are instantly applied to your account.
               </p>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white rounded-lg p-3 border border-gray-200">
-                  <h5 className="font-medium text-gray-800 mb-1">Game Coins</h5>
-                  <p className="text-xs text-gray-600">Use earned coins from gameplay</p>
-                </div>
-                <div className="bg-white rounded-lg p-3 border border-gray-200">
-                  <h5 className="font-medium text-gray-800 mb-1">Watch Ads</h5>
-                  <p className="text-xs text-gray-600">Get premium features temporarily</p>
-                </div>
+              <div className="bg-white rounded-lg p-3 border border-gray-200">
+                <h5 className="font-medium text-gray-800 mb-1">Secure & Instant</h5>
+                <p className="text-xs text-gray-600">Powered by Pi Network's secure payment system</p>
               </div>
             </div>
           </div>

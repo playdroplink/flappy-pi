@@ -53,7 +53,8 @@ const SplashScreen = () => {
               <img 
                 src="/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png" 
                 alt="Flappy Pi Logo" 
-                className="w-24 h-24 animate-bounce drop-shadow-lg"
+                className="w-24 h-24 drop-shadow-lg animate-bounce"
+                style={{ animationDelay: '0s' }}
               />
             </div>
             <h1 className="text-4xl font-bold text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text mb-2">

@@ -1,8 +1,19 @@
 
 import React from 'react';
 import { Heart, Globe, Mail, Users, Star, Code } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const EnhancedFooter: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
+  const handleExternalLink = (url: string) => {
+    window.open(url, '_blank', 'noopener noreferrer');
+  };
+
   return (
     <footer className="bg-white text-gray-800 py-8 px-4 border-t border-gray-200">
       <div className="max-w-6xl mx-auto">
@@ -35,19 +46,28 @@ const EnhancedFooter: React.FC = () => {
             <h4 className="font-semibold text-lg mb-4 text-blue-600">Quick Links</h4>
             <ul className="space-y-3">
               <li>
-                <button className="text-gray-700 hover:text-blue-600 transition-colors flex items-center space-x-2">
+                <button 
+                  onClick={() => handleNavigation('/leaderboard')}
+                  className="text-gray-700 hover:text-blue-600 transition-colors flex items-center space-x-2"
+                >
                   <Star className="w-4 h-4" />
                   <span>Leaderboard</span>
                 </button>
               </li>
               <li>
-                <button className="text-gray-700 hover:text-blue-600 transition-colors flex items-center space-x-2">
+                <button 
+                  onClick={() => handleNavigation('/help')}
+                  className="text-gray-700 hover:text-blue-600 transition-colors flex items-center space-x-2"
+                >
                   <Users className="w-4 h-4" />
                   <span>Community</span>
                 </button>
               </li>
               <li>
-                <button className="text-gray-700 hover:text-blue-600 transition-colors flex items-center space-x-2">
+                <button 
+                  onClick={() => handleExternalLink('https://github.com/mrwain/flappy-pi')}
+                  className="text-gray-700 hover:text-blue-600 transition-colors flex items-center space-x-2"
+                >
                   <Code className="w-4 h-4" />
                   <span>Open Source</span>
                 </button>
@@ -60,24 +80,22 @@ const EnhancedFooter: React.FC = () => {
             <h4 className="font-semibold text-lg mb-4 text-purple-600">Connect</h4>
             <ul className="space-y-3">
               <li>
-                <a 
-                  href="mailto:support@mrwain.org" 
+                <button 
+                  onClick={() => handleNavigation('/contact')}
                   className="text-gray-700 hover:text-purple-600 transition-colors flex items-center space-x-2"
                 >
                   <Mail className="w-4 h-4" />
                   <span>Support</span>
-                </a>
+                </button>
               </li>
               <li>
-                <a 
-                  href="https://mrwain.org" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
+                <button 
+                  onClick={() => handleExternalLink('https://mrwain.org')}
                   className="text-gray-700 hover:text-purple-600 transition-colors flex items-center space-x-2"
                 >
                   <Globe className="w-4 h-4" />
                   <span>Website</span>
-                </a>
+                </button>
               </li>
               <li>
                 <span className="text-gray-600 text-sm">Pi Network Official</span>
@@ -93,10 +111,16 @@ const EnhancedFooter: React.FC = () => {
               © 2025 mrwain organization. All rights reserved.
             </div>
             <div className="flex items-center space-x-6 text-sm">
-              <button className="text-gray-700 hover:text-blue-600 transition-colors">
+              <button 
+                onClick={() => handleNavigation('/privacy')}
+                className="text-gray-700 hover:text-blue-600 transition-colors"
+              >
                 Privacy Policy
               </button>
-              <button className="text-gray-700 hover:text-blue-600 transition-colors">
+              <button 
+                onClick={() => handleNavigation('/terms')}
+                className="text-gray-700 hover:text-blue-600 transition-colors"
+              >
                 Terms of Service
               </button>
               <div className="flex items-center space-x-2">
