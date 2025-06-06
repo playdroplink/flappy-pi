@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -42,8 +41,8 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
   const renderActionButtons = () => {
     if (selectedBirdSkin === skin.id) {
       return (
-        <Button className="bg-green-600 hover:bg-green-700 text-white w-full" disabled>
-          <Check className="mr-1 h-4 w-4" />
+        <Button className="bg-green-600 hover:bg-green-700 text-white w-full text-xs px-2 py-2" disabled>
+          <Check className="mr-1 h-3 w-3" />
           Selected
         </Button>
       );
@@ -52,8 +51,8 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
     // Elite skins require elite subscription
     if (skin.eliteOnly && !hasEliteSubscription) {
       return (
-        <Button className="bg-gray-400 cursor-not-allowed text-white w-full" disabled>
-          <Crown className="mr-1 h-4 w-4" />
+        <Button className="bg-gray-400 cursor-not-allowed text-white w-full text-xs px-2 py-2" disabled>
+          <Crown className="mr-1 h-3 w-3" />
           Elite Only
         </Button>
       );
@@ -64,21 +63,21 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
       return (
         <Button 
           onClick={() => onSelectSkin(skin.id)}
-          className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+          className="bg-blue-600 hover:bg-blue-700 text-white w-full text-xs px-2 py-2"
         >
           {hasEliteSubscription && skin.eliteOnly ? (
             <>
-              <Crown className="mr-1 h-4 w-4" />
+              <Crown className="mr-1 h-3 w-3" />
               Select (Elite)
             </>
           ) : hasAllSkinsSubscription && !skin.owned ? (
             <>
-              <Sparkles className="mr-1 h-4 w-4" />
+              <Sparkles className="mr-1 h-3 w-3" />
               Select (Subscription)
             </>
           ) : (
             <>
-              <Check className="mr-1 h-4 w-4" />
+              <Check className="mr-1 h-3 w-3" />
               Select
             </>
           )}
@@ -88,20 +87,20 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
 
     if (skin.priceType === 'premium') {
       return (
-        <div className="space-y-2">
+        <div className="space-y-1">
           <Button 
             onClick={() => onPiPayment(skin)}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white w-full"
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white w-full text-xs px-2 py-2"
           >
-            <Zap className="mr-1 h-4 w-4" />
+            <Zap className="mr-1 h-3 w-3" />
             Buy with Pi
           </Button>
           <Button 
             onClick={() => onCoinPurchase(skin)}
-            className={`w-full ${coins >= skin.coinPrice ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-gray-400 cursor-not-allowed'} text-white`}
+            className={`w-full text-xs px-2 py-2 ${coins >= skin.coinPrice ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-gray-400 cursor-not-allowed'} text-white`}
             disabled={coins < skin.coinPrice}
           >
-            <Coins className="mr-1 h-4 w-4" />
+            <Coins className="mr-1 h-3 w-3" />
             Buy with Coins
           </Button>
         </div>
@@ -110,8 +109,8 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
 
     if (skin.priceType === 'elite') {
       return (
-        <Button className="bg-gray-400 cursor-not-allowed text-white w-full" disabled>
-          <Crown className="mr-1 h-4 w-4" />
+        <Button className="bg-gray-400 cursor-not-allowed text-white w-full text-xs px-2 py-2" disabled>
+          <Crown className="mr-1 h-3 w-3" />
           Elite Required
         </Button>
       );
@@ -120,76 +119,76 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
     return (
       <Button 
         onClick={() => onSelectSkin(skin.id)}
-        className="bg-yellow-600 hover:bg-yellow-700 text-white w-full"
+        className="bg-yellow-600 hover:bg-yellow-700 text-white w-full text-xs px-2 py-2"
       >
-        <Coins className="mr-1 h-4 w-4" />
+        <Coins className="mr-1 h-3 w-3" />
         Free
       </Button>
     );
   };
 
   return (
-    <Card className="p-4 bg-gray-50 border-gray-200">
-      <div className="flex items-center space-x-4">
-        <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg border border-gray-200 relative">
+    <Card className="p-3 bg-gray-50 border-gray-200">
+      <div className="flex items-center space-x-3">
+        <div className="w-12 h-12 flex items-center justify-center bg-white rounded-lg border border-gray-200 relative flex-shrink-0">
           <img 
             src={skin.image} 
             alt={skin.name}
-            className="w-12 h-12 object-contain"
+            className="w-10 h-10 object-contain"
           />
           {hasEliteSubscription && skin.eliteOnly && (
             <div className="absolute -top-1 -right-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-1">
-              <Crown className="h-3 w-3 text-white" />
+              <Crown className="h-2 w-2 text-white" />
             </div>
           )}
           {hasAllSkinsSubscription && !skin.owned && !skin.eliteOnly && (
             <div className="absolute -top-1 -right-1 bg-pink-500 rounded-full p-1">
-              <Sparkles className="h-3 w-3 text-white" />
+              <Sparkles className="h-2 w-2 text-white" />
             </div>
           )}
         </div>
         
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-gray-800 text-lg truncate flex items-center">
+          <h4 className="font-semibold text-gray-800 text-sm truncate flex items-center">
             {skin.name}
             {skin.eliteOnly && (
-              <Crown className="h-4 w-4 ml-2 text-yellow-600" />
+              <Crown className="h-3 w-3 ml-1 text-yellow-600" />
             )}
           </h4>
-          <div className="mb-2">
+          <div className="mb-1">
             {skin.eliteOnly && hasEliteSubscription ? (
-              <span className="text-yellow-600 text-sm font-medium flex items-center">
-                <Crown className="h-4 w-4 mr-1" />
+              <span className="text-yellow-600 text-xs font-medium flex items-center">
+                <Crown className="h-3 w-3 mr-1" />
                 Elite Access
               </span>
             ) : skin.eliteOnly ? (
-              <span className="text-gray-500 text-sm font-medium flex items-center">
-                <Crown className="h-4 w-4 mr-1" />
+              <span className="text-gray-500 text-xs font-medium flex items-center">
+                <Crown className="h-3 w-3 mr-1" />
                 Elite Only
               </span>
             ) : hasAllSkinsSubscription && !skin.owned ? (
-              <span className="text-pink-600 text-sm font-medium flex items-center">
-                <Sparkles className="h-4 w-4 mr-1" />
+              <span className="text-pink-600 text-xs font-medium flex items-center">
+                <Sparkles className="h-3 w-3 mr-1" />
                 Subscription Access
               </span>
             ) : skin.priceType === 'free' ? (
-              <span className="text-green-600 text-sm font-medium">Free</span>
+              <span className="text-green-600 text-xs font-medium">Free</span>
             ) : (
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <div className="flex items-center space-x-1">
-                  <Zap className="h-4 w-4 text-purple-600" />
-                  <span className="text-purple-600 font-bold text-sm">{skin.piPrice} Pi</span>
+                  <Zap className="h-3 w-3 text-purple-600" />
+                  <span className="text-purple-600 font-bold text-xs">{skin.piPrice} Pi</span>
                 </div>
                 <div className="flex items-center space-x-1">
-                  <Coins className="h-4 w-4 text-yellow-600" />
-                  <span className="text-yellow-600 font-bold text-sm">{skin.coinPrice.toLocaleString()} Coins</span>
+                  <Coins className="h-3 w-3 text-yellow-600" />
+                  <span className="text-yellow-600 font-bold text-xs">{skin.coinPrice.toLocaleString()} Coins</span>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        <div className="text-right space-y-2 flex-shrink-0">
+        <div className="text-right space-y-1 flex-shrink-0 w-24">
           {renderActionButtons()}
         </div>
       </div>
@@ -198,4 +197,3 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
 };
 
 export default BirdSkinCard;
-
