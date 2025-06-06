@@ -36,7 +36,7 @@ interface GameLoopState {
   lastPipeSpawn: number;
   gameOver: boolean;
   initialized: boolean;
-  gameStarted: boolean; // New flag to control game start
+  gameStarted: boolean;
 }
 
 interface UseGameLoopProps {
@@ -59,37 +59,41 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   });
 
   const resetGame = useCallback((canvasHeight: number) => {
-    // Only reset if not already initialized to prevent multiple resets
-    if (gameStateRef.current.initialized && gameState === 'playing') {
-      console.log('Game already initialized, skipping reset');
-      return;
-    }
-    
-    console.log('COMPLETE GAME RESET - Clearing all state');
+    console.log('COMPLETE GAME RESET - Clearing all state and resetting bird');
     const safeY = Math.max(150, canvasHeight / 3);
     
+    // Complete state reset with proper bird positioning
     gameStateRef.current = {
-      bird: { x: 80, y: safeY, velocity: 0, rotation: 0 },
-      pipes: [],
-      clouds: [],
+      bird: { 
+        x: 80, 
+        y: safeY, 
+        velocity: 0, // Reset velocity completely
+        rotation: 0 // Reset tilt/angle
+      },
+      pipes: [], // Clear all pipes
+      clouds: [], // Clear all clouds
       frameCount: 0,
       score: 0,
       lastPipeSpawn: 0,
       gameOver: false,
       initialized: true,
-      gameStarted: false // Start with game not started
+      gameStarted: false // Bird waits for first tap
     };
     
+    // Reset score display
     onScoreUpdate(0);
-    console.log('Game completely reset and ready to play - waiting for first tap');
-  }, [onScoreUpdate, gameState]);
+    console.log('Game completely reset - bird positioned at safe location, waiting for tap to start');
+  }, [onScoreUpdate]);
 
   const startGame = useCallback(() => {
     if (gameStateRef.current.gameStarted) return;
     
-    console.log('Starting game - bird will now fall and pipes will spawn');
+    console.log('Starting game - enabling physics and pipe spawning');
     gameStateRef.current.gameStarted = true;
     gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 120; // Delay first pipe
+    
+    // Give bird a small initial jump to feel responsive
+    gameStateRef.current.bird.velocity = -3;
   }, []);
 
   const continueGame = useCallback(() => {
@@ -97,6 +101,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     const canvas = document.querySelector('canvas');
     const safeY = canvas ? Math.max(150, canvas.height / 3) : 200;
     
+    // Reset bird to safe position with small upward velocity
     gameStateRef.current.bird = {
       x: 80,
       y: safeY,
@@ -105,7 +110,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     };
     
     gameStateRef.current.gameOver = false;
-    gameStateRef.current.gameStarted = true; // Ensure game is started after continue
+    gameStateRef.current.gameStarted = true;
     
     // Remove pipes that are too close to bird
     gameStateRef.current.pipes = gameStateRef.current.pipes.filter(pipe => 
@@ -113,7 +118,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     );
     gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 200;
     
-    console.log('Continue complete - score preserved:', gameStateRef.current.score);
+    console.log('Continue complete - bird respawned at safe position');
   }, []);
 
   const jump = useCallback(() => {
@@ -123,7 +128,8 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
         startGame();
       }
       
-      gameStateRef.current.bird.velocity = -8; // Strong jump for better control
+      // Apply jump force
+      gameStateRef.current.bird.velocity = -8;
       console.log('Bird jumped! Velocity:', gameStateRef.current.bird.velocity);
     }
   }, [gameState, startGame]);
@@ -133,42 +139,38 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     
     if (gameOver || gameState !== 'playing' || !gameStarted) return false;
     
-    // Much more forgiving bird hitbox - smaller collision area
-    const BIRD_SIZE = 16; // Reduced collision size significantly
+    // Forgiving bird hitbox
+    const BIRD_SIZE = 16;
     
-    // Very generous collision detection - only the center core of the bird
     const birdLeft = bird.x - BIRD_SIZE/2 + 8;
     const birdRight = bird.x + BIRD_SIZE/2 - 8;
     const birdTop = bird.y - BIRD_SIZE/2 + 8;
     const birdBottom = bird.y + BIRD_SIZE/2 - 8;
     
-    // Check ceiling collision with generous margin
+    // Check ceiling collision
     if (birdTop <= 10) {
       console.log('Bird hit ceiling! Collision detected');
       return true;
     }
     
-    // Check ground collision with more forgiving ground detection
+    // Check ground collision
     if (birdBottom >= canvas.height - 50) {
       console.log('Bird hit ground! Collision detected');
       return true;
     }
     
-    // Check pipe collisions with very forgiving detection
+    // Check pipe collisions
     for (const pipe of pipes) {
       const pipeWidth = pipe.width || 80;
-      const pipeLeft = pipe.x + 8; // More generous margin on pipe edges
+      const pipeLeft = pipe.x + 8;
       const pipeRight = pipe.x + pipeWidth - 8;
       
-      // Only check collision if bird is clearly within pipe horizontal bounds
       if (birdRight > pipeLeft && birdLeft < pipeRight) {
-        // Check top pipe collision with generous margin
         if (birdTop < pipe.topHeight - 8) {
           console.log('Bird hit top pipe! Collision detected');
           return true;
         }
         
-        // Check bottom pipe collision with generous margin
         if (birdBottom > pipe.bottomY + 8) {
           console.log('Bird hit bottom pipe! Collision detected');
           return true;

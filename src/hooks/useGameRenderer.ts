@@ -218,7 +218,7 @@ export const useGameRenderer = ({
       });
     }
 
-    // Draw bird with precise sprite rendering
+    // Draw bird with enhanced respawn positioning
     const birdImage = new Image();
     birdImage.src = getBirdImage();
     
@@ -230,40 +230,52 @@ export const useGameRenderer = ({
       ctx.shadowBlur = 12;
     }
     
-    // Different animation based on game state
+    // Enhanced animation based on game state
     let flapOffset = 0;
     if (state.gameStarted) {
       // Subtle flapping animation when game is active
       flapOffset = Math.sin(state.frameCount * 0.2) * 1.5;
     } else {
-      // Gentle floating animation when waiting
+      // Gentle floating animation when waiting to start
       flapOffset = Math.sin(state.frameCount * 0.1) * 2;
     }
     
-    ctx.translate(state.bird.x, state.bird.y + flapOffset);
+    // Ensure bird stays in safe spawn position until game starts
+    const birdX = state.gameStarted ? state.bird.x : 80;
+    const birdY = state.gameStarted ? state.bird.y + flapOffset : state.bird.y + flapOffset;
+    
+    ctx.translate(birdX, birdY);
     ctx.rotate(state.bird.rotation * Math.PI / 180);
     
     // Draw bird sprite with precise dimensions
     ctx.drawImage(birdImage, -BIRD_SIZE/2, -BIRD_SIZE/2, BIRD_SIZE, BIRD_SIZE);
     ctx.restore();
 
-    // Show level and theme transition message
+    // Enhanced "Tap to Start" overlay
     if (!state.gameStarted && state.initialized) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
+      // Main title
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 24px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('Tap to Start!', canvas.width / 2, canvas.height / 2);
       
-      // Show current theme
+      // Subtitle with instructions
+      ctx.font = '16px Arial';
+      ctx.fillText('Touch the screen or press space to begin flying', canvas.width / 2, canvas.height / 2 + 40);
+      
+      // Theme indicator
       ctx.font = '14px Arial';
       const themeText = `${difficulty.backgroundTheme.charAt(0).toUpperCase() + difficulty.backgroundTheme.slice(1)} Theme`;
       ctx.fillText(themeText, canvas.width / 2, canvas.height / 2 + 60);
       
-      ctx.font = '16px Arial';
-      ctx.fillText('Touch the screen or press space to begin flying', canvas.width / 2, canvas.height / 2 + 40);
+      // Animated "Get Ready" pulse effect
+      const pulseAlpha = 0.5 + Math.sin(state.frameCount * 0.1) * 0.3;
+      ctx.fillStyle = `rgba(255, 255, 255, ${pulseAlpha})`;
+      ctx.font = '12px Arial';
+      ctx.fillText('Get Ready!', canvas.width / 2, canvas.height / 2 + 80);
     }
 
     // Draw smooth scrolling ground with NO flickering
