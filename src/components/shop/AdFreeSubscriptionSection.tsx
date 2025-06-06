@@ -2,10 +2,19 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Crown, Zap, Infinity, Calendar } from 'lucide-react';
-import { AdSystem } from '@/hooks/useAdSystem';
 
 interface AdFreeSubscriptionSectionProps {
-  adSystem: AdSystem;
+  adSystem: {
+    gameCount: number;
+    isAdFree: boolean;
+    shouldShowMandatoryAd: boolean;
+    canContinueWithoutAd: boolean;
+    adFreeTimeRemaining: { days: number; hours: number } | null;
+    incrementGameCount: () => void;
+    resetAdCounter: () => void;
+    purchaseAdFree: (coins?: number) => Promise<boolean>;
+    purchaseAdFreeWithPi: () => Promise<boolean>;
+  };
   handlePurchaseAdFree: () => void;
 }
 
