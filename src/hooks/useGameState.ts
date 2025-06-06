@@ -134,12 +134,6 @@ export const useGameState = () => {
     setLevel(1);
     setLives(1);
     setShowWelcome(true);
-    
-    // Clear any potential game loops or timers
-    const highestTimeoutId = setTimeout(() => {}, 0);
-    for (let i = 0; i < highestTimeoutId; i++) {
-      clearTimeout(i);
-    }
   };
 
   const handleScoreUpdate = (newScore: number) => {
