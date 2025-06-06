@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import SplashScreen from '../components/SplashScreen';
 import WelcomeScreen from '../components/WelcomeScreen';
@@ -8,6 +9,7 @@ import GameContinueOverlay from '../components/GameContinueOverlay';
 import MandatoryAdModal from '../components/MandatoryAdModal';
 import AdFreeSubscriptionModal from '../components/AdFreeSubscriptionModal';
 import TutorialModal from '../components/TutorialModal';
+import RevivePrompt from '../components/RevivePrompt';
 import { useGameState } from '../hooks/useGameState';
 import { useGameEvents } from '../hooks/useGameEvents';
 import { useModals } from '../hooks/useModals';
@@ -139,6 +141,13 @@ const Index = () => {
         onShowAd={() => modals.handleShowAd('continue')}
         onShareScore={modals.handleShareScore}
         isPausedForRevive={gameEvents.isPausedForRevive}
+      />
+
+      <RevivePrompt
+        isVisible={gameEvents.showRevivePrompt}
+        onWatchAd={gameEvents.handleReviveAdWatch}
+        onDecline={gameEvents.handleReviveDecline}
+        score={gameState.score}
       />
 
       <GameContinueOverlay

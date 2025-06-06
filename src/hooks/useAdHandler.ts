@@ -58,7 +58,7 @@ export const useAdHandler = ({
       switch (adType) {
         case 'continue':
           if (!adWatched && isPausedForRevive) {
-            console.log('Ad watched - showing continue button');
+            console.log('Revive ad watched - showing continue button');
             setShowContinueButton(true);
             setAdWatched(true);
             

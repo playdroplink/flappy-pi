@@ -43,6 +43,7 @@ export const useGameEvents = ({
   const [adWatched, setAdWatched] = useState(false);
   const [showMandatoryAd, setShowMandatoryAd] = useState(false);
   const [showAdFreeModal, setShowAdFreeModal] = useState(false);
+  const [showRevivePrompt, setShowRevivePrompt] = useState(false);
 
   const { handleGameOver } = useGameOverHandler({
     coins,
@@ -94,6 +95,32 @@ export const useGameEvents = ({
     setAdWatched
   });
 
+  // Enhanced revive system handlers
+  const handleReviveAdWatch = () => {
+    console.log('Player chose to watch revive ad');
+    setShowRevivePrompt(false);
+    
+    // Simulate ad watching (replace with real ad integration)
+    setTimeout(() => {
+      handleAdWatch('continue');
+    }, 3000); // 3 second simulated ad
+  };
+
+  const handleReviveDecline = () => {
+    console.log('Player declined revive ad');
+    setShowRevivePrompt(false);
+    setIsPausedForRevive(false);
+    handleGameOver(score);
+  };
+
+  // Show revive prompt when collision occurs and revive is available
+  const enhancedHandleCollision = () => {
+    if (!reviveUsed && score >= 5) {
+      setShowRevivePrompt(true);
+    }
+    handleCollision();
+  };
+
   // Enhanced handlers with Pi payment integration
   const handlePiAdWatch = () => {
     setShowMandatoryAd(false);
@@ -105,7 +132,7 @@ export const useGameEvents = ({
   };
 
   return {
-    handleCollision,
+    handleCollision: enhancedHandleCollision,
     handleGameOver,
     handleCoinEarned: (coinAmount: number) => handleCoinEarned(coinAmount, coins, setCoins),
     handleAdWatch,
@@ -117,6 +144,9 @@ export const useGameEvents = ({
     reviveUsed,
     showMandatoryAd,
     showAdFreeModal,
+    showRevivePrompt,
+    handleReviveAdWatch,
+    handleReviveDecline,
     adSystem,
     piPayments,
     setShowAdFreeModal,

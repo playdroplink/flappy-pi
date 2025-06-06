@@ -41,9 +41,9 @@ export const useCollisionHandler = ({
       }
     }
     
-    // If revive hasn't been used and player has a decent score, offer ad to continue
+    // If revive hasn't been used and player has a decent score, offer revive with ad
     if (!reviveUsed && score >= 5) {
-      console.log('Offering ad to continue game');
+      console.log('Offering revive with ad - pausing game for revive prompt');
       setGameState('paused');
       setIsPausedForRevive(true);
       setShowContinueButton(false);
