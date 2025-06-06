@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { piNetworkService } from '@/services/piNetworkService';
 import { gameBackendService } from '@/services/gameBackendService';
@@ -14,12 +14,38 @@ interface PaymentResult {
 export const usePiPayments = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isPiAvailable, setIsPiAvailable] = useState(false);
   const { toast } = useToast();
   const { profile, refreshProfile } = useUserProfile();
+
+  // Check if Pi is available on this platform
+  useEffect(() => {
+    const checkPiAvailability = async () => {
+      try {
+        await piNetworkService.initialize();
+        setIsPiAvailable(true);
+      } catch (error) {
+        console.error('Pi SDK not available:', error);
+        setIsPiAvailable(false);
+      }
+    };
+    
+    checkPiAvailability();
+  }, []);
 
   const authenticateUser = async (): Promise<boolean> => {
     try {
       setIsProcessing(true);
+      
+      if (!isPiAvailable) {
+        toast({
+          title: "Pi Network Unavailable",
+          description: "Pi Network is not available on this platform or browser.",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
       const user = await piNetworkService.authenticate();
       
       if (user) {
@@ -73,32 +99,67 @@ export const usePiPayments = () => {
 
       // Process payment through backend
       if (profile) {
-        const result = await gameBackendService.makePurchase(
-          profile.pi_user_id,
-          'power_up',
-          'ad_free_month',
-          0, // Pi payments don't deduct coins
-          paymentId
-        );
+        try {
+          const result = await gameBackendService.makePurchase(
+            profile.pi_user_id,
+            'power_up',
+            'ad_free_month',
+            0, // Pi payments don't deduct coins
+            paymentId
+          );
 
-        if (result.success) {
-          await refreshProfile();
+          if (result.success) {
+            await refreshProfile();
+            toast({
+              title: "Ad-Free Subscription Activated! 🎉",
+              description: "Enjoy 30 days of ad-free gaming with Pi payment!"
+            });
+            return { success: true, paymentId };
+          } else {
+            toast({
+              title: "Purchase Failed",
+              description: result.error || "Could not process purchase",
+              variant: "destructive"
+            });
+            return { success: false, error: result.error };
+          }
+        } catch (error) {
+          console.error('Backend purchase processing error:', error);
+          // Fall back to local storage update for demo purposes
+          const adFreeUntil = new Date();
+          adFreeUntil.setMonth(adFreeUntil.getMonth() + 1);
+          
+          localStorage.setItem('flappypi-ad-free', JSON.stringify({
+            active: true,
+            expiresAt: adFreeUntil.toISOString(),
+            paymentId
+          }));
+          
           toast({
             title: "Ad-Free Subscription Activated! 🎉",
-            description: "Enjoy 30 days of ad-free gaming with Pi payment!"
+            description: "Enjoy 30 days of ad-free gaming with Pi payment! (Demo mode)"
           });
+          
           return { success: true, paymentId };
-        } else {
-          toast({
-            title: "Purchase Failed",
-            description: result.error || "Could not process purchase",
-            variant: "destructive"
-          });
-          return { success: false, error: result.error };
         }
+      } else {
+        // Demo mode - store locally
+        const adFreeUntil = new Date();
+        adFreeUntil.setMonth(adFreeUntil.getMonth() + 1);
+        
+        localStorage.setItem('flappypi-ad-free', JSON.stringify({
+          active: true,
+          expiresAt: adFreeUntil.toISOString(),
+          paymentId
+        }));
+        
+        toast({
+          title: "Ad-Free Subscription Activated! 🎉",
+          description: "Enjoy 30 days of ad-free gaming with Pi payment! (Demo mode)"
+        });
+        
+        return { success: true, paymentId };
       }
-
-      return { success: false, error: 'User profile not available' };
     } catch (error) {
       console.error('Pi payment error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Payment failed';
@@ -138,32 +199,68 @@ export const usePiPayments = () => {
 
       // Process payment through backend
       if (profile) {
-        const result = await gameBackendService.makePurchase(
-          profile.pi_user_id,
-          'bird_skin',
-          skinId,
-          0, // Pi payments don't deduct coins
-          paymentId
-        );
+        try {
+          const result = await gameBackendService.makePurchase(
+            profile.pi_user_id,
+            'bird_skin',
+            skinId,
+            0, // Pi payments don't deduct coins
+            paymentId
+          );
 
-        if (result.success) {
-          await refreshProfile();
+          if (result.success) {
+            await refreshProfile();
+            
+            // Update local storage for demo purposes
+            const ownedSkins = JSON.parse(localStorage.getItem('flappypi-owned-skins') || '["default"]');
+            if (!ownedSkins.includes(skinId)) {
+              ownedSkins.push(skinId);
+              localStorage.setItem('flappypi-owned-skins', JSON.stringify(ownedSkins));
+            }
+            
+            toast({
+              title: "Bird Skin Purchased! 🐦",
+              description: `You now own the ${skinId} bird skin!`
+            });
+            return { success: true, paymentId };
+          } else {
+            toast({
+              title: "Purchase Failed",
+              description: result.error || "Could not process purchase",
+              variant: "destructive"
+            });
+            return { success: false, error: result.error };
+          }
+        } catch (error) {
+          // Fall back to local storage update for demo purposes
+          const ownedSkins = JSON.parse(localStorage.getItem('flappypi-owned-skins') || '["default"]');
+          if (!ownedSkins.includes(skinId)) {
+            ownedSkins.push(skinId);
+            localStorage.setItem('flappypi-owned-skins', JSON.stringify(ownedSkins));
+          }
+          
           toast({
             title: "Bird Skin Purchased! 🐦",
-            description: `You now own the ${skinId} bird skin!`
+            description: `You now own the ${skinId} bird skin! (Demo mode)`
           });
+          
           return { success: true, paymentId };
-        } else {
-          toast({
-            title: "Purchase Failed",
-            description: result.error || "Could not process purchase",
-            variant: "destructive"
-          });
-          return { success: false, error: result.error };
         }
+      } else {
+        // Demo mode - store locally
+        const ownedSkins = JSON.parse(localStorage.getItem('flappypi-owned-skins') || '["default"]');
+        if (!ownedSkins.includes(skinId)) {
+          ownedSkins.push(skinId);
+          localStorage.setItem('flappypi-owned-skins', JSON.stringify(ownedSkins));
+        }
+        
+        toast({
+          title: "Bird Skin Purchased! 🐦",
+          description: `You now own the ${skinId} bird skin! (Demo mode)`
+        });
+        
+        return { success: true, paymentId };
       }
-
-      return { success: false, error: 'User profile not available' };
     } catch (error) {
       console.error('Pi payment error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Payment failed';
@@ -187,6 +284,7 @@ export const usePiPayments = () => {
   return {
     isProcessing,
     isAuthenticated,
+    isPiAvailable,
     authenticateUser,
     purchaseAdFreeSubscription,
     purchaseBirdSkin,

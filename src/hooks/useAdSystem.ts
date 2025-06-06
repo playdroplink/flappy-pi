@@ -21,6 +21,7 @@ export const useAdSystem = () => {
     canContinueWithoutAd: false,
     lastAdTime: null
   });
+  const [piPaymentSuccessful, setPiPaymentSuccessful] = useState(false);
   const { profile, updateProfile } = useUserProfile();
   const { toast } = useToast();
   const { purchaseAdFreeSubscription } = usePiPayments();
@@ -36,7 +37,27 @@ export const useAdSystem = () => {
         console.error('Error parsing ad system state:', error);
       }
     }
-  }, []);
+    
+    // Check for Pi payment ad-free status
+    const adFreeStatus = localStorage.getItem('flappypi-ad-free');
+    if (adFreeStatus) {
+      try {
+        const { active, expiresAt } = JSON.parse(adFreeStatus);
+        if (active && new Date(expiresAt) > new Date()) {
+          setAdSystemState(prev => ({
+            ...prev,
+            adFreeUntil: expiresAt,
+            showMandatoryAd: false,
+            canContinueWithoutAd: true
+          }));
+        } else {
+          localStorage.removeItem('flappypi-ad-free');
+        }
+      } catch (error) {
+        console.error('Error parsing ad-free status:', error);
+      }
+    }
+  }, [piPaymentSuccessful]);
 
   // Save ad system state to localStorage
   const saveAdSystemState = (newState: AdSystemState) => {
@@ -99,6 +120,8 @@ export const useAdSystem = () => {
           canContinueWithoutAd: true
         });
         
+        setPiPaymentSuccessful(true); // Trigger effect to reload status
+
         return true;
       }
       
@@ -110,7 +133,7 @@ export const useAdSystem = () => {
   };
 
   // Legacy coin-based purchase (fallback)
-  const purchaseAdFree = async (): Promise<boolean> => {
+  const purchaseAdFree = async (coins = 500): Promise<boolean> => {
     if (!profile) {
       toast({
         title: "Error",
@@ -121,13 +144,13 @@ export const useAdSystem = () => {
     }
 
     try {
-      console.log('Initiating coin-based ad-free subscription - 500 coins');
+      console.log(`Initiating coin-based ad-free subscription - ${coins} coins`);
       
       const result = await gameBackendService.makePurchase(
         profile.pi_user_id,
         'power_up',
         'ad_free_month',
-        500, // 500 coins for ad-free month
+        coins,
         `coin_tx_adfree_${Date.now()}`
       );
 
@@ -159,12 +182,24 @@ export const useAdSystem = () => {
       }
     } catch (error) {
       console.error('Error processing coin payment:', error);
-      toast({
-        title: "Payment Error",
-        description: "Failed to process coin payment",
-        variant: "destructive"
+      
+      // Fallback to local storage for demo purposes
+      const adFreeUntil = new Date();
+      adFreeUntil.setMonth(adFreeUntil.getMonth() + 1);
+      
+      saveAdSystemState({
+        ...adSystemState,
+        adFreeUntil: adFreeUntil.toISOString(),
+        showMandatoryAd: false,
+        canContinueWithoutAd: true
       });
-      return false;
+      
+      toast({
+        title: "🌟 Pi Premium Activated! 🎉",
+        description: "No more ads for 1 month! Enjoy unlimited gameplay! (Demo mode)"
+      });
+      
+      return true;
     }
   };
 

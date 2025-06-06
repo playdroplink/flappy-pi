@@ -32,7 +32,7 @@ interface PiPayment {
 
 declare global {
   interface Window {
-    Pi: {
+    Pi?: {
       init: (config: { version: string; sandbox: boolean }) => Promise<void>;
       authenticate: (scopes: string[], onIncompletePaymentFound?: (payment: PiPayment) => void) => Promise<PiUser>;
       createPayment: (paymentData: {
@@ -50,16 +50,25 @@ declare global {
   }
 }
 
+import { loadPiSdk } from './piSdkLoader';
+
 class PiNetworkService {
   private isInitialized = false;
   private currentUser: PiUser | null = null;
   private readonly APP_ID = 'flappypi';
   private readonly SANDBOX = true; // Change to false for production
+  private paymentCallbacks: Map<string, Function> = new Map();
 
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
     try {
+      // Load Pi SDK if not loaded
+      const sdkLoaded = await loadPiSdk();
+      if (!sdkLoaded) {
+        throw new Error('Pi SDK failed to load');
+      }
+
       // Check if Pi SDK is loaded
       if (!window.Pi) {
         console.error('Pi SDK not loaded. Make sure to include the Pi SDK script.');
@@ -83,12 +92,13 @@ class PiNetworkService {
     try {
       await this.initialize();
       
-      this.currentUser = await window.Pi.authenticate([
+      this.currentUser = await window.Pi!.authenticate([
         'payments',
         'username'
       ], (payment) => {
         console.log('Incomplete payment found:', payment);
-        // Handle incomplete payment if needed
+        // Handle incomplete payment
+        this.handleIncompletePayment(payment);
       });
 
       console.log('Pi user authenticated:', this.currentUser);
@@ -99,31 +109,57 @@ class PiNetworkService {
     }
   }
 
+  private handleIncompletePayment(payment: PiPayment): void {
+    // Get the callback for this payment if it exists
+    const callback = this.paymentCallbacks.get(payment.identifier);
+    if (callback) {
+      callback(payment);
+      this.paymentCallbacks.delete(payment.identifier);
+    } else {
+      console.log('No callback found for incomplete payment:', payment.identifier);
+    }
+  }
+
   async createPayment(amount: number, memo: string, metadata: any = {}): Promise<string> {
     if (!this.currentUser) {
-      throw new Error('User not authenticated');
+      const user = await this.authenticate();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
     }
 
     return new Promise((resolve, reject) => {
-      window.Pi.createPayment({
+      if (!window.Pi) {
+        reject(new Error('Pi SDK not available'));
+        return;
+      }
+
+      const paymentData = {
         amount,
         memo,
         metadata: {
           ...metadata,
           app_id: this.APP_ID,
-          user_id: this.currentUser?.uid
+          user_id: this.currentUser?.uid || 'guest',
+          timestamp: Date.now()
         }
-      }, {
+      };
+
+      console.log('Creating payment with data:', paymentData);
+
+      window.Pi.createPayment(paymentData, {
         onReadyForServerApproval: (paymentId: string) => {
           console.log('Payment ready for server approval:', paymentId);
+          // In a real app, you would call your backend to approve the payment
+          // For now, we'll just resolve the promise with the payment ID
           resolve(paymentId);
         },
         onReadyForServerCompletion: (paymentId: string, txid: string) => {
           console.log('Payment ready for server completion:', paymentId, txid);
-          // This will be handled by the backend
+          // This will be handled by the backend in a real implementation
         },
         onCancel: (paymentId: string) => {
-          console.log('Payment cancelled:', paymentId);
+          console.log('Payment cancelled by user:', paymentId);
           reject(new Error('Payment cancelled by user'));
         },
         onError: (error: Error, payment?: PiPayment) => {
@@ -134,8 +170,17 @@ class PiNetworkService {
     });
   }
 
+  // Register a callback for a specific payment
+  registerPaymentCallback(paymentId: string, callback: Function): void {
+    this.paymentCallbacks.set(paymentId, callback);
+  }
+
   shareScore(score: number, level: number): void {
     try {
+      if (!window.Pi) {
+        throw new Error('Pi SDK not available');
+      }
+
       const title = "Check out my Flappy Pi score!";
       const message = `I just scored ${score} points and reached level ${level} in Flappy Pi! 🐦 Can you beat my score? Play now on Pi Network!`;
       

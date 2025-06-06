@@ -1,198 +1,180 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Coins, Check, Zap, Sparkles, Crown } from 'lucide-react';
-
-interface BirdSkin {
-  id: string;
-  name: string;
-  piPrice: number;
-  coinPrice: number;
-  priceType: 'free' | 'premium' | 'elite';
-  image: string;
-  owned: boolean;
-  eliteOnly?: boolean;
-}
+import { Button } from '@/components/ui/button';
+import { Coins, Crown, Lock, Check } from 'lucide-react';
+import PiPaymentModal from '../PiPaymentModal';
 
 interface BirdSkinCardProps {
-  skin: BirdSkin;
-  selectedBirdSkin: string;
-  coins: number;
+  id: string;
+  name: string;
+  description?: string;
+  image: string;
+  piPrice: number;
+  coinPrice: number;
   isOwned: boolean;
-  hasAllSkinsSubscription?: boolean;
-  hasEliteSubscription?: boolean;
-  onSelectSkin: (skinId: string) => void;
-  onPiPayment: (skin: BirdSkin) => void;
-  onCoinPurchase: (skin: BirdSkin) => void;
+  isSelected: boolean;
+  canUse: boolean;
+  onSelect: () => void;
+  onPurchase: () => void;
+  userCoins: number;
+  priceType: 'free' | 'premium' | 'elite';
 }
 
 const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
-  skin,
-  selectedBirdSkin,
-  coins,
+  id,
+  name,
+  description,
+  image,
+  piPrice,
+  coinPrice,
   isOwned,
-  hasAllSkinsSubscription = false,
-  hasEliteSubscription = false,
-  onSelectSkin,
-  onPiPayment,
-  onCoinPurchase
+  isSelected,
+  canUse,
+  onSelect,
+  onPurchase,
+  userCoins,
+  priceType
 }) => {
-  const renderActionButtons = () => {
-    if (selectedBirdSkin === skin.id) {
-      return (
-        <Button className="bg-green-600 hover:bg-green-700 text-white w-full text-xs px-2 py-2" disabled>
-          <Check className="mr-1 h-3 w-3" />
-          Selected
-        </Button>
-      );
-    }
+  const [showPiModal, setShowPiModal] = useState(false);
+  const canAffordCoins = userCoins >= coinPrice;
+  
+  // Calculate status text and styles
+  let statusText = '';
+  let statusColor = '';
+  
+  if (isSelected) {
+    statusText = 'Selected';
+    statusColor = 'bg-green-100 text-green-700';
+  } else if (isOwned) {
+    statusText = 'Owned';
+    statusColor = 'bg-blue-100 text-blue-700';
+  } else if (!canUse) {
+    statusText = priceType === 'elite' ? 'Elite Only' : 'Locked';
+    statusColor = 'bg-red-100 text-red-700';
+  } else {
+    statusText = 'Available';
+    statusColor = 'bg-gray-100 text-gray-700';
+  }
 
-    // Elite skins require elite subscription
-    if (skin.eliteOnly && !hasEliteSubscription) {
-      return (
-        <Button className="bg-gray-400 cursor-not-allowed text-white w-full text-xs px-2 py-2" disabled>
-          <Crown className="mr-1 h-3 w-3" />
-          Elite Only
-        </Button>
-      );
-    }
+  const handlePiPayment = () => {
+    setShowPiModal(true);
+  };
 
-    // If user has subscriptions or owns the skin, they can select it
-    if (isOwned) {
-      return (
-        <Button 
-          onClick={() => onSelectSkin(skin.id)}
-          className="bg-blue-600 hover:bg-blue-700 text-white w-full text-xs px-2 py-2"
-        >
-          {hasEliteSubscription && skin.eliteOnly ? (
-            <>
-              <Crown className="mr-1 h-3 w-3" />
-              Select (Elite)
-            </>
-          ) : hasAllSkinsSubscription && !skin.owned ? (
-            <>
-              <Sparkles className="mr-1 h-3 w-3" />
-              Select (Subscription)
-            </>
-          ) : (
-            <>
-              <Check className="mr-1 h-3 w-3" />
-              Select
-            </>
-          )}
-        </Button>
-      );
-    }
-
-    if (skin.priceType === 'premium') {
-      return (
-        <div className="space-y-1">
-          <Button 
-            onClick={() => onPiPayment(skin)}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white w-full text-xs px-2 py-2"
-          >
-            <Zap className="mr-1 h-3 w-3" />
-            Buy with Pi
-          </Button>
-          <Button 
-            onClick={() => onCoinPurchase(skin)}
-            className={`w-full text-xs px-2 py-2 ${coins >= skin.coinPrice ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-gray-400 cursor-not-allowed'} text-white`}
-            disabled={coins < skin.coinPrice}
-          >
-            <Coins className="mr-1 h-3 w-3" />
-            Buy with Coins
-          </Button>
-        </div>
-      );
-    }
-
-    if (skin.priceType === 'elite') {
-      return (
-        <Button className="bg-gray-400 cursor-not-allowed text-white w-full text-xs px-2 py-2" disabled>
-          <Crown className="mr-1 h-3 w-3" />
-          Elite Required
-        </Button>
-      );
-    }
-
-    return (
-      <Button 
-        onClick={() => onSelectSkin(skin.id)}
-        className="bg-yellow-600 hover:bg-yellow-700 text-white w-full text-xs px-2 py-2"
-      >
-        <Coins className="mr-1 h-3 w-3" />
-        Free
-      </Button>
-    );
+  const handlePiSuccess = () => {
+    onPurchase();
   };
 
   return (
-    <Card className="p-3 bg-gray-50 border-gray-200">
-      <div className="flex items-center space-x-3">
-        <div className="w-12 h-12 flex items-center justify-center bg-white rounded-lg border border-gray-200 relative flex-shrink-0">
-          <img 
-            src={skin.image} 
-            alt={skin.name}
-            className="w-10 h-10 object-contain"
-          />
-          {hasEliteSubscription && skin.eliteOnly && (
-            <div className="absolute -top-1 -right-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-1">
-              <Crown className="h-2 w-2 text-white" />
+    <>
+      <Card className={`overflow-hidden ${isSelected ? 'border-2 border-green-500' : 'border border-gray-200'}`}>
+        <div className="relative">
+          {/* Status Badge */}
+          <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+            {statusText}
+          </div>
+          
+          {/* Elite Badge */}
+          {priceType === 'elite' && (
+            <div className="absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-amber-700 flex items-center">
+              <Crown className="w-3 h-3 mr-1" />
+              <span>Elite</span>
             </div>
           )}
-          {hasAllSkinsSubscription && !skin.owned && !skin.eliteOnly && (
-            <div className="absolute -top-1 -right-1 bg-pink-500 rounded-full p-1">
-              <Sparkles className="h-2 w-2 text-white" />
-            </div>
-          )}
+          
+          {/* Image */}
+          <div className="h-32 bg-gradient-to-b from-blue-50 to-cyan-50 flex items-center justify-center">
+            <img 
+              src={image} 
+              alt={name} 
+              className="h-24 w-24 object-contain" 
+              loading="lazy"
+            />
+          </div>
         </div>
         
-        <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-gray-800 text-sm truncate flex items-center">
-            {skin.name}
-            {skin.eliteOnly && (
-              <Crown className="h-3 w-3 ml-1 text-yellow-600" />
+        {/* Content */}
+        <div className="p-4 space-y-3">
+          <div>
+            <h3 className="font-bold text-gray-800">{name}</h3>
+            {description && (
+              <p className="text-xs text-gray-500">{description}</p>
             )}
-          </h4>
-          <div className="mb-1">
-            {skin.eliteOnly && hasEliteSubscription ? (
-              <span className="text-yellow-600 text-xs font-medium flex items-center">
-                <Crown className="h-3 w-3 mr-1" />
-                Elite Access
-              </span>
-            ) : skin.eliteOnly ? (
-              <span className="text-gray-500 text-xs font-medium flex items-center">
-                <Crown className="h-3 w-3 mr-1" />
-                Elite Only
-              </span>
-            ) : hasAllSkinsSubscription && !skin.owned ? (
-              <span className="text-pink-600 text-xs font-medium flex items-center">
-                <Sparkles className="h-3 w-3 mr-1" />
-                Subscription Access
-              </span>
-            ) : skin.priceType === 'free' ? (
-              <span className="text-green-600 text-xs font-medium">Free</span>
-            ) : (
-              <div className="space-y-0.5">
-                <div className="flex items-center space-x-1">
-                  <Zap className="h-3 w-3 text-purple-600" />
-                  <span className="text-purple-600 font-bold text-xs">{skin.piPrice} Pi</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Coins className="h-3 w-3 text-yellow-600" />
-                  <span className="text-yellow-600 font-bold text-xs">{skin.coinPrice.toLocaleString()} Coins</span>
-                </div>
+          </div>
+          
+          {/* Price */}
+          {!isOwned && (
+            <div className="flex items-center space-x-2 text-sm">
+              <div className="flex items-center">
+                <span className="text-yellow-600 font-bold mr-1">{piPrice}</span>
+                <span className="text-gray-600">Pi</span>
               </div>
+              <span className="text-gray-400">or</span>
+              <div className="flex items-center">
+                <Coins className="w-3 h-3 text-blue-500 mr-1" />
+                <span className="text-gray-700">{coinPrice}</span>
+              </div>
+            </div>
+          )}
+          
+          {/* Action Buttons */}
+          <div className="space-y-2">
+            {isOwned ? (
+              <Button 
+                onClick={onSelect} 
+                variant={isSelected ? "default" : "outline"}
+                className="w-full"
+              >
+                {isSelected ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Selected
+                  </>
+                ) : (
+                  'Select'
+                )}
+              </Button>
+            ) : canUse ? (
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  onClick={handlePiPayment}
+                  className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white text-xs py-1 h-9"
+                >
+                  Buy with Pi
+                </Button>
+                <Button 
+                  onClick={onPurchase}
+                  disabled={!canAffordCoins}
+                  className={`w-full text-xs py-1 h-9 ${canAffordCoins ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}
+                >
+                  {canAffordCoins ? 'Buy with Coins' : 'Not enough'}
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                disabled 
+                className="w-full bg-gray-200 text-gray-500"
+              >
+                <Lock className="h-3 w-3 mr-2" />
+                Locked
+              </Button>
             )}
           </div>
         </div>
+      </Card>
 
-        <div className="text-right space-y-1 flex-shrink-0 w-24">
-          {renderActionButtons()}
-        </div>
-      </div>
-    </Card>
+      {/* Pi Payment Modal */}
+      <PiPaymentModal
+        isOpen={showPiModal}
+        onClose={() => setShowPiModal(false)}
+        itemName={name}
+        itemDescription={`Bird Skin: ${description || name}`}
+        piAmount={piPrice}
+        onSuccess={handlePiSuccess}
+        skinId={id}
+        isSubscription={false}
+      />
+    </>
   );
 };
 
