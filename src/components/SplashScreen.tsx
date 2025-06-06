@@ -13,9 +13,9 @@ const SplashScreen = () => {
           clearInterval(interval);
           return 100;
         }
-        return prev + 2;
+        return prev + 1;
       });
-    }, 60); // Complete in 3 seconds (100 / 2 = 50 steps * 60ms = 3000ms)
+    }, 30); // Complete in 3 seconds (100 steps * 30ms = 3000ms)
 
     return () => clearInterval(interval);
   }, []);
@@ -47,32 +47,32 @@ const SplashScreen = () => {
       </div>
 
       <div className="flex-1 flex items-center justify-center w-full px-4">
-        <Card className="p-8 text-center w-full max-w-sm animate-scale-in bg-white/95 backdrop-blur-lg shadow-2xl rounded-xl border-0">
+        <Card className="p-6 sm:p-8 text-center w-full max-w-sm animate-scale-in bg-white/95 backdrop-blur-lg shadow-2xl rounded-xl border-0">
           <div className="mb-6">
             <div className="mb-4 flex justify-center">
               <img 
                 src="/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png" 
                 alt="Flappy Pi Logo" 
-                className="w-24 h-24 drop-shadow-lg animate-bounce"
+                className="w-20 h-20 sm:w-24 sm:h-24 drop-shadow-lg animate-bounce"
                 style={{ animationDelay: '0s' }}
               />
             </div>
-            <h1 className="text-4xl font-bold text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text mb-2">
+            <h1 className="text-3xl sm:text-4xl font-bold text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text mb-2">
               Flappy Pi
             </h1>
-            <p className="text-gray-700 text-lg font-medium">
+            <p className="text-gray-700 text-base sm:text-lg font-medium">
               Soar to new heights with Pi Network!
             </p>
           </div>
           
           <div className="space-y-4">
             <div className="w-full">
-              <Progress value={progress} className="w-full h-4 bg-gray-200 rounded-full overflow-hidden" />
-              <div className="mt-3 text-sm text-gray-600 font-semibold">
+              <Progress value={progress} className="w-full h-3 sm:h-4 bg-gray-200 rounded-full overflow-hidden" />
+              <div className="mt-3 text-sm font-semibold text-gray-600">
                 Loading... {progress}%
               </div>
             </div>
-            <div className="text-sm text-gray-500 font-medium bg-gray-50 rounded-full px-4 py-2">
+            <div className="text-xs sm:text-sm text-gray-500 font-medium bg-gray-50 rounded-full px-3 sm:px-4 py-2">
               Powered by mrwain organization
             </div>
           </div>
