@@ -126,6 +126,57 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          amount_pi: number | null
+          auto_renew: boolean | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          created_at: string
+          end_date: string
+          id: string
+          pi_transaction_id: string | null
+          pi_user_id: string
+          plan_id: string
+          plan_name: string
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_pi?: number | null
+          auto_renew?: boolean | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          end_date: string
+          id?: string
+          pi_transaction_id?: string | null
+          pi_user_id: string
+          plan_id: string
+          plan_name: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_pi?: number | null
+          auto_renew?: boolean | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          end_date?: string
+          id?: string
+          pi_transaction_id?: string | null
+          pi_user_id?: string
+          plan_id?: string
+          plan_name?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_inventory: {
         Row: {
           created_at: string | null
@@ -164,6 +215,10 @@ export type Database = {
           pi_user_id: string
           premium_expires_at: string | null
           selected_bird_skin: string | null
+          subscription_end: string | null
+          subscription_plan: string | null
+          subscription_start: string | null
+          subscription_status: string | null
           total_coins: number | null
           updated_at: string | null
           username: string
@@ -178,6 +233,10 @@ export type Database = {
           pi_user_id: string
           premium_expires_at?: string | null
           selected_bird_skin?: string | null
+          subscription_end?: string | null
+          subscription_plan?: string | null
+          subscription_start?: string | null
+          subscription_status?: string | null
           total_coins?: number | null
           updated_at?: string | null
           username: string
@@ -192,6 +251,10 @@ export type Database = {
           pi_user_id?: string
           premium_expires_at?: string | null
           selected_bird_skin?: string | null
+          subscription_end?: string | null
+          subscription_plan?: string | null
+          subscription_start?: string | null
+          subscription_status?: string | null
           total_coins?: number | null
           updated_at?: string | null
           username?: string
@@ -260,6 +323,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_subscription: {
+        Args: {
+          p_pi_user_id: string
+          p_plan_id: string
+          p_plan_name: string
+          p_duration_days: number
+          p_pi_transaction_id: string
+          p_amount_pi?: number
+        }
+        Returns: Json
+      }
+      cancel_subscription: {
+        Args: { p_pi_user_id: string; p_reason?: string }
+        Returns: Json
+      }
       claim_daily_reward: {
         Args: { p_pi_user_id: string }
         Returns: Json
@@ -291,6 +369,10 @@ export type Database = {
           p_coins_earned: number
           p_session_duration?: number
         }
+        Returns: Json
+      }
+      expire_subscriptions: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
       make_purchase: {

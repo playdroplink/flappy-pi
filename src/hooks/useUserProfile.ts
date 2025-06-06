@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { gameBackendService, UserProfile } from '@/services/gameBackendService';
 import { purchaseStateService, PurchaseState } from '@/services/purchaseStateService';
+import { subscriptionService } from '@/services/subscriptionService';
 import { useToast } from '@/hooks/use-toast';
 
 interface UseUserProfileReturn {
@@ -15,6 +16,8 @@ interface UseUserProfileReturn {
   hasPremium: boolean;
   isAdFree: boolean;
   ownedSkins: string[];
+  hasActiveSubscription: boolean;
+  subscriptionStatus: string;
 }
 
 export const useUserProfile = (): UseUserProfileReturn => {
@@ -48,6 +51,17 @@ export const useUserProfile = (): UseUserProfileReturn => {
     }
   };
 
+  const checkSubscriptionExpiry = async () => {
+    if (!profile?.pi_user_id) return;
+
+    try {
+      // Check if subscriptions need to be expired
+      await subscriptionService.expireSubscriptions();
+    } catch (error) {
+      console.error('Error checking subscription expiry:', error);
+    }
+  };
+
   const initializeProfile = async (piUserId?: string, username?: string) => {
     setLoading(true);
     try {
@@ -76,8 +90,11 @@ export const useUserProfile = (): UseUserProfileReturn => {
       if (existingProfile) {
         localStorage.setItem('flappypi-profile', JSON.stringify(existingProfile));
         
-        // Load purchase state
-        await refreshPurchaseState();
+        // Load purchase state and check subscription expiry
+        await Promise.all([
+          refreshPurchaseState(),
+          checkSubscriptionExpiry()
+        ]);
       }
     } catch (error) {
       console.error('Error initializing profile:', error);
@@ -127,8 +144,11 @@ export const useUserProfile = (): UseUserProfileReturn => {
         setProfile(refreshedProfile);
         localStorage.setItem('flappypi-profile', JSON.stringify(refreshedProfile));
         
-        // Also refresh purchase state
-        await refreshPurchaseState();
+        // Also refresh purchase state and check subscription expiry
+        await Promise.all([
+          refreshPurchaseState(),
+          checkSubscriptionExpiry()
+        ]);
       }
     } catch (error) {
       console.error('Error refreshing profile:', error);
@@ -174,6 +194,10 @@ export const useUserProfile = (): UseUserProfileReturn => {
   const hasPremium = purchaseState?.hasPremium || false;
   const isAdFree = purchaseState?.isAdFree || false;
   const ownedSkins = purchaseState?.ownedSkins || ['default'];
+  
+  // New subscription-related computed properties
+  const hasActiveSubscription = profile?.subscription_status === 'active';
+  const subscriptionStatus = profile?.subscription_status || 'none';
 
   return {
     profile,
@@ -185,6 +209,8 @@ export const useUserProfile = (): UseUserProfileReturn => {
     initializeProfile,
     hasPremium,
     isAdFree,
-    ownedSkins
+    ownedSkins,
+    hasActiveSubscription,
+    subscriptionStatus
   };
 };

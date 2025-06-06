@@ -1,16 +1,22 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ArrowLeft, Crown, Star, Zap, Check, Coins, X } from 'lucide-react';
+import { ArrowLeft, Crown, Star, Zap, Check, Coins, X, History } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { subscriptionService } from '@/services/subscriptionService';
+import SubscriptionStatusCard from '@/components/SubscriptionStatusCard';
+import SubscriptionHistoryModal from '@/components/SubscriptionHistoryModal';
 import EnhancedFooter from '@/components/EnhancedFooter';
 
 const SubscriptionPlansPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { profile, refreshProfile } = useUserProfile();
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const handleBack = () => {
     navigate('/');
@@ -22,6 +28,7 @@ const SubscriptionPlansPage: React.FC = () => {
       name: 'Starter Pack',
       price: '5 π',
       period: 'one-time',
+      duration: 30,
       description: 'Essential features for new players',
       icon: <Star className="w-6 h-6" />,
       color: 'from-blue-500 to-cyan-500',
@@ -38,13 +45,14 @@ const SubscriptionPlansPage: React.FC = () => {
       name: 'Premium Pack',
       price: '15 π',
       period: 'one-time',
+      duration: 30,
       description: 'Perfect for serious gamers',
       icon: <Crown className="w-6 h-6" />,
       color: 'from-purple-500 to-pink-500',
       features: [
         '15,000 bonus coins',
         '3 premium bird skins',
-        '2x coin multiplier (7 days)',
+        '2x coin multiplier (30 days)',
         'Weekly Pi bonus',
         'VIP badge'
       ],
@@ -55,13 +63,14 @@ const SubscriptionPlansPage: React.FC = () => {
       name: 'Ultimate Pack',
       price: '30 π',
       period: 'one-time',
+      duration: 60,
       description: 'Maximum rewards and exclusive content',
       icon: <Zap className="w-6 h-6" />,
       color: 'from-yellow-500 to-orange-500',
       features: [
         '50,000 bonus coins',
         'All premium bird skins',
-        '5x coin multiplier (14 days)',
+        '5x coin multiplier (60 days)',
         'Monthly Pi airdrops',
         'Exclusive elite skins',
         'Lifetime VIP status'
@@ -71,34 +80,86 @@ const SubscriptionPlansPage: React.FC = () => {
   ];
 
   const handlePurchase = async (plan: any) => {
+    if (!profile?.pi_user_id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please create a profile first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     toast({
       title: "Processing Pi Payment",
       description: `Processing ${plan.price} payment for ${plan.name}...`
     });
 
     // Simulate Pi Network payment processing
-    setTimeout(() => {
-      toast({
-        title: "Purchase Successful! 🎉",
-        description: `Successfully purchased ${plan.name} with ${plan.price}!`
-      });
+    setTimeout(async () => {
+      try {
+        const mockTransactionId = `pi_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const amountPi = parseFloat(plan.price.replace(' π', ''));
+
+        const result = await subscriptionService.activateSubscription(
+          profile.pi_user_id,
+          plan.id,
+          plan.name,
+          plan.duration,
+          mockTransactionId,
+          amountPi
+        );
+
+        if (result.success) {
+          toast({
+            title: "Purchase Successful! 🎉",
+            description: `Successfully purchased ${plan.name} with ${plan.price}!`
+          });
+          
+          // Refresh profile to show updated subscription status
+          await refreshProfile();
+        } else {
+          throw new Error(result.error || 'Payment failed');
+        }
+      } catch (error) {
+        console.error('Purchase error:', error);
+        toast({
+          title: "Purchase Failed",
+          description: error instanceof Error ? error.message : "Failed to process purchase",
+          variant: "destructive"
+        });
+      }
     }, 2000);
   };
 
   const handleCancelPlan = async (planId: string) => {
+    if (!profile?.pi_user_id) return;
+
     toast({
       title: "Processing Cancellation",
       description: "Cancelling your subscription..."
     });
 
-    // Simulate cancellation processing
-    setTimeout(() => {
+    try {
+      const result = await subscriptionService.cancelSubscription(profile.pi_user_id);
+      
+      if (result.success) {
+        toast({
+          title: "Subscription Cancelled",
+          description: result.message || "Your subscription has been cancelled successfully."
+        });
+        
+        await refreshProfile();
+      } else {
+        throw new Error(result.error || 'Failed to cancel subscription');
+      }
+    } catch (error) {
+      console.error('Cancellation error:', error);
       toast({
-        title: "Subscription Cancelled",
-        description: "Your subscription has been cancelled successfully.",
+        title: "Cancellation Failed",
+        description: error instanceof Error ? error.message : "Failed to cancel subscription",
         variant: "destructive"
       });
-    }, 1500);
+    }
   };
 
   return (
@@ -116,6 +177,16 @@ const SubscriptionPlansPage: React.FC = () => {
               <ArrowLeft className="w-6 h-6 mr-2" />
               Back
             </Button>
+            
+            <Button
+              onClick={() => setIsHistoryOpen(true)}
+              variant="ghost"
+              size="lg"
+              className="text-white hover:bg-white/20 rounded-xl"
+            >
+              <History className="w-6 h-6 mr-2" />
+              History
+            </Button>
           </div>
 
           {/* Title */}
@@ -129,6 +200,11 @@ const SubscriptionPlansPage: React.FC = () => {
             <p className="text-xl text-white/90 drop-shadow-md">
               One-time purchases to boost your gaming experience
             </p>
+          </div>
+
+          {/* Current Subscription Status */}
+          <div className="max-w-4xl mx-auto mb-8">
+            <SubscriptionStatusCard />
           </div>
 
           {/* Plans Grid */}
@@ -168,16 +244,6 @@ const SubscriptionPlansPage: React.FC = () => {
                       size="lg"
                     >
                       Buy with Pi
-                    </Button>
-                    
-                    <Button
-                      onClick={() => handleCancelPlan(plan.id)}
-                      variant="outline"
-                      size="sm"
-                      className="w-full text-red-600 border-red-200 hover:bg-red-50"
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Cancel Plan
                     </Button>
                   </div>
                 </div>
@@ -219,6 +285,11 @@ const SubscriptionPlansPage: React.FC = () => {
         
         <EnhancedFooter />
       </ScrollArea>
+
+      <SubscriptionHistoryModal
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+      />
     </div>
   );
 };
