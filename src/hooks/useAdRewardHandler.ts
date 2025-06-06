@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { gameBackendService } from '@/services/gameBackendService';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UseAdRewardHandlerProps {
   coins: number;
@@ -24,11 +25,12 @@ export const useAdRewardHandler = ({
   setLives
 }: UseAdRewardHandlerProps) => {
   const { toast } = useToast();
-  const { profile, refreshProfile } = useUserProfile();
+  const { refreshProfile } = useUserProfile();
+  const { user } = useAuth();
 
   const handleAdWatch = useCallback(async (adType: 'continue' | 'coins' | 'life') => {
-    if (!profile) {
-      console.warn('No user profile available for ad reward');
+    if (!user) {
+      console.warn('No authenticated user available for ad reward');
       return;
     }
 
@@ -41,12 +43,12 @@ export const useAdRewardHandler = ({
             setAdWatched(true);
             
             // Record ad watch in backend
-            await gameBackendService.watchAdReward(profile.pi_user_id, 'continue', 0);
+            await gameBackendService.watchAdReward('continue', 0);
           }
           break;
           
         case 'coins':
-          const coinsResult = await gameBackendService.watchAdReward(profile.pi_user_id, 'coins', 25);
+          const coinsResult = await gameBackendService.watchAdReward('coins', 25);
           if (coinsResult) {
             setCoins(coins + coinsResult.reward_amount);
             localStorage.setItem('flappypi-coins', (coins + coinsResult.reward_amount).toString());
@@ -59,7 +61,7 @@ export const useAdRewardHandler = ({
           break;
           
         case 'life':
-          await gameBackendService.watchAdReward(profile.pi_user_id, 'life', 0);
+          await gameBackendService.watchAdReward('life', 0);
           setLives(1);
           toast({
             title: "Extra Life! ❤️",
@@ -80,7 +82,7 @@ export const useAdRewardHandler = ({
         });
       }
     }
-  }, [profile, adWatched, isPausedForRevive, setShowContinueButton, setAdWatched, coins, setCoins, refreshProfile, toast, setLives]);
+  }, [user, adWatched, isPausedForRevive, setShowContinueButton, setAdWatched, coins, setCoins, refreshProfile, toast, setLives]);
 
   return {
     handleAdWatch

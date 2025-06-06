@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { gameBackendService } from '@/services/gameBackendService';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UseGameOverHandlerProps {
   level: number;
@@ -41,6 +42,7 @@ export const useGameOverHandler = ({
   const { toast } = useToast();
   const { submitScore } = useLeaderboard();
   const { profile, refreshProfile } = useUserProfile();
+  const { user } = useAuth();
 
   const handleGameOver = useCallback(async (finalScore: number) => {
     console.log('Game over with final score:', finalScore);
@@ -52,19 +54,22 @@ export const useGameOverHandler = ({
     setAdWatched(false);
     setShowMandatoryAd(false);
     
-    if (!profile) {
-      console.warn('No user profile available for game over handling');
+    if (!user || !profile) {
+      console.warn('No authenticated user or profile available for game over handling');
       return;
     }
     
     try {
+      // Calculate session duration (estimate based on score)
+      const estimatedDuration = Math.max(finalScore * 2, 30); // 2 seconds per point minimum 30 seconds
+      
       // Complete game session in backend
       const sessionResult = await gameBackendService.completeGameSession(
-        profile.pi_user_id,
         'classic',
         finalScore,
         level,
-        Math.floor(finalScore / 3) + (level * 2)
+        Math.floor(finalScore / 3) + (level * 2),
+        estimatedDuration
       );
       
       if (sessionResult) {
@@ -108,9 +113,9 @@ export const useGameOverHandler = ({
     }
 
     // Submit score to leaderboard if it's a decent score (> 0)
-    if (finalScore > 0 && profile) {
+    if (finalScore > 0 && user && profile) {
       try {
-        await submitScore(profile.pi_user_id, profile.username, finalScore);
+        await submitScore(user.id, profile.username, finalScore);
       } catch (error) {
         console.error('Failed to submit score:', error);
       }
@@ -120,7 +125,7 @@ export const useGameOverHandler = ({
     setLives(1);
     setLevel(1);
     setReviveUsed(false);
-  }, [setGameState, setScore, setIsPausedForRevive, setShowContinueButton, setAdWatched, setShowMandatoryAd, profile, level, setCoins, setHighScore, toast, refreshProfile, coins, highScore, submitScore, setLives, setLevel, setReviveUsed]);
+  }, [setGameState, setScore, setIsPausedForRevive, setShowContinueButton, setAdWatched, setShowMandatoryAd, user, profile, level, setCoins, setHighScore, toast, refreshProfile, coins, highScore, submitScore, setLives, setLevel, setReviveUsed]);
 
   return {
     handleGameOver

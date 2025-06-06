@@ -48,7 +48,6 @@ export interface UserProfile {
 class GameBackendService {
   // Complete a game session and update all related data
   async completeGameSession(
-    piUserId: string,
     gameMode: GameMode,
     finalScore: number,
     levelReached: number,
@@ -57,7 +56,6 @@ class GameBackendService {
   ): Promise<GameSessionResult | null> {
     try {
       const { data, error } = await supabase.rpc('complete_game_session', {
-        p_pi_user_id: piUserId,
         p_game_mode: gameMode,
         p_final_score: finalScore,
         p_level_reached: levelReached,
@@ -79,7 +77,6 @@ class GameBackendService {
 
   // Make a purchase using coins
   async makePurchase(
-    piUserId: string,
     itemType: ItemType,
     itemId: string,
     costCoins: number,
@@ -87,7 +84,6 @@ class GameBackendService {
   ): Promise<PurchaseResult> {
     try {
       const { data, error } = await supabase.rpc('make_purchase', {
-        p_pi_user_id: piUserId,
         p_item_type: itemType,
         p_item_id: itemId,
         p_cost_coins: costCoins,
@@ -107,10 +103,15 @@ class GameBackendService {
   }
 
   // Claim daily reward
-  async claimDailyReward(piUserId: string): Promise<DailyRewardResult> {
+  async claimDailyReward(): Promise<DailyRewardResult> {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return { success: false, error: 'User not authenticated' };
+      }
+
       const { data, error } = await supabase.rpc('claim_daily_reward', {
-        p_pi_user_id: piUserId
+        p_pi_user_id: user.id
       });
 
       if (error) {
@@ -127,13 +128,18 @@ class GameBackendService {
 
   // Record ad watch and give reward
   async watchAdReward(
-    piUserId: string,
     adType: string,
     rewardAmount: number = 25
   ): Promise<AdRewardResult | null> {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('User not authenticated for ad reward');
+        return null;
+      }
+
       const { data, error } = await supabase.rpc('watch_ad_reward', {
-        p_pi_user_id: piUserId,
+        p_pi_user_id: user.id,
         p_ad_type: adType,
         p_reward_amount: rewardAmount
       });
@@ -193,12 +199,15 @@ class GameBackendService {
   }
 
   // Get user inventory
-  async getUserInventory(piUserId: string): Promise<any[]> {
+  async getUserInventory(): Promise<any[]> {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
       const { data, error } = await supabase
         .from('user_inventory')
         .select('*')
-        .eq('pi_user_id', piUserId);
+        .eq('pi_user_id', user.id);
 
       if (error) {
         console.error('Error fetching user inventory:', error);
@@ -213,12 +222,15 @@ class GameBackendService {
   }
 
   // Get user's game sessions
-  async getUserGameSessions(piUserId: string, limit: number = 10): Promise<any[]> {
+  async getUserGameSessions(limit: number = 10): Promise<any[]> {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
       const { data, error } = await supabase
         .from('game_sessions')
         .select('*')
-        .eq('pi_user_id', piUserId)
+        .eq('pi_user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -235,12 +247,15 @@ class GameBackendService {
   }
 
   // Get daily reward status
-  async getDailyRewardStatus(piUserId: string): Promise<any> {
+  async getDailyRewardStatus(): Promise<any> {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
       const { data, error } = await supabase
         .from('daily_rewards')
         .select('*')
-        .eq('pi_user_id', piUserId)
+        .eq('pi_user_id', user.id)
         .single();
 
       if (error && error.code !== 'PGRST116') {

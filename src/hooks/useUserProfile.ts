@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { gameBackendService, UserProfile } from '@/services/gameBackendService';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UseUserProfileReturn {
   profile: UserProfile | null;
@@ -15,32 +16,27 @@ export const useUserProfile = (): UseUserProfileReturn => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-
-  // Generate a mock Pi user ID for demo purposes
-  const generateMockPiUser = () => {
-    const usernames = ['PiFlyer', 'SkyMaster', 'BirdLegend', 'CloudChaser', 'WingCommander', 'PiExplorer'];
-    const randomUsername = usernames[Math.floor(Math.random() * usernames.length)];
-    const randomId = Math.random().toString(36).substr(2, 9);
-    return {
-      piUserId: `pi_user_${randomId}`,
-      username: `${randomUsername}_${randomId.substr(0, 4)}`
-    };
-  };
+  const { user, session } = useAuth();
 
   const initializeProfile = async (piUserId?: string, username?: string) => {
+    if (!user || !session) {
+      console.log('No authenticated user, skipping profile initialization');
+      return;
+    }
+
     setLoading(true);
     try {
-      // Use provided credentials or generate mock ones
-      const mockUser = piUserId && username ? { piUserId, username } : generateMockPiUser();
+      const userId = user.id;
+      const userDisplayName = username || user.user_metadata?.username || user.email?.split('@')[0] || 'Player';
       
       // Try to get existing profile
-      let existingProfile = await gameBackendService.getUserProfile(mockUser.piUserId);
+      let existingProfile = await gameBackendService.getUserProfile(userId);
       
       if (!existingProfile) {
         // Create new profile
         const newProfile = {
-          pi_user_id: mockUser.piUserId,
-          username: mockUser.username,
+          pi_user_id: userId,
+          username: userDisplayName,
           total_coins: 0,
           selected_bird_skin: 'default',
           music_enabled: true
@@ -51,7 +47,7 @@ export const useUserProfile = (): UseUserProfileReturn => {
       
       setProfile(existingProfile);
       
-      // Store in localStorage for persistence
+      // Store in localStorage for quick access
       if (existingProfile) {
         localStorage.setItem('flappypi-profile', JSON.stringify(existingProfile));
       }
@@ -68,7 +64,7 @@ export const useUserProfile = (): UseUserProfileReturn => {
   };
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
-    if (!profile) return;
+    if (!profile || !user) return;
     
     setLoading(true);
     try {
@@ -94,11 +90,11 @@ export const useUserProfile = (): UseUserProfileReturn => {
   };
 
   const refreshProfile = async () => {
-    if (!profile) return;
+    if (!user) return;
     
     setLoading(true);
     try {
-      const refreshedProfile = await gameBackendService.getUserProfile(profile.pi_user_id);
+      const refreshedProfile = await gameBackendService.getUserProfile(user.id);
       if (refreshedProfile) {
         setProfile(refreshedProfile);
         localStorage.setItem('flappypi-profile', JSON.stringify(refreshedProfile));
@@ -110,25 +106,34 @@ export const useUserProfile = (): UseUserProfileReturn => {
     }
   };
 
-  // Load profile from localStorage on mount
+  // Initialize profile when user becomes available
   useEffect(() => {
-    const savedProfile = localStorage.getItem('flappypi-profile');
-    if (savedProfile) {
-      try {
-        const parsedProfile = JSON.parse(savedProfile);
-        setProfile(parsedProfile);
-        // Refresh from database in background
-        refreshProfile();
-      } catch (error) {
-        console.error('Error parsing saved profile:', error);
-        // Initialize new profile if saved data is corrupted
-        initializeProfile();
+    if (user && session && !profile) {
+      // Try to load from localStorage first
+      const savedProfile = localStorage.getItem('flappypi-profile');
+      if (savedProfile) {
+        try {
+          const parsedProfile = JSON.parse(savedProfile);
+          // Verify this profile belongs to the current user
+          if (parsedProfile.pi_user_id === user.id) {
+            setProfile(parsedProfile);
+            // Refresh from database in background
+            refreshProfile();
+            return;
+          }
+        } catch (error) {
+          console.error('Error parsing saved profile:', error);
+        }
       }
-    } else {
-      // No saved profile, initialize new one
+      
+      // Initialize new profile or load from database
       initializeProfile();
+    } else if (!user) {
+      // Clear profile when user logs out
+      setProfile(null);
+      localStorage.removeItem('flappypi-profile');
     }
-  }, []);
+  }, [user, session]);
 
   return {
     profile,
