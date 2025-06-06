@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type GameMode = 'classic' | 'endless' | 'challenge';
 type GameStateType = 'menu' | 'playing' | 'gameOver' | 'paused';
@@ -20,6 +21,7 @@ export const useGameState = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { toast } = useToast();
   const { profile, updateProfile } = useUserProfile();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // Load saved data from localStorage (fallback)
@@ -108,8 +110,8 @@ export const useGameState = () => {
     setGameState('menu'); // Set to menu first
     setShowWelcome(false);
     
-    // Auto-enter fullscreen when starting game
-    if (!isFullscreen) {
+    // Auto-enter fullscreen only on mobile devices
+    if (!isFullscreen && isMobile) {
       enterFullscreen();
     }
     
@@ -123,7 +125,7 @@ export const useGameState = () => {
   const backToMenu = () => {
     console.log('Returning to menu - complete game reset');
     
-    // Exit fullscreen when returning to menu
+    // Exit fullscreen when returning to menu (only if currently in fullscreen)
     if (isFullscreen) {
       exitFullscreen();
     }
