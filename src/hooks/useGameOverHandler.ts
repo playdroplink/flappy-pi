@@ -47,15 +47,23 @@ export const useGameOverHandler = ({
   const handleGameOver = useCallback(async (finalScore: number) => {
     console.log('Game over with final score:', finalScore);
     
-    // Increment game count for ad system
+    // Check if mandatory ad should be shown
     adSystem.incrementGameCount();
     
+    // Check if user should see mandatory ad (every 2 games)
+    if (adSystem.shouldShowMandatoryAd()) {
+      console.log('Showing mandatory ad after game over');
+      setShowMandatoryAd(true);
+      setGameState('paused');
+      return;
+    }
+    
+    // Normal game over flow
     setGameState('gameOver');
     setScore(finalScore);
     setIsPausedForRevive(false);
     setShowContinueButton(false);
     setAdWatched(false);
-    setShowMandatoryAd(false);
     
     if (!profile) {
       console.warn('No user profile available for game over handling');

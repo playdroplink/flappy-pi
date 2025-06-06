@@ -1,6 +1,5 @@
 
-import { useRef, useCallback } from 'react';
-import { useAdSystem } from '@/hooks/useAdSystem';
+import { useCallback } from 'react';
 
 interface UseCollisionHandlerProps {
   reviveUsed: boolean;
@@ -23,52 +22,24 @@ export const useCollisionHandler = ({
   setShowMandatoryAd,
   onGameOver
 }: UseCollisionHandlerProps) => {
-  const adSystem = useAdSystem();
-  const collisionHandledRef = useRef(false);
 
   const handleCollision = useCallback(() => {
-    // Prevent multiple collision handling
-    if (collisionHandledRef.current) {
-      console.log('Collision already handled, ignoring');
-      return;
-    }
+    console.log('Collision detected! Revive used:', reviveUsed, 'Score:', score);
     
-    collisionHandledRef.current = true;
-    console.log('Collision detected - checking ad system');
-    
-    // Reset collision flag after delay to allow new games
-    setTimeout(() => {
-      collisionHandledRef.current = false;
-    }, 1000);
-    
-    // Check if user can continue without ad (Premium subscription)
-    if (adSystem.canContinueWithoutAd && !reviveUsed) {
-      console.log('User has Premium - allowing continue without ad');
+    // If revive hasn't been used and player has a decent score, offer ad to continue
+    if (!reviveUsed && score >= 5) {
+      console.log('Offering ad to continue game');
+      setGameState('paused');
       setIsPausedForRevive(true);
-      setGameState('paused');
-      setShowContinueButton(true);
-      setAdWatched(false);
-      return;
-    }
-    
-    // Check if this is a mandatory ad game over
-    if (adSystem.shouldShowMandatoryAd) {
-      console.log('Showing mandatory ad');
-      setShowMandatoryAd(true);
-      setGameState('paused');
-      return;
-    }
-    
-    // Normal revive flow (optional ad)
-    if (!reviveUsed) {
-      setIsPausedForRevive(true);
-      setGameState('paused');
-      setAdWatched(false);
       setShowContinueButton(false);
+      setAdWatched(false);
+      setShowMandatoryAd(false);
     } else {
+      // Game over - no revive available
+      console.log('No revive available - game over');
       onGameOver(score);
     }
-  }, [adSystem.canContinueWithoutAd, adSystem.shouldShowMandatoryAd, reviveUsed, score, setGameState, setIsPausedForRevive, setShowContinueButton, setAdWatched, setShowMandatoryAd, onGameOver]);
+  }, [reviveUsed, score, setGameState, setIsPausedForRevive, setShowContinueButton, setAdWatched, setShowMandatoryAd, onGameOver]);
 
   return { handleCollision };
 };
