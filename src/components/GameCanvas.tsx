@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
@@ -17,6 +16,7 @@ interface GameCanvasProps {
   birdSkin: string;
   musicEnabled: boolean;
   onContinueGameRef?: (fn: () => void) => void;
+  userDifficulty?: 'easy' | 'medium' | 'hard';
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({
@@ -29,7 +29,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   onCoinEarned,
   birdSkin,
   musicEnabled,
-  onContinueGameRef
+  onContinueGameRef,
+  userDifficulty = 'medium'
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number>();
@@ -63,14 +64,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       playDie();
       onCollision();
     },
-    gameMode
+    gameMode,
+    userDifficulty
   });
 
   const { draw } = useGameRenderer({ 
     canvasRef, 
     gameStateRef, 
     birdSkin,
-    gameMode 
+    gameMode,
+    userDifficulty
   });
 
   useEffect(() => {

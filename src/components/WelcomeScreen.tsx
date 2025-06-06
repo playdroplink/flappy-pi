@@ -24,6 +24,8 @@ interface WelcomeScreenProps {
   coins: number;
   musicEnabled: boolean;
   onToggleMusic: (enabled: boolean) => void;
+  userDifficulty?: 'easy' | 'medium' | 'hard';
+  onDifficultyChange?: (difficulty: 'easy' | 'medium' | 'hard') => void;
 }
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
@@ -37,7 +39,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onOpenTutorial,
   coins,
   musicEnabled,
-  onToggleMusic
+  onToggleMusic,
+  userDifficulty = 'medium',
+  onDifficultyChange
 }) => {
   // Add background music
   useBackgroundMusic({ musicEnabled, gameState: 'menu' });
@@ -65,9 +69,11 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           coins={coins}
           musicEnabled={musicEnabled}
           onToggleMusic={onToggleMusic}
+          userDifficulty={userDifficulty}
+          onDifficultyChange={onDifficultyChange}
         />
 
-        {/* Pi Premium Perks - Show occasionally */}
+        {/* Pi Premium Perks */}
         <div className="w-full mb-4 animate-fade-in" style={{ animationDelay: '0.25s' }}>
           <PiPremiumPerks onUpgrade={handlePiPremiumUpgrade} />
         </div>

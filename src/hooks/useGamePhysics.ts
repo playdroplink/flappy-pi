@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { getDifficulty, getScoreMultiplier } from '../utils/gameDifficulty';
+import { getDifficultyByUserChoice, getScoreMultiplier } from '../utils/gameDifficulty';
 
 interface UseGamePhysicsProps {
   gameStateRef: React.MutableRefObject<any>;
@@ -8,6 +8,7 @@ interface UseGamePhysicsProps {
   checkCollisions: (canvas: HTMLCanvasElement) => boolean;
   onCollision: () => void;
   gameMode: 'classic' | 'endless' | 'challenge';
+  userDifficulty?: 'easy' | 'medium' | 'hard';
 }
 
 export const useGamePhysics = ({ 
@@ -16,7 +17,8 @@ export const useGamePhysics = ({
   onCoinEarned,
   checkCollisions, 
   onCollision,
-  gameMode
+  gameMode,
+  userDifficulty = 'medium'
 }: UseGamePhysicsProps) => {
   const difficultyCache = useRef<{ score: number; difficulty: any } | null>(null);
 
@@ -25,10 +27,10 @@ export const useGamePhysics = ({
       return difficultyCache.current.difficulty;
     }
     
-    const difficulty = getDifficulty(score, gameMode);
+    const difficulty = getDifficultyByUserChoice(userDifficulty, score, gameMode);
     difficultyCache.current = { score, difficulty };
     return difficulty;
-  }, [gameMode]);
+  }, [gameMode, userDifficulty]);
 
   const updateGame = useCallback(() => {
     const canvas = document.querySelector('canvas') as HTMLCanvasElement;
@@ -41,9 +43,9 @@ export const useGamePhysics = ({
     const difficulty = getDifficultyOptimized(state.score);
     const scoreMultiplier = getScoreMultiplier(gameMode);
     const GRAVITY = 0.35;
-    const PIPE_WIDTH = 80; // Reduced for better gameplay
-    const PIPE_GAP = 140; // Optimal gap size
-    const PIPE_SPACING = 240; // Increased spacing between pipes
+    const PIPE_WIDTH = difficulty.pipeWidth; // Use dynamic pipe width
+    const PIPE_GAP = difficulty.pipeGap; // Use dynamic pipe gap
+    const PIPE_SPACING = 280; // Increased spacing for better gameplay
 
     // Apply wind effect if enabled
     let horizontalForce = 0;
@@ -64,11 +66,11 @@ export const useGamePhysics = ({
       state.bird.x = Math.max(50, Math.min(state.bird.x, canvas.width - 150));
     }
 
-    // Spawn new pipes with improved spacing and gap management
-    const spawnThreshold = Math.max(PIPE_SPACING / 2, 120);
+    // Spawn new pipes with improved spacing and dynamic sizing
+    const spawnThreshold = Math.max(PIPE_SPACING / 2, 140);
     if (state.frameCount - state.lastPipeSpawn > spawnThreshold) {
-      const minHeight = 60;
-      const maxHeight = canvas.height - PIPE_GAP - minHeight - 50; // Account for ground
+      const minHeight = 80;
+      const maxHeight = canvas.height - PIPE_GAP - minHeight - 50;
       const pipeHeight = Math.random() * (maxHeight - minHeight) + minHeight;
       
       const newPipe = {
@@ -76,10 +78,11 @@ export const useGamePhysics = ({
         topHeight: pipeHeight,
         bottomY: pipeHeight + PIPE_GAP,
         passed: false,
-        scored: false, // Add scored flag to prevent double scoring
+        scored: false,
         isMoving: difficulty.hasMovingPipes,
         verticalDirection: difficulty.hasMovingPipes ? (Math.random() > 0.5 ? 1 : -1) : 0,
-        moveSpeed: difficulty.hasMovingPipes ? 1 : 0
+        moveSpeed: difficulty.hasMovingPipes ? 1 : 0,
+        width: PIPE_WIDTH // Store pipe width for collision detection
       };
       state.pipes.push(newPipe);
       state.lastPipeSpawn = state.frameCount;
@@ -96,7 +99,7 @@ export const useGamePhysics = ({
       });
     }
 
-    // Update pipes and FIXED scoring logic
+    // Update pipes with dynamic width
     state.pipes = state.pipes.filter((pipe: any) => {
       pipe.x -= difficulty.pipeSpeed;
       
@@ -115,7 +118,7 @@ export const useGamePhysics = ({
         }
       }
       
-      // FIXED SCORING: Score when bird completely passes pipe (bird.x > pipe.x + PIPE_WIDTH)
+      // FIXED SCORING: Score when bird completely passes pipe
       if (!pipe.scored && state.bird.x > (pipe.x + PIPE_WIDTH)) {
         pipe.scored = true;
         const newScore = state.score + 1;
@@ -123,10 +126,8 @@ export const useGamePhysics = ({
         
         console.log('SCORE! Bird passed pipe completely. New score:', newScore);
         
-        // Immediately update UI score
         onScoreUpdate(newScore);
         
-        // Award coins based on mode multiplier
         const coinsEarned = Math.floor(scoreMultiplier);
         onCoinEarned(coinsEarned);
       }

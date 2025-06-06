@@ -1,4 +1,3 @@
-
 export interface DifficultySettings {
   pipeGap: number;
   pipeSpeed: number;
@@ -8,11 +7,13 @@ export interface DifficultySettings {
   hasClouds: boolean;
   hasWind: boolean;
   windStrength: number;
+  pipeWidth: number;
 }
 
 const PIPE_GAP_BASE = 200;
 const PIPE_SPEED_BASE = 2;
 const PIPE_SPAWN_RATE_BASE = 120;
+const PIPE_WIDTH_BASE = 100; // Bigger pipes for better visibility
 
 export const getTimeOfDay = (level: number): 'morning' | 'afternoon' | 'evening' | 'night' => {
   if (level <= 3) return 'morning';
@@ -21,11 +22,15 @@ export const getTimeOfDay = (level: number): 'morning' | 'afternoon' | 'evening'
   return 'night';
 };
 
-export const getDifficulty = (currentScore: number, gameMode: 'classic' | 'endless' | 'challenge'): DifficultySettings => {
+export const getDifficultyByUserChoice = (
+  userDifficulty: 'easy' | 'medium' | 'hard',
+  currentScore: number,
+  gameMode: 'classic' | 'endless' | 'challenge'
+): DifficultySettings => {
   const level = Math.floor(currentScore / 5) + 1;
   const timeOfDay = getTimeOfDay(level);
   
-  console.log(`Getting difficulty for ${gameMode} mode, score: ${currentScore}, level: ${level}`);
+  console.log(`Getting difficulty for ${gameMode} mode, user choice: ${userDifficulty}, score: ${currentScore}, level: ${level}`);
   
   let baseDifficulty: DifficultySettings = {
     pipeGap: PIPE_GAP_BASE,
@@ -35,65 +40,64 @@ export const getDifficulty = (currentScore: number, gameMode: 'classic' | 'endle
     hasMovingPipes: false,
     hasClouds: false,
     hasWind: false,
-    windStrength: 0
+    windStrength: 0,
+    pipeWidth: PIPE_WIDTH_BASE
   };
 
-  // Apply game mode specific modifications
+  // Apply user difficulty choice first
+  if (userDifficulty === 'easy') {
+    baseDifficulty.pipeGap = PIPE_GAP_BASE + 80; // Much wider gap
+    baseDifficulty.pipeSpeed = PIPE_SPEED_BASE * 0.7; // Slower pipes
+    baseDifficulty.spawnRate = PIPE_SPAWN_RATE_BASE + 60; // More time between pipes
+    baseDifficulty.pipeWidth = PIPE_WIDTH_BASE + 20; // Slightly bigger pipes
+  } else if (userDifficulty === 'medium') {
+    baseDifficulty.pipeGap = PIPE_GAP_BASE + 40; // Moderate gap
+    baseDifficulty.pipeSpeed = PIPE_SPEED_BASE * 0.85; // Normal speed
+    baseDifficulty.spawnRate = PIPE_SPAWN_RATE_BASE + 20; // Normal spacing
+    baseDifficulty.pipeWidth = PIPE_WIDTH_BASE; // Normal pipe size
+  } else if (userDifficulty === 'hard') {
+    baseDifficulty.pipeGap = PIPE_GAP_BASE; // Standard gap
+    baseDifficulty.pipeSpeed = PIPE_SPEED_BASE; // Normal speed
+    baseDifficulty.spawnRate = PIPE_SPAWN_RATE_BASE; // Standard spacing
+    baseDifficulty.pipeWidth = PIPE_WIDTH_BASE - 10; // Slightly smaller pipes
+  }
+
+  // Apply progressive difficulty based on score (but keep user choice as base)
+  const progressionFactor = Math.min(currentScore / 30, 1.5);
+  
   if (gameMode === 'classic') {
-    console.log('Applying classic mode difficulty');
-    // Classic mode - gentle learning curve
-    if (currentScore < 5) {
-      baseDifficulty.pipeGap = PIPE_GAP_BASE + 50; // Easier start
-      baseDifficulty.pipeSpeed = PIPE_SPEED_BASE * 0.8;
-      baseDifficulty.spawnRate = PIPE_SPAWN_RATE_BASE + 30;
-    } else if (currentScore < 15) {
-      baseDifficulty.pipeGap = PIPE_GAP_BASE;
-      baseDifficulty.pipeSpeed = PIPE_SPEED_BASE;
-      baseDifficulty.spawnRate = PIPE_SPAWN_RATE_BASE;
-    } else if (currentScore < 25) {
-      baseDifficulty.pipeGap = PIPE_GAP_BASE - 20;
-      baseDifficulty.pipeSpeed = PIPE_SPEED_BASE * 1.1;
-      baseDifficulty.spawnRate = PIPE_SPAWN_RATE_BASE - 10;
+    if (currentScore > 10) {
+      baseDifficulty.pipeSpeed *= (1 + progressionFactor * 0.2);
       baseDifficulty.hasClouds = true;
-    } else {
-      baseDifficulty.pipeGap = PIPE_GAP_BASE - 40;
-      baseDifficulty.pipeSpeed = PIPE_SPEED_BASE * 1.3;
-      baseDifficulty.spawnRate = PIPE_SPAWN_RATE_BASE - 20;
-      baseDifficulty.hasClouds = true;
-      baseDifficulty.hasMovingPipes = currentScore > 30;
+    }
+    if (currentScore > 20) {
+      baseDifficulty.hasMovingPipes = userDifficulty === 'hard';
     }
   } else if (gameMode === 'endless') {
-    console.log('Applying endless mode difficulty');
-    // Endless mode - continuous scaling progression
-    const progressionFactor = Math.min(currentScore / 40, 3); // Cap at 3x difficulty
-    baseDifficulty.pipeGap = Math.max(PIPE_GAP_BASE - (progressionFactor * 40), 100);
-    baseDifficulty.pipeSpeed = PIPE_SPEED_BASE * (1 + progressionFactor * 0.4);
-    baseDifficulty.spawnRate = Math.max(PIPE_SPAWN_RATE_BASE - (progressionFactor * 25), 50);
-    
-    // Add features progressively
+    baseDifficulty.pipeSpeed *= (1 + progressionFactor * 0.3);
     if (currentScore > 8) baseDifficulty.hasClouds = true;
     if (currentScore > 16) baseDifficulty.hasMovingPipes = true;
-    if (currentScore > 24) {
+    if (currentScore > 24 && userDifficulty !== 'easy') {
       baseDifficulty.hasWind = true;
-      baseDifficulty.windStrength = Math.min(progressionFactor * 0.25, 0.6);
+      baseDifficulty.windStrength = Math.min(progressionFactor * 0.2, 0.5);
     }
   } else if (gameMode === 'challenge') {
-    console.log('Applying challenge mode difficulty');
-    // Challenge mode - immediate high difficulty with all obstacles
-    const challengeFactor = Math.min(currentScore / 20, 2);
-    baseDifficulty.pipeGap = Math.max(PIPE_GAP_BASE - 70 - (challengeFactor * 20), 80);
-    baseDifficulty.pipeSpeed = PIPE_SPEED_BASE * (1.8 + challengeFactor * 0.3);
-    baseDifficulty.spawnRate = Math.max(PIPE_SPAWN_RATE_BASE - 50 - (challengeFactor * 15), 40);
-    
-    // All obstacles enabled from start
+    baseDifficulty.pipeSpeed *= (1.5 + progressionFactor * 0.2);
     baseDifficulty.hasMovingPipes = true;
     baseDifficulty.hasClouds = true;
-    baseDifficulty.hasWind = true;
-    baseDifficulty.windStrength = 0.4 + (challengeFactor * 0.2);
+    if (userDifficulty !== 'easy') {
+      baseDifficulty.hasWind = true;
+      baseDifficulty.windStrength = 0.3 + (progressionFactor * 0.15);
+    }
   }
 
   console.log('Final difficulty settings:', baseDifficulty);
   return baseDifficulty;
+};
+
+// Keep the old function for backward compatibility
+export const getDifficulty = (currentScore: number, gameMode: 'classic' | 'endless' | 'challenge'): DifficultySettings => {
+  return getDifficultyByUserChoice('medium', currentScore, gameMode);
 };
 
 export const getBackgroundGradient = (timeOfDay: string): { top: string; bottom: string } => {

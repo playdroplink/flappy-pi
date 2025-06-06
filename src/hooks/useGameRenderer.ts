@@ -1,15 +1,21 @@
-
 import { useCallback, useRef } from 'react';
-import { getDifficulty, getBackgroundGradient } from '../utils/gameDifficulty';
+import { getDifficultyByUserChoice, getBackgroundGradient } from '../utils/gameDifficulty';
 
 interface UseGameRendererProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
   gameStateRef: React.MutableRefObject<any>;
   birdSkin: string;
   gameMode: 'classic' | 'endless' | 'challenge';
+  userDifficulty?: 'easy' | 'medium' | 'hard';
 }
 
-export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }: UseGameRendererProps) => {
+export const useGameRenderer = ({ 
+  canvasRef, 
+  gameStateRef, 
+  birdSkin, 
+  gameMode,
+  userDifficulty = 'medium'
+}: UseGameRendererProps) => {
   const difficultyCache = useRef<{ score: number; difficulty: any } | null>(null);
   const backgroundCache = useRef<{ timeOfDay: string; colors: any } | null>(null);
   const groundOffset = useRef(0);
@@ -19,10 +25,10 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
       return difficultyCache.current.difficulty;
     }
     
-    const difficulty = getDifficulty(score, gameMode);
+    const difficulty = getDifficultyByUserChoice(userDifficulty, score, gameMode);
     difficultyCache.current = { score, difficulty };
     return difficulty;
-  }, [gameMode]);
+  }, [gameMode, userDifficulty]);
 
   const getBackgroundColorsOptimized = useCallback((timeOfDay: string) => {
     if (backgroundCache.current && backgroundCache.current.timeOfDay === timeOfDay) {
@@ -54,9 +60,8 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
     const difficulty = getDifficultyOptimized(state.score);
     const backgroundColors = getBackgroundColorsOptimized(difficulty.timeOfDay);
     
-    // Optimal Flappy Bird dimensions - 24x24 bird sprite
-    const BIRD_SIZE = 32; // Perfect size for visibility and gameplay
-    const PIPE_WIDTH = 80; // Narrower pipes for better gameplay
+    const BIRD_SIZE = 32;
+    const PIPE_WIDTH = difficulty.pipeWidth; // Use dynamic pipe width
     const GROUND_HEIGHT = 40;
 
     // Clear canvas with beautiful gradient background
@@ -107,10 +112,12 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
       ctx.globalAlpha = 1;
     }
 
-    // Draw pipes with modern styling and shadows
+    // Draw pipes with dynamic sizing and enhanced styling
     state.pipes.forEach((pipe: any) => {
+      const pipeWidth = pipe.width || PIPE_WIDTH; // Use stored width or default
+      
       // Pipe colors based on time of day
-      let pipeGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH, 0);
+      let pipeGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + pipeWidth, 0);
       
       if (difficulty.timeOfDay === 'evening') {
         pipeGradient.addColorStop(0, '#4CAF50');
@@ -123,10 +130,10 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
         pipeGradient.addColorStop(1, '#388E3C');
       }
 
-      // Pipe shadows
+      // Pipe shadows with correct width
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
-      ctx.fillRect(pipe.x + 3, 3, PIPE_WIDTH, pipe.topHeight);
-      ctx.fillRect(pipe.x + 3, pipe.bottomY + 3, PIPE_WIDTH, canvas.height - pipe.bottomY);
+      ctx.fillRect(pipe.x + 3, 3, pipeWidth, pipe.topHeight);
+      ctx.fillRect(pipe.x + 3, pipe.bottomY + 3, pipeWidth, canvas.height - pipe.bottomY);
 
       // Add glow effect for moving pipes
       if (pipe.isMoving) {
@@ -136,19 +143,19 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
 
       // Top pipe
       ctx.fillStyle = pipeGradient;
-      ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.topHeight);
+      ctx.fillRect(pipe.x, 0, pipeWidth, pipe.topHeight);
 
       // Bottom pipe  
-      ctx.fillRect(pipe.x, pipe.bottomY, PIPE_WIDTH, canvas.height - pipe.bottomY);
+      ctx.fillRect(pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
 
-      // Pipe caps with enhanced styling
-      const capGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH, 0);
+      // Pipe caps with enhanced styling and correct width
+      const capGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + pipeWidth, 0);
       capGradient.addColorStop(0, '#66BB6A');
       capGradient.addColorStop(1, '#4CAF50');
       
       ctx.fillStyle = capGradient;
-      ctx.fillRect(pipe.x - 5, pipe.topHeight - 25, PIPE_WIDTH + 10, 25);
-      ctx.fillRect(pipe.x - 5, pipe.bottomY, PIPE_WIDTH + 10, 25);
+      ctx.fillRect(pipe.x - 5, pipe.topHeight - 25, pipeWidth + 10, 25);
+      ctx.fillRect(pipe.x - 5, pipe.bottomY, pipeWidth + 10, 25);
 
       // Reset shadow
       ctx.shadowBlur = 0;
