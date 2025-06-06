@@ -112,14 +112,15 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     
     if (gameOver || gameState !== 'playing') return false;
     
-    const BIRD_SIZE = 25;
+    // Improved bird hitbox - smaller for better gameplay
+    const BIRD_SIZE = 20; // Reduced from 25
     const PIPE_WIDTH = 120;
     
-    // Enhanced collision detection with more precise hitboxes
-    const birdLeft = bird.x - BIRD_SIZE/2 + 3; // Slight margin for better gameplay
-    const birdRight = bird.x + BIRD_SIZE/2 - 3;
-    const birdTop = bird.y - BIRD_SIZE/2 + 3;
-    const birdBottom = bird.y + BIRD_SIZE/2 - 3;
+    // More forgiving collision detection
+    const birdLeft = bird.x - BIRD_SIZE/2 + 5; // Increased margin
+    const birdRight = bird.x + BIRD_SIZE/2 - 5;
+    const birdTop = bird.y - BIRD_SIZE/2 + 5;
+    const birdBottom = bird.y + BIRD_SIZE/2 - 5;
     
     // Check ceiling collision
     if (birdTop <= 0) {
@@ -133,7 +134,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       return true;
     }
     
-    // Check pipe collisions with more precise detection
+    // Check pipe collisions with improved detection
     for (const pipe of pipes) {
       const pipeLeft = pipe.x;
       const pipeRight = pipe.x + PIPE_WIDTH;

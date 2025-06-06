@@ -55,18 +55,29 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
     const BIRD_SIZE = 25;
     const PIPE_WIDTH = 120;
 
-    // Clear canvas with time-of-day gradient background
+    // Clear canvas with beautiful gradient background
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, backgroundColors.top);
+    gradient.addColorStop(0.7, backgroundColors.middle || backgroundColors.top);
     gradient.addColorStop(1, backgroundColors.bottom);
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw clouds if enabled
+    // Draw animated clouds with shadows
     if (difficulty.hasClouds && state.clouds) {
-      ctx.fillStyle = difficulty.timeOfDay === 'night' ? '#333333' : '#FFFFFF';
       state.clouds.forEach((cloud: any) => {
-        ctx.globalAlpha = 0.7;
+        // Cloud shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.arc(cloud.x + 3, cloud.y + 3, cloud.size / 2, 0, Math.PI * 2);
+        ctx.arc(cloud.x + cloud.size * 0.3 + 3, cloud.y + 3, cloud.size * 0.4, 0, Math.PI * 2);
+        ctx.arc(cloud.x - cloud.size * 0.3 + 3, cloud.y + 3, cloud.size * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Cloud
+        ctx.fillStyle = difficulty.timeOfDay === 'night' ? '#444444' : '#FFFFFF';
+        ctx.globalAlpha = 0.8;
         ctx.beginPath();
         ctx.arc(cloud.x, cloud.y, cloud.size / 2, 0, Math.PI * 2);
         ctx.arc(cloud.x + cloud.size * 0.3, cloud.y, cloud.size * 0.4, 0, Math.PI * 2);
@@ -80,7 +91,7 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
     if (difficulty.hasWind) {
       ctx.strokeStyle = difficulty.timeOfDay === 'night' ? '#CCCCCC' : '#FFFFFF';
       ctx.lineWidth = 2;
-      ctx.globalAlpha = 0.3;
+      ctx.globalAlpha = 0.4;
       for (let i = 0; i < 5; i++) {
         const y = (canvas.height / 6) * (i + 1);
         const offset = Math.sin((state.frameCount + i * 20) * 0.05) * 30;
@@ -92,40 +103,51 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
       ctx.globalAlpha = 1;
     }
 
-    // Draw pipes with moving animation if enabled
+    // Draw pipes with modern styling and shadows
     state.pipes.forEach((pipe: any) => {
-      // Pipe color based on time of day
-      let pipeColor = '#4CAF50';
-      let pipeStroke = '#388E3C';
+      // Pipe colors based on time of day
+      let pipeGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH, 0);
       
       if (difficulty.timeOfDay === 'evening') {
-        pipeColor = '#FF8C00';
-        pipeStroke = '#FF6347';
+        pipeGradient.addColorStop(0, '#FF8C00');
+        pipeGradient.addColorStop(1, '#FF6347');
       } else if (difficulty.timeOfDay === 'night') {
-        pipeColor = '#4169E1';
-        pipeStroke = '#191970';
+        pipeGradient.addColorStop(0, '#4169E1');
+        pipeGradient.addColorStop(1, '#191970');
+      } else {
+        pipeGradient.addColorStop(0, '#4CAF50');
+        pipeGradient.addColorStop(1, '#388E3C');
       }
+
+      // Pipe shadows
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(pipe.x + 5, 3, PIPE_WIDTH, pipe.topHeight);
+      ctx.fillRect(pipe.x + 5, pipe.bottomY + 3, PIPE_WIDTH, canvas.height - pipe.bottomY);
 
       // Add glow effect for moving pipes
       if (pipe.isMoving) {
-        ctx.shadowColor = pipeColor;
-        ctx.shadowBlur = 10;
+        ctx.shadowColor = difficulty.timeOfDay === 'night' ? '#6495ED' : '#4CAF50';
+        ctx.shadowBlur = 15;
       }
 
       // Top pipe
-      ctx.fillStyle = pipeColor;
+      ctx.fillStyle = pipeGradient;
       ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.topHeight);
-      ctx.strokeStyle = pipeStroke;
-      ctx.lineWidth = 3;
-      ctx.strokeRect(pipe.x, 0, PIPE_WIDTH, pipe.topHeight);
 
-      // Bottom pipe
+      // Bottom pipe  
       ctx.fillRect(pipe.x, pipe.bottomY, PIPE_WIDTH, canvas.height - pipe.bottomY);
-      ctx.strokeRect(pipe.x, pipe.bottomY, PIPE_WIDTH, canvas.height - pipe.bottomY);
 
-      // Pipe caps with enhanced color
-      const capColor = difficulty.timeOfDay === 'night' ? '#6495ED' : '#66BB6A';
-      ctx.fillStyle = capColor;
+      // Pipe caps with enhanced styling
+      const capGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH, 0);
+      if (difficulty.timeOfDay === 'night') {
+        capGradient.addColorStop(0, '#6495ED');
+        capGradient.addColorStop(1, '#4169E1');
+      } else {
+        capGradient.addColorStop(0, '#66BB6A');
+        capGradient.addColorStop(1, '#4CAF50');
+      }
+      
+      ctx.fillStyle = capGradient;
       ctx.fillRect(pipe.x - 5, pipe.topHeight - 30, PIPE_WIDTH + 10, 30);
       ctx.fillRect(pipe.x - 5, pipe.bottomY, PIPE_WIDTH + 10, 30);
 
@@ -133,44 +155,51 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
       ctx.shadowBlur = 0;
     });
 
-    // Draw bird with enhanced visibility for different times
+    // Draw bird with enhanced visibility and animation
     const birdImage = new Image();
     birdImage.src = getBirdImage();
     
     ctx.save();
     
-    // Add glow effect for night time
+    // Add glow effect for night time and moving animation
     if (difficulty.timeOfDay === 'night') {
       ctx.shadowColor = '#FFFF00';
-      ctx.shadowBlur = 15;
+      ctx.shadowBlur = 20;
     }
     
-    ctx.translate(state.bird.x + BIRD_SIZE/2, state.bird.y + BIRD_SIZE/2);
+    // Flapping animation effect
+    const flapOffset = Math.sin(state.frameCount * 0.3) * 2;
+    
+    ctx.translate(state.bird.x + BIRD_SIZE/2, state.bird.y + BIRD_SIZE/2 + flapOffset);
     ctx.rotate(state.bird.rotation * Math.PI / 180);
     ctx.drawImage(birdImage, -BIRD_SIZE/2, -BIRD_SIZE/2, BIRD_SIZE, BIRD_SIZE);
     ctx.restore();
 
-    // Draw ground with time-based color
-    let groundColor = '#8B4513';
-    if (difficulty.timeOfDay === 'evening') groundColor = '#654321';
-    if (difficulty.timeOfDay === 'night') groundColor = '#2F1B14';
+    // Draw modern ground with gradient
+    const groundGradient = ctx.createLinearGradient(0, canvas.height - 25, 0, canvas.height);
+    if (difficulty.timeOfDay === 'evening') {
+      groundGradient.addColorStop(0, '#8B4513');
+      groundGradient.addColorStop(1, '#654321');
+    } else if (difficulty.timeOfDay === 'night') {
+      groundGradient.addColorStop(0, '#2F1B14');
+      groundGradient.addColorStop(1, '#1A0F0A');
+    } else {
+      groundGradient.addColorStop(0, '#8B4513');
+      groundGradient.addColorStop(1, '#5D2F0C');
+    }
     
-    ctx.fillStyle = groundColor;
+    ctx.fillStyle = groundGradient;
     ctx.fillRect(0, canvas.height - 25, canvas.width, 25);
 
-    // Draw time of day indicator
-    ctx.fillStyle = difficulty.timeOfDay === 'night' ? '#FFFFFF' : '#000000';
-    ctx.font = 'bold 16px Arial';
-    ctx.globalAlpha = 0.7;
-    ctx.fillText(`${difficulty.timeOfDay.charAt(0).toUpperCase() + difficulty.timeOfDay.slice(1)} - Level ${Math.floor(state.score / 5) + 1}`, 10, 30);
-    ctx.globalAlpha = 1;
-
-    // Show game mode indicator
-    ctx.fillStyle = difficulty.timeOfDay === 'night' ? '#FFFFFF' : '#000000';
-    ctx.font = 'bold 8px Arial';
-    ctx.globalAlpha = 0.5;
-    ctx.fillText(`${gameMode.toUpperCase()} MODE`, 10, canvas.height - 35);
-    ctx.globalAlpha = 1;
+    // Buildings/cityscape in background
+    if (state.frameCount % 2 === 0) { // Optimize rendering
+      ctx.fillStyle = difficulty.timeOfDay === 'night' ? 'rgba(50,50,50,0.8)' : 'rgba(100,100,100,0.6)';
+      for (let i = 0; i < 5; i++) {
+        const buildingX = (canvas.width / 5) * i;
+        const buildingHeight = 50 + Math.sin(buildingX * 0.01 + state.frameCount * 0.001) * 30;
+        ctx.fillRect(buildingX, canvas.height - 25 - buildingHeight, canvas.width / 5, buildingHeight);
+      }
+    }
   }, [getBirdImage, canvasRef, gameStateRef, gameMode, getDifficultyOptimized, getBackgroundColorsOptimized]);
 
   return { draw };

@@ -1,3 +1,4 @@
+
 import { useCallback, useRef } from 'react';
 import { getDifficulty, getScoreMultiplier } from '../utils/gameDifficulty';
 
@@ -63,17 +64,22 @@ export const useGamePhysics = ({
       state.bird.x = Math.max(50, Math.min(state.bird.x, canvas.width - 150));
     }
 
-    // Spawn new pipes
+    // Spawn new pipes with better gap management
     const spawnThreshold = Math.max(difficulty.spawnRate, 120);
     if (state.frameCount - state.lastPipeSpawn > spawnThreshold) {
       const minHeight = 80;
-      const maxHeight = canvas.height - difficulty.pipeGap - minHeight - 25; // Account for ground
+      // Ensure adequate gap size (starts larger, gets smaller with difficulty)
+      const baseGap = 180; // Increased base gap
+      const difficultyGapReduction = Math.min(state.score * 2, 40); // Max reduction of 40px
+      const finalGap = Math.max(baseGap - difficultyGapReduction, 140); // Minimum gap of 140px
+      
+      const maxHeight = canvas.height - finalGap - minHeight - 25; // Account for ground
       const pipeHeight = Math.random() * (maxHeight - minHeight) + minHeight;
       
       const newPipe = {
         x: canvas.width,
         topHeight: pipeHeight,
-        bottomY: pipeHeight + difficulty.pipeGap,
+        bottomY: pipeHeight + finalGap,
         passed: false,
         isMoving: difficulty.hasMovingPipes,
         verticalDirection: difficulty.hasMovingPipes ? (Math.random() > 0.5 ? 1 : -1) : 0,
@@ -94,7 +100,7 @@ export const useGamePhysics = ({
       });
     }
 
-    // Update pipes and check for scoring
+    // Update pipes and check for scoring - FIXED SCORING LOGIC
     state.pipes = state.pipes.filter((pipe: any) => {
       pipe.x -= difficulty.pipeSpeed;
       
@@ -113,12 +119,12 @@ export const useGamePhysics = ({
         }
       }
       
-      // Enhanced scoring logic - score when bird's CENTER passes pipe's RIGHT edge
+      // FIXED: Score when bird CENTER passes pipe RIGHT edge (not left edge)
       if (!pipe.passed && state.bird.x > (pipe.x + PIPE_WIDTH)) {
         pipe.passed = true;
         state.score++;
         
-        console.log('Score increased to:', state.score);
+        console.log('SCORE! Bird passed pipe. Score:', state.score);
         
         // Immediately update UI score
         onScoreUpdate(state.score);

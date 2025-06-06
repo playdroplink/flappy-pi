@@ -39,49 +39,64 @@ const GameUI: React.FC<GameUIProps> = ({
   if (gameState === 'playing' && !isPausedForRevive) {
     return (
       <div className="fixed inset-0 pointer-events-none z-10">
-        {/* Enhanced Top Header Layout */}
+        {/* Modern Header Layout with Flappy Pi Branding */}
         <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-          {/* Left Side - Mode and Level Info */}
+          {/* Left Side - Flappy Pi Logo */}
           <div className="flex flex-col gap-2">
-            <div className="bg-blue-600/90 rounded-xl px-4 py-2 text-white font-bold text-sm shadow-lg backdrop-blur-sm">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl px-4 py-2 text-white font-bold shadow-lg backdrop-blur-sm">
+              <div className="text-lg">🐦 Flappy Pi</div>
               <div className="text-xs opacity-80">Level {level}</div>
-              <div className="text-sm">{gameMode === 'classic' ? 'Morning' : gameMode === 'endless' ? 'Day' : 'Night'}</div>
               <div className="text-xs uppercase tracking-wide">{gameMode}</div>
             </div>
           </div>
 
-          {/* Center - Score (Large and Prominent) */}
-          <div className="flex justify-center">
-            <div className="bg-white/95 rounded-2xl px-8 py-4 shadow-2xl">
-              <div className="text-6xl font-black text-gray-800 text-center tracking-tight">
+          {/* Center - Large Floating Score */}
+          <div className="flex justify-center transform -translate-y-2">
+            <div className="bg-white/95 rounded-2xl px-8 py-4 shadow-2xl border-4 border-yellow-400">
+              <div className="text-6xl font-black text-gray-800 text-center tracking-tight animate-pulse">
                 {score}
               </div>
             </div>
           </div>
 
-          {/* Right Side - Coins */}
-          <div className="flex flex-col gap-2">
-            <div className="bg-yellow-500/90 rounded-xl px-4 py-3 text-white font-bold shadow-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2">
-                <Coins className="w-5 h-5 text-yellow-100" />
-                <span className="text-lg font-bold">{coins}</span>
-              </div>
-            </div>
+          {/* Right Side - Shop & Leaderboard Icons */}
+          <div className="flex flex-col gap-2 pointer-events-auto">
+            <Button
+              onClick={onOpenShop}
+              size="sm"
+              className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-lg"
+            >
+              🛒
+            </Button>
+            <Button
+              onClick={onOpenLeaderboard}
+              size="sm"
+              className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white shadow-lg"
+            >
+              🏆
+            </Button>
           </div>
         </div>
         
-        {/* Bottom HUD - Lives Only */}
-        <div className="absolute bottom-4 left-4">
-          <div className="flex items-center gap-2 bg-red-500/90 rounded-lg px-4 py-3 backdrop-blur-sm">
+        {/* Bottom Left - Lives and Flappy Coins */}
+        <div className="absolute bottom-4 left-4 flex flex-col gap-2">
+          <div className="flex items-center gap-2 bg-red-500/90 rounded-lg px-4 py-3 backdrop-blur-sm shadow-lg">
             <Heart className="w-5 h-5 text-red-100" />
             <span className="text-white font-bold text-lg">{lives}</span>
           </div>
+          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg px-4 py-3 text-white font-bold shadow-lg backdrop-blur-sm">
+            <div className="flex items-center gap-2">
+              <Coins className="w-5 h-5 text-yellow-100" />
+              <span className="text-lg font-bold">{coins}</span>
+            </div>
+            <div className="text-xs opacity-80">Flappy Coins</div>
+          </div>
         </div>
 
-        {/* Bottom Right - Game Mode Indicator */}
+        {/* Bottom Right - Copyright */}
         <div className="absolute bottom-4 right-4">
-          <div className="bg-black/50 rounded-lg px-3 py-2 text-white font-bold text-xs uppercase tracking-wider opacity-70">
-            {gameMode} MODE
+          <div className="bg-black/50 rounded-lg px-3 py-2 text-white text-xs opacity-70">
+            © 2025 mrwain organization
           </div>
         </div>
       </div>
@@ -119,7 +134,7 @@ const GameUI: React.FC<GameUIProps> = ({
           <div className="space-y-3">
             <Button 
               onClick={onStartGame}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
               size="lg"
             >
               <Play className="w-5 h-5 mr-2" />
@@ -128,13 +143,22 @@ const GameUI: React.FC<GameUIProps> = ({
             
             <div className="flex gap-2">
               <Button 
+                onClick={onShowAd}
+                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+              >
+                🔄 Revive with Ad
+              </Button>
+              <Button 
                 onClick={onShareScore}
                 variant="outline"
                 className="flex-1"
               >
                 <Star className="w-4 h-4 mr-2" />
-                Share Score
+                Share
               </Button>
+            </div>
+            
+            <div className="flex gap-2">
               <Button 
                 onClick={onOpenLeaderboard}
                 variant="outline"
@@ -143,15 +167,14 @@ const GameUI: React.FC<GameUIProps> = ({
                 <Trophy className="w-4 h-4 mr-2" />
                 Leaderboard
               </Button>
+              <Button 
+                onClick={onOpenShop}
+                className="flex-1 text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+              >
+                <Menu className="w-4 h-4 mr-2" />
+                Shop
+              </Button>
             </div>
-            
-            <Button 
-              onClick={onOpenShop}
-              className="w-full text-white bg-cyan-500 hover:bg-cyan-600"
-            >
-              <Menu className="w-5 h-5 mr-2" />
-              Shop
-            </Button>
             
             <Button 
               onClick={onBackToMenu}

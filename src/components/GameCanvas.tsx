@@ -3,6 +3,7 @@ import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
 import { useGameRenderer } from '../hooks/useGameRenderer';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
+import { useSoundEffects } from '../hooks/useSoundEffects';
 
 interface GameCanvasProps {
   gameState: 'menu' | 'playing' | 'gameOver' | 'paused';
@@ -37,19 +38,31 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   }>({});
 
   useBackgroundMusic({ musicEnabled, gameState });
+  
+  // Initialize sound effects
+  const { initializeGameSounds, playWingFlap, playPoint, playHit, playDie } = useSoundEffects();
 
   const { gameStateRef, resetGame, continueGame, jump, checkCollisions } = useGameLoop({
     gameState,
-    onCollision,
+    onCollision: () => {
+      playHit(); // Play hit sound on collision
+      onCollision();
+    },
     onScoreUpdate
   });
 
   const { updateGame } = useGamePhysics({
     gameStateRef,
-    onScoreUpdate,
+    onScoreUpdate: (score) => {
+      playPoint(); // Play point sound when scoring
+      onScoreUpdate(score);
+    },
     onCoinEarned,
     checkCollisions,
-    onCollision,
+    onCollision: () => {
+      playDie(); // Play die sound on game over
+      onCollision();
+    },
     gameMode
   });
 
@@ -59,6 +72,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     birdSkin,
     gameMode 
   });
+
+  // Initialize sound effects on component mount
+  useEffect(() => {
+    initializeGameSounds();
+  }, [initializeGameSounds]);
 
   const gameLoop = useCallback(() => {
     if (gameState === 'playing' && !gameStateRef.current.gameOver) {
@@ -78,7 +96,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   }, [continueGame, onContinueGameRef]);
 
-  // Enhanced input handlers with better cleanup
+  // Enhanced input handlers with sound effects
   useEffect(() => {
     // Force cleanup of any existing handlers
     if (inputHandlersRef.current.handleClick) {
@@ -94,6 +112,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       const handleClick = (e: MouseEvent | TouchEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        playWingFlap(); // Play wing flap sound on jump
         jump();
       };
       
@@ -101,6 +120,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         if (e.code === 'Space') {
           e.preventDefault();
           e.stopPropagation();
+          playWingFlap(); // Play wing flap sound on space press
           jump();
         }
       };
@@ -126,7 +146,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         window.removeEventListener('keydown', inputHandlersRef.current.handleKeyPress);
       }
     };
-  }, [jump, gameState]);
+  }, [jump, gameState, playWingFlap]);
 
   // Enhanced game state management with better cleanup
   useEffect(() => {
