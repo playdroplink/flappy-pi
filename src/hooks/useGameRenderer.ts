@@ -1,4 +1,3 @@
-
 import { useCallback, useRef } from 'react';
 import { getDifficultyByUserChoice } from '../utils/gameDifficulty';
 import { useBackgroundRenderer } from './useBackgroundRenderer';
@@ -7,6 +6,7 @@ import { useBirdRenderer } from './useBirdRenderer';
 import { usePipesRenderer } from './usePipesRenderer';
 import { useGroundRenderer } from './useGroundRenderer';
 import { useUIRenderer } from './useUIRenderer';
+import { useLevelVisuals } from './useLevelVisuals';
 
 interface UseGameRendererProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
@@ -30,6 +30,7 @@ export const useGameRenderer = ({
   flashTimer
 }: UseGameRendererProps) => {
   const difficultyCache = useRef<{ score: number; difficulty: any } | null>(null);
+  const lastLevelRef = useRef<number>(1);
 
   const { renderBackground } = useBackgroundRenderer({ gameMode, userDifficulty });
   const { renderClouds, renderWindEffect } = useCloudsRenderer();
@@ -37,6 +38,14 @@ export const useGameRenderer = ({
   const { renderPipes } = usePipesRenderer();
   const { renderGround, renderBuildings } = useGroundRenderer();
   const { renderTapToStart } = useUIRenderer();
+  const { 
+    triggerLevelVisual, 
+    updateParticles, 
+    renderLevelText, 
+    renderParticles, 
+    applyBackgroundEffects,
+    resetEffects 
+  } = useLevelVisuals();
 
   const getDifficultyOptimized = useCallback((score: number) => {
     if (difficultyCache.current && difficultyCache.current.score === score) {
@@ -56,6 +65,22 @@ export const useGameRenderer = ({
     if (!ctx) return;
 
     const state = gameStateRef.current;
+    
+    // Check for level up and trigger visual effects
+    const currentLevel = Math.floor(state.score / 5) + 1;
+    if (currentLevel > lastLevelRef.current && state.gameStarted) {
+      triggerLevelVisual(currentLevel, canvas);
+      lastLevelRef.current = currentLevel;
+    }
+
+    // Update particle systems
+    updateParticles();
+
+    // Save context for background effects
+    ctx.save();
+    
+    // Apply background effects (shake, etc.)
+    applyBackgroundEffects(ctx, canvas);
     
     // Apply flash effect if active
     if (flashTimer && flashTimer.current > 0) {
@@ -81,6 +106,9 @@ export const useGameRenderer = ({
       heartsSystem.renderHearts(ctx);
     }
     
+    // Render level visual particles
+    renderParticles(ctx);
+    
     // Render bird
     renderBird(ctx, state.bird, state.frameCount, state.gameStarted, difficulty);
     
@@ -90,6 +118,9 @@ export const useGameRenderer = ({
     // Render ground and buildings
     renderGround(ctx, canvas, difficulty, state.gameStarted);
     renderBuildings(ctx, canvas, difficulty, state.frameCount);
+    
+    // Render level text overlay
+    renderLevelText(ctx, canvas, currentLevel, state.frameCount);
     
     // Render lives UI (hearts in corner)
     if (livesSystem) {
@@ -107,6 +138,9 @@ export const useGameRenderer = ({
       ctx.fillText('❤️ Hearts unlocked! Collect for extra lives!', canvas.width / 2, canvas.height / 2);
       ctx.restore();
     }
+
+    // Restore context after background effects
+    ctx.restore();
   }, [
     canvasRef, 
     gameStateRef, 
@@ -120,8 +154,19 @@ export const useGameRenderer = ({
     renderBuildings,
     livesSystem,
     heartsSystem,
-    flashTimer
+    flashTimer,
+    triggerLevelVisual,
+    updateParticles,
+    renderLevelText,
+    renderParticles,
+    applyBackgroundEffects
   ]);
 
-  return { draw };
+  // Reset visual effects when game resets
+  const resetVisuals = useCallback(() => {
+    lastLevelRef.current = 1;
+    resetEffects();
+  }, [resetEffects]);
+
+  return { draw, resetVisuals };
 };

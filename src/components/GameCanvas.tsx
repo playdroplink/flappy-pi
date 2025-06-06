@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
@@ -70,7 +69,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     userDifficulty
   });
 
-  const { draw } = useGameRenderer({ 
+  const { draw, resetVisuals } = useGameRenderer({ 
     canvasRef, 
     gameStateRef, 
     birdSkin,
@@ -95,8 +94,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     resetGame: (canvasHeight: number) => {
       resetGame(canvasHeight);
       resetGameWithLives();
+      if (resetVisuals) {
+        resetVisuals();
+      }
     },
-    canvasRef
+    canvasRef,
+    resetVisuals
   });
 
   useEffect(() => {

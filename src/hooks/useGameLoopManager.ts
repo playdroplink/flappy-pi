@@ -8,6 +8,7 @@ interface UseGameLoopManagerProps {
   draw: () => void;
   resetGame: (canvasHeight: number) => void;
   canvasRef: React.RefObject<HTMLCanvasElement>;
+  resetVisuals?: () => void;
 }
 
 export const useGameLoopManager = ({
@@ -16,54 +17,72 @@ export const useGameLoopManager = ({
   updateGame,
   draw,
   resetGame,
-  canvasRef
+  canvasRef,
+  resetVisuals
 }: UseGameLoopManagerProps) => {
-  const gameLoopRef = useRef<number>();
-  const gameInitializedRef = useRef(false);
+  const animationFrameRef = useRef<number>();
+  const lastResetState = useRef<string>('');
 
   const gameLoop = useCallback(() => {
-    if (gameState === 'playing' && !gameStateRef.current.gameOver) {
+    if (gameState === 'playing') {
       updateGame();
     }
     draw();
-    
-    if (gameState === 'playing') {
-      gameLoopRef.current = requestAnimationFrame(gameLoop);
-    }
-  }, [updateGame, draw, gameState]);
+    animationFrameRef.current = requestAnimationFrame(gameLoop);
+  }, [gameState, updateGame, draw]);
 
-  useEffect(() => {
-    if (gameLoopRef.current) {
-      cancelAnimationFrame(gameLoopRef.current);
-      gameLoopRef.current = undefined;
-    }
+  const setupCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    if (gameState === 'playing') {
-      const canvas = canvasRef.current;
-      if (canvas && !gameInitializedRef.current) {
-        console.log('Entering playing state - initializing game for first time');
-        gameInitializedRef.current = true;
-        resetGame(canvas.height);
-        
-        setTimeout(() => {
-          if (gameState === 'playing') {
-            gameLoopRef.current = requestAnimationFrame(gameLoop);
-          }
-        }, 100);
-      } else if (canvas && gameInitializedRef.current) {
-        console.log('Game already initialized, starting game loop');
-        gameLoopRef.current = requestAnimationFrame(gameLoop);
-      }
-    } else {
-      // Reset initialization flag when leaving playing state
-      gameInitializedRef.current = false;
-    }
+    const updateCanvasSize = () => {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+    };
+
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
 
     return () => {
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-        gameLoopRef.current = undefined;
+      window.removeEventListener('resize', updateCanvasSize);
+    };
+  }, [canvasRef]);
+
+  useEffect(() => {
+    const cleanup = setupCanvas();
+    return cleanup;
+  }, [setupCanvas]);
+
+  useEffect(() => {
+    if (gameState === 'playing' && lastResetState.current !== 'playing') {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        resetGame(canvas.height);
+        if (resetVisuals) {
+          resetVisuals();
+        }
+      }
+      lastResetState.current = 'playing';
+    }
+  }, [gameState, resetGame, canvasRef, resetVisuals]);
+
+  useEffect(() => {
+    animationFrameRef.current = requestAnimationFrame(gameLoop);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [gameState, gameLoop, resetGame, canvasRef]);
+  }, [gameLoop]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !gameStateRef.current) return;
+
+    gameStateRef.current.initialized = true;
+  }, [canvasRef, gameStateRef]);
 };
