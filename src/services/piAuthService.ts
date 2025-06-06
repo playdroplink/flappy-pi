@@ -23,11 +23,11 @@ class PiAuthService {
       }
 
       // Step 2: Send Pi user data to our backend for Supabase authentication
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/pi-auth`, {
+      const response = await fetch(`https://fwfefplvruawsbspwpxh.supabase.co/functions/v1/pi-auth`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.supabaseKey}`
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3ZmVmcGx2cnVhd3Nic3B3cHhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNDYzMjgsImV4cCI6MjA2NDcyMjMyOH0.q2g4YZeUpmOOmK2LO7KKb-B8ZTpsoxJ9b1H_Wf11_LM`
         },
         body: JSON.stringify({
           piUserId: piUser.uid,

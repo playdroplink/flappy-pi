@@ -9,6 +9,7 @@ interface UseSupabaseAuthReturn {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isAuthenticated: boolean;
   signInWithPi: () => Promise<boolean>;
   signOut: () => Promise<void>;
 }
@@ -96,6 +97,7 @@ export const useSupabaseAuth = (): UseSupabaseAuthReturn => {
     user,
     session,
     loading,
+    isAuthenticated: !!user,
     signInWithPi,
     signOut
   };
