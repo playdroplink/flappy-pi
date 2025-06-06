@@ -1,11 +1,8 @@
 
-import { useRef, useCallback, useEffect, useState } from 'react';
-
-interface AudioFile {
-  src: string;
-  audio: HTMLAudioElement;
-  loaded: boolean;
-}
+import { useRef, useEffect } from 'react';
+import { useAudioContext } from './useAudioContext';
+import { useAudioLoader } from './useAudioLoader';
+import { useAudioPlayback } from './useAudioPlayback';
 
 interface UseAudioManagerProps {
   musicEnabled: boolean;
@@ -13,92 +10,13 @@ interface UseAudioManagerProps {
 }
 
 export const useAudioManager = ({ musicEnabled, gameState }: UseAudioManagerProps) => {
-  const audioFiles = useRef<Map<string, AudioFile>>(new Map());
-  const [audioUnlocked, setAudioUnlocked] = useState(false);
-  const audioContext = useRef<AudioContext | null>(null);
   const backgroundMusic = useRef<HTMLAudioElement | null>(null);
-
-  // Initialize Web Audio API for better compatibility
-  const initializeAudioContext = useCallback(() => {
-    if (!audioContext.current) {
-      try {
-        audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-        console.log('Audio context initialized');
-      } catch (error) {
-        console.warn('Web Audio API not supported, falling back to HTML5 audio');
-      }
-    }
-  }, []);
-
-  // Preload audio files with multiple format support
-  const preloadAudio = useCallback((key: string, basePath: string) => {
-    const audio = new Audio();
-    
-    // Try multiple formats for better compatibility
-    const formats = ['mp3', 'ogg', 'wav'];
-    let formatIndex = 0;
-
-    const tryNextFormat = () => {
-      if (formatIndex >= formats.length) {
-        console.warn(`Failed to load audio: ${key}`);
-        return;
-      }
-
-      const format = formats[formatIndex];
-      audio.src = `${basePath}.${format}`;
-      
-      audio.addEventListener('loadeddata', () => {
-        audioFiles.current.set(key, {
-          src: audio.src,
-          audio: audio,
-          loaded: true
-        });
-        console.log(`Audio loaded: ${key} (${format})`);
-      }, { once: true });
-
-      audio.addEventListener('error', () => {
-        formatIndex++;
-        tryNextFormat();
-      }, { once: true });
-
-      audio.load();
-    };
-
-    tryNextFormat();
-  }, []);
-
-  // Unlock audio on first user interaction - FIXED for autoplay restrictions
-  const unlockAudio = useCallback(() => {
-    if (audioUnlocked) return;
-
-    // Create a silent audio to test and unlock
-    const testAudio = new Audio();
-    testAudio.src = 'data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAABOW';
-    testAudio.volume = 0.01; // Very quiet
-    
-    const playPromise = testAudio.play();
-    if (playPromise !== undefined) {
-      playPromise.then(() => {
-        testAudio.pause();
-        testAudio.currentTime = 0;
-        setAudioUnlocked(true);
-        console.log('Audio unlocked successfully');
-        
-        // Initialize and resume audio context after unlock
-        initializeAudioContext();
-        if (audioContext.current?.state === 'suspended') {
-          audioContext.current.resume().then(() => {
-            console.log('Audio context resumed');
-          });
-        }
-      }).catch((error) => {
-        console.log('Audio unlock failed, will try again on next interaction:', error);
-      });
-    }
-  }, [audioUnlocked, initializeAudioContext]);
+  const { audioUnlocked } = useAudioContext();
+  const { preloadAudio } = useAudioLoader();
+  const audioPlayback = useAudioPlayback({ audioUnlocked });
 
   // Initialize background music with format fallbacks
-  const initializeBackgroundMusic = useCallback(() => {
+  const initializeBackgroundMusic = () => {
     if (backgroundMusic.current) return;
 
     backgroundMusic.current = new Audio();
@@ -129,37 +47,7 @@ export const useAudioManager = ({ musicEnabled, gameState }: UseAudioManagerProp
     };
 
     tryNextFormat();
-  }, []);
-
-  // Play sound effect with improved error handling
-  const playSound = useCallback((key: string, volume = 0.6) => {
-    if (!audioUnlocked) {
-      console.log('Audio not unlocked yet - user interaction required');
-      return;
-    }
-
-    const audioFile = audioFiles.current.get(key);
-    if (!audioFile || !audioFile.loaded) {
-      console.warn(`Audio not loaded: ${key}`);
-      return;
-    }
-
-    try {
-      // Clone the audio for overlapping sounds
-      const audio = audioFile.audio.cloneNode() as HTMLAudioElement;
-      audio.volume = volume;
-      audio.currentTime = 0;
-      
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch((error) => {
-          console.log(`Failed to play sound: ${key}`, error);
-        });
-      }
-    } catch (error) {
-      console.warn(`Error playing sound ${key}:`, error);
-    }
-  }, [audioUnlocked]);
+  };
 
   // Initialize all game sounds
   useEffect(() => {
@@ -175,25 +63,7 @@ export const useAudioManager = ({ musicEnabled, gameState }: UseAudioManagerProp
 
     // Initialize background music
     initializeBackgroundMusic();
-
-    // Add multiple interaction listeners for audio unlock
-    const handleInteraction = () => {
-      unlockAudio();
-    };
-
-    // Listen for various user interactions
-    document.addEventListener('touchstart', handleInteraction, { once: true });
-    document.addEventListener('click', handleInteraction, { once: true });
-    document.addEventListener('keydown', handleInteraction, { once: true });
-    document.addEventListener('pointerdown', handleInteraction, { once: true });
-
-    return () => {
-      document.removeEventListener('touchstart', handleInteraction);
-      document.removeEventListener('click', handleInteraction);
-      document.removeEventListener('keydown', handleInteraction);
-      document.removeEventListener('pointerdown', handleInteraction);
-    };
-  }, [preloadAudio, initializeBackgroundMusic, unlockAudio]);
+  }, [preloadAudio]);
 
   // Handle background music with proper unlocking
   useEffect(() => {
@@ -218,20 +88,11 @@ export const useAudioManager = ({ musicEnabled, gameState }: UseAudioManagerProp
         backgroundMusic.current.pause();
         backgroundMusic.current = null;
       }
-      if (audioContext.current) {
-        audioContext.current.close();
-      }
     };
   }, []);
 
   return {
-    playSound,
     audioUnlocked,
-    playWingFlap: () => playSound('wing', 0.4),
-    playPoint: () => playSound('point', 0.7),
-    playHit: () => playSound('hit', 0.8),
-    playDie: () => playSound('die', 0.7),
-    playSwoosh: () => playSound('swoosh', 0.5),
-    playHeartPickup: () => playSound('heart', 0.6)
+    ...audioPlayback
   };
 };
