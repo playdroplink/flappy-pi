@@ -38,6 +38,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     handleClick?: (e: MouseEvent) => void;
     handleKeyPress?: (e: KeyboardEvent) => void;
   }>({});
+  const gameInitializedRef = useRef(false); // Track initialization state
 
   useBackgroundMusic({ musicEnabled, gameState });
   
@@ -148,7 +149,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
   }, [jump, gameState, playWingFlap]);
 
-  // Enhanced game state management with better cleanup
+  // Enhanced game state management with better cleanup and initialization tracking
   useEffect(() => {
     if (gameLoopRef.current) {
       cancelAnimationFrame(gameLoopRef.current);
@@ -157,8 +158,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
     if (gameState === 'playing') {
       const canvas = canvasRef.current;
-      if (canvas) {
-        console.log('Entering playing state - resetting game');
+      if (canvas && !gameInitializedRef.current) {
+        console.log('Entering playing state - initializing game for first time');
+        gameInitializedRef.current = true;
         resetGame(canvas.height);
         
         setTimeout(() => {
@@ -166,7 +168,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             gameLoopRef.current = requestAnimationFrame(gameLoop);
           }
         }, 100);
+      } else if (canvas && gameInitializedRef.current) {
+        console.log('Game already initialized, starting game loop');
+        gameLoopRef.current = requestAnimationFrame(gameLoop);
       }
+    } else {
+      // Reset initialization flag when leaving playing state
+      gameInitializedRef.current = false;
     }
 
     return () => {
