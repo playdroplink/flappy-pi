@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import HomePage from './pages/HomePage';
 import GamePage from './pages/GamePage';
@@ -12,6 +12,7 @@ import TermsPage from './pages/TermsPage';
 import ContactPage from './pages/ContactPage';
 import HelpPage from './pages/HelpPage';
 import Index from './pages/Index';
+import NotFound from './pages/NotFound';
 import { loadPiSdk } from './services/piSdkLoader';
 import { piNetworkService } from './services/piNetworkService';
 
@@ -46,6 +47,7 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/help" element={<HelpPage />} />
           <Route path="/account" element={<SettingsPage />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
       <Toaster />

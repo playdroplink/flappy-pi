@@ -8,6 +8,8 @@ import GameModeButtons from './welcome/GameModeButtons';
 import QuickActionButtons from './welcome/QuickActionButtons';
 import WelcomeFooter from './welcome/WelcomeFooter';
 import BackgroundElements from './welcome/BackgroundElements';
+import EnhancedFooter from './EnhancedFooter';
+import { ScrollArea } from './ui/scroll-area';
 
 type GameMode = 'classic' | 'endless' | 'challenge';
 
@@ -47,47 +49,54 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-sky-400 via-cyan-400 to-blue-500 flex flex-col overflow-hidden">
-      {/* Animated background elements */}
-      <BackgroundElements />
+    <div className="fixed inset-0 w-full h-full flex flex-col">
+      <ScrollArea className="flex-1">
+        <div className="min-h-screen bg-gradient-to-br from-sky-400 via-cyan-400 to-blue-500">
+          {/* Animated background elements */}
+          <BackgroundElements />
 
-      {/* Header Section */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-md mx-auto w-full">
-        {/* Logo and Title */}
-        <WelcomeHeader />
+          {/* Header Section */}
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-md mx-auto w-full">
+            {/* Logo and Title */}
+            <WelcomeHeader />
 
-        {/* User Stats Card */}
-        <UserStatsCard 
-          coins={coins}
-          musicEnabled={musicEnabled}
-          onToggleMusic={onToggleMusic}
-        />
+            {/* User Stats Card */}
+            <UserStatsCard 
+              coins={coins}
+              musicEnabled={musicEnabled}
+              onToggleMusic={onToggleMusic}
+            />
 
-        {/* Pi Premium Perks */}
-        <div className="w-full mb-4 animate-fade-in" style={{ animationDelay: '0.25s' }}>
-          <PiPremiumPerks onUpgrade={handlePiPremiumUpgrade} />
+            {/* Pi Premium Perks */}
+            <div className="w-full mb-4 animate-fade-in" style={{ animationDelay: '0.25s' }}>
+              <PiPremiumPerks onUpgrade={handlePiPremiumUpgrade} />
+            </div>
+
+            {/* Game Mode Buttons */}
+            <GameModeButtons 
+              onStartGame={onStartGame}
+              onOpenTutorial={onOpenTutorial}
+            />
+
+            {/* Quick Actions */}
+            <QuickActionButtons 
+              onOpenShop={onOpenShop}
+              onOpenLeaderboard={onOpenLeaderboard}
+            />
+          </div>
+
+          {/* Footer Navigation Links */}
+          <WelcomeFooter 
+            onOpenPrivacy={onOpenPrivacy}
+            onOpenTerms={onOpenTerms}
+            onOpenContact={onOpenContact}
+            onOpenHelp={onOpenHelp}
+          />
         </div>
-
-        {/* Game Mode Buttons */}
-        <GameModeButtons 
-          onStartGame={onStartGame}
-          onOpenTutorial={onOpenTutorial}
-        />
-
-        {/* Quick Actions */}
-        <QuickActionButtons 
-          onOpenShop={onOpenShop}
-          onOpenLeaderboard={onOpenLeaderboard}
-        />
-      </div>
-
-      {/* Footer */}
-      <WelcomeFooter 
-        onOpenPrivacy={onOpenPrivacy}
-        onOpenTerms={onOpenTerms}
-        onOpenContact={onOpenContact}
-        onOpenHelp={onOpenHelp}
-      />
+        
+        {/* Enhanced Footer */}
+        <EnhancedFooter />
+      </ScrollArea>
     </div>
   );
 };
