@@ -1,4 +1,3 @@
-
 import { useCallback, useRef } from 'react';
 
 interface LevelVisual {
@@ -47,13 +46,24 @@ export const useLevelVisuals = () => {
     if (visual.particles) {
       const particleCount = level >= 20 ? 15 : level >= 10 ? 10 : 8;
       for (let i = 0; i < particleCount; i++) {
+        let particleType: 'coin' | 'heart' | 'star';
+        
+        // Explicitly assign the correct type based on visual.particles
+        if (visual.particles === 'coins') {
+          particleType = 'coin';
+        } else if (visual.particles === 'hearts') {
+          particleType = 'heart';
+        } else {
+          particleType = 'star';
+        }
+        
         const particle = {
           id: particleIdCounter.current++,
           x: Math.random() * canvas.width,
           y: -20,
           vx: (Math.random() - 0.5) * 2,
           vy: Math.random() * 2 + 1,
-          type: visual.particles === 'coins' ? 'coin' : visual.particles === 'hearts' ? 'heart' : 'star',
+          type: particleType,
           life: 0,
           maxLife: 180 // 3 seconds at 60fps
         };
