@@ -6,6 +6,7 @@ import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 import { useNavigate } from 'react-router-dom';
 import EnhancedFooter from '../components/EnhancedFooter';
 import NavigationMenu from '../components/NavigationMenu';
+import HeaderMenu from '../components/home/HeaderMenu';
 import { ScrollArea } from '../components/ui/scroll-area';
 import HomeHeader from '../components/home/HomeHeader';
 import UserStatsSection from '../components/home/UserStatsSection';
@@ -39,14 +40,17 @@ const HomePage: React.FC = () => {
       {/* Navigation Menu */}
       <NavigationMenu />
       
+      {/* Header Menu */}
+      <HeaderMenu />
+      
       {/* Scrollable Content Area */}
       <ScrollArea className="flex-1">
         <div className="min-h-screen bg-gradient-to-br from-sky-400 via-cyan-400 to-blue-500">
           {/* Animated background elements */}
           <BackgroundDecoration />
 
-          {/* Header Section */}
-          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-md mx-auto w-full">
+          {/* Header Section with proper top padding to account for header menu */}
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 pt-20 max-w-md mx-auto w-full">
             {/* Logo and Title */}
             <HomeHeader />
 
