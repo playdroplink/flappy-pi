@@ -1,3 +1,4 @@
+
 import React from 'react';
 import ShopModal from './ShopModal';
 import LeaderboardModal from './LeaderboardModal';
@@ -7,6 +8,9 @@ import PrivacyModal from './PrivacyModal';
 import TermsModal from './TermsModal';
 import ContactModal from './ContactModal';
 import HelpModal from './HelpModal';
+import MandatoryAdModal from './MandatoryAdModal';
+import { usePiPayments } from '@/hooks/usePiPayments';
+import { useAdSystem } from '@/hooks/useAdSystem';
 
 interface GameModalsProps {
   showShop: boolean;
@@ -17,6 +21,7 @@ interface GameModalsProps {
   showTerms: boolean;
   showContact: boolean;
   showHelp: boolean;
+  showMandatoryAd: boolean;
   adType: 'continue' | 'coins' | 'life';
   coins: number;
   score: number;
@@ -32,9 +37,11 @@ interface GameModalsProps {
   setShowTerms: (show: boolean) => void;
   setShowContact: (show: boolean) => void;
   setShowHelp: (show: boolean) => void;
+  setShowMandatoryAd: (show: boolean) => void;
   setCoins: (coins: number) => void;
   setSelectedBirdSkin: (skin: string) => void;
   onWatchAd: (adType: 'continue' | 'coins' | 'life') => void;
+  onMandatoryAdWatch: () => void;
 }
 
 const GameModals: React.FC<GameModalsProps> = ({
@@ -46,6 +53,7 @@ const GameModals: React.FC<GameModalsProps> = ({
   showTerms,
   showContact,
   showHelp,
+  showMandatoryAd,
   adType,
   coins,
   score,
@@ -61,10 +69,27 @@ const GameModals: React.FC<GameModalsProps> = ({
   setShowTerms,
   setShowContact,
   setShowHelp,
+  setShowMandatoryAd,
   setCoins,
   setSelectedBirdSkin,
-  onWatchAd
+  onWatchAd,
+  onMandatoryAdWatch
 }) => {
+  const { purchaseAdFreeWithPi } = useAdSystem();
+  const { shareScore } = usePiPayments();
+
+  const handleUpgradeToPremium = async () => {
+    const success = await purchaseAdFreeWithPi();
+    if (success) {
+      setShowMandatoryAd(false);
+    }
+  };
+
+  const handleShareScore = () => {
+    shareScore(score, level);
+    setShowShareScore(false);
+  };
+
   return (
     <>
       <ShopModal 
@@ -88,9 +113,17 @@ const GameModals: React.FC<GameModalsProps> = ({
         adType={adType}
       />
 
+      <MandatoryAdModal
+        isOpen={showMandatoryAd}
+        onWatchAd={onMandatoryAdWatch}
+        onUpgradeToPremium={handleUpgradeToPremium}
+        canUpgrade={true}
+      />
+
       <ShareScoreModal
         isOpen={showShareScore}
         onClose={() => setShowShareScore(false)}
+        onShare={handleShareScore}
         score={score}
         level={level}
         highScore={highScore}

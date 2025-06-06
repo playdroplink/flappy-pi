@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Zap, Clock, Play, Crown } from 'lucide-react';
+import { Zap, Clock, Play, Crown, Coins } from 'lucide-react';
+import { usePiPayments } from '@/hooks/usePiPayments';
 
 interface MandatoryAdModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ const MandatoryAdModal: React.FC<MandatoryAdModalProps> = ({
 }) => {
   const [isWatching, setIsWatching] = useState(false);
   const [countdown, setCountdown] = useState(3);
+  const { isProcessing, purchaseAdFreeSubscription } = usePiPayments();
 
   // Reset state when popup opens
   useEffect(() => {
@@ -42,6 +44,13 @@ const MandatoryAdModal: React.FC<MandatoryAdModalProps> = ({
   const handleWatchAd = () => {
     setIsWatching(true);
     setCountdown(3);
+  };
+
+  const handlePiPayment = async () => {
+    const result = await purchaseAdFreeSubscription();
+    if (result.success) {
+      onUpgradeToPremium();
+    }
   };
 
   return (
@@ -81,20 +90,33 @@ const MandatoryAdModal: React.FC<MandatoryAdModalProps> = ({
                 <Button
                   onClick={handleWatchAd}
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white border-0 rounded-xl py-3 font-bold text-base"
+                  disabled={isProcessing}
                 >
                   <Play className="mr-2 h-5 w-5" />
                   🎬 Watch Pi Ad (Required)
                 </Button>
                 
                 {canUpgrade && (
-                  <Button
-                    onClick={onUpgradeToPremium}
-                    variant="outline"
-                    className="w-full border-purple-300 text-purple-600 hover:bg-purple-50 rounded-xl py-2"
-                  >
-                    <Crown className="mr-2 h-4 w-4" />
-                    💎 Get Pi Premium (10 Pi)
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      onClick={handlePiPayment}
+                      disabled={isProcessing}
+                      className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white border-0 rounded-xl py-3 font-bold text-base"
+                    >
+                      <Coins className="mr-2 h-5 w-5" />
+                      {isProcessing ? 'Processing...' : '💎 Get Pi Premium (10 π)'}
+                    </Button>
+                    
+                    <Button
+                      onClick={onUpgradeToPremium}
+                      variant="outline"
+                      disabled={isProcessing}
+                      className="w-full border-purple-300 text-purple-600 hover:bg-purple-50 rounded-xl py-2"
+                    >
+                      <Crown className="mr-2 h-4 w-4" />
+                      💎 Other Payment Options
+                    </Button>
+                  </div>
                 )}
               </div>
 

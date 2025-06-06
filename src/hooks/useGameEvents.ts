@@ -5,6 +5,7 @@ import { useCollisionHandler } from '@/hooks/useCollisionHandler';
 import { useGameOverHandler } from '@/hooks/useGameOverHandler';
 import { useAdHandler } from '@/hooks/useAdHandler';
 import { useContinueGame } from '@/hooks/useContinueGame';
+import { usePiPayments } from '@/hooks/usePiPayments';
 
 interface UseGameEventsProps {
   score: number;
@@ -34,6 +35,7 @@ export const useGameEvents = ({
   continueGame
 }: UseGameEventsProps) => {
   const adSystem = useAdSystem();
+  const piPayments = usePiPayments();
   
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [isPausedForRevive, setIsPausedForRevive] = useState(false);
@@ -92,11 +94,23 @@ export const useGameEvents = ({
     setAdWatched
   });
 
+  // Enhanced handlers with Pi payment integration
+  const handlePiAdWatch = () => {
+    setShowMandatoryAd(false);
+    handleMandatoryAdWatch();
+  };
+
+  const handleShareScore = () => {
+    piPayments.shareScore(score, level);
+  };
+
   return {
     handleCollision,
     handleGameOver,
     handleCoinEarned: (coinAmount: number) => handleCoinEarned(coinAmount, coins, setCoins),
     handleAdWatch,
+    handleMandatoryAdWatch: handlePiAdWatch,
+    handleShareScore,
     showContinueButton,
     handleContinueClick,
     isPausedForRevive,
@@ -104,7 +118,8 @@ export const useGameEvents = ({
     showMandatoryAd,
     showAdFreeModal,
     adSystem,
-    handleMandatoryAdWatch,
-    setShowAdFreeModal
+    piPayments,
+    setShowAdFreeModal,
+    setShowMandatoryAd
   };
 };
