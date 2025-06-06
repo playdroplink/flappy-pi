@@ -402,7 +402,7 @@ Secure payment transactions through Pi Network’s official SDK.
 
 For questions or contributions:
 **mrwain organization**
-Email: [support@mrwain.org](mailto:support@mrwain.org)
+Email: [supportmrwainorganization@gmail.com](mailto:mrwainorganization@gmail.com)
 GitHub: github.com/mrwain/flappy-pi
 
 ---
