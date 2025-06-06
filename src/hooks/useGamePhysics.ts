@@ -1,5 +1,5 @@
 
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { getDifficulty, getScoreMultiplier } from '../utils/gameDifficulty';
 
 interface UseGamePhysicsProps {
@@ -19,6 +19,19 @@ export const useGamePhysics = ({
   onCollision,
   gameMode
 }: UseGamePhysicsProps) => {
+  const difficultyCache = useRef<{ score: number; difficulty: any } | null>(null);
+
+  const getDifficultyOptimized = useCallback((score: number) => {
+    // Cache difficulty to avoid excessive calculations
+    if (difficultyCache.current && difficultyCache.current.score === score) {
+      return difficultyCache.current.difficulty;
+    }
+    
+    const difficulty = getDifficulty(score, gameMode);
+    difficultyCache.current = { score, difficulty };
+    return difficulty;
+  }, [gameMode]);
+
   const updateGame = useCallback(() => {
     const canvas = document.querySelector('canvas') as HTMLCanvasElement;
     if (!canvas) return;
@@ -27,7 +40,7 @@ export const useGamePhysics = ({
     
     if (!state || state.gameOver || !state.initialized) return;
     
-    const difficulty = getDifficulty(state.score, gameMode);
+    const difficulty = getDifficultyOptimized(state.score);
     const scoreMultiplier = getScoreMultiplier(gameMode);
     const GRAVITY = 0.35;
     const PIPE_WIDTH = 120;
@@ -69,7 +82,6 @@ export const useGamePhysics = ({
       };
       state.pipes.push(newPipe);
       state.lastPipeSpawn = state.frameCount;
-      console.log(`New pipe spawned in ${gameMode} mode. Total pipes:`, state.pipes.length);
     }
 
     // Spawn clouds if enabled
@@ -102,7 +114,6 @@ export const useGamePhysics = ({
       if (!pipe.passed && state.bird.x > (pipe.x + PIPE_WIDTH)) {
         pipe.passed = true;
         state.score++;
-        console.log(`SCORE in ${gameMode} mode! New score: ${state.score}`);
         onScoreUpdate(state.score);
         
         // Award coins based on mode multiplier
@@ -123,14 +134,13 @@ export const useGamePhysics = ({
 
     // Check collisions
     if (checkCollisions(canvas)) {
-      console.log(`Collision in ${gameMode} mode! Game over. Final score: ${state.score}`);
       state.gameOver = true;
       onCollision();
       return;
     }
 
     state.frameCount++;
-  }, [gameStateRef, onScoreUpdate, onCoinEarned, checkCollisions, onCollision, gameMode]);
+  }, [gameStateRef, onScoreUpdate, onCoinEarned, checkCollisions, onCollision, gameMode, getDifficultyOptimized]);
 
   return { updateGame };
 };
