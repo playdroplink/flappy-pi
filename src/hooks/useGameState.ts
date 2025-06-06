@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -18,6 +17,7 @@ export const useGameState = () => {
   const [selectedBirdSkin, setSelectedBirdSkin] = useState('default');
   const [coins, setCoins] = useState(0);
   const [musicEnabled, setMusicEnabled] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const { toast } = useToast();
   const { profile, updateProfile } = useUserProfile();
 
@@ -56,30 +56,90 @@ export const useGameState = () => {
     }
   }, [profile]);
 
+  const enterFullscreen = async () => {
+    try {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+        toast({
+          title: "Fullscreen Mode Activated! 🎮",
+          description: "Enjoy the immersive gaming experience!"
+        });
+      }
+    } catch (error) {
+      console.error('Failed to enter fullscreen:', error);
+      toast({
+        title: "Fullscreen Failed",
+        description: "Your browser doesn't support fullscreen mode",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const exitFullscreen = async () => {
+    try {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (error) {
+      console.error('Failed to exit fullscreen:', error);
+    }
+  };
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
   const startGame = (mode: GameMode) => {
-    console.log('Starting new game with mode:', mode);
+    console.log('Starting completely new game with mode:', mode);
     
-    // Reset all game state completely
+    // Force complete state reset
     setGameMode(mode);
     setScore(0);
     setLevel(1);
     setLives(1);
+    setGameState('menu'); // Set to menu first
     setShowWelcome(false);
     
-    // Small delay to ensure state is reset before starting
+    // Auto-enter fullscreen when starting game
+    if (!isFullscreen) {
+      enterFullscreen();
+    }
+    
+    // Use a longer delay to ensure complete state reset
     setTimeout(() => {
       setGameState('playing');
-      console.log('Game state set to playing');
-    }, 100);
+      console.log('Game state set to playing after reset');
+    }, 200);
   };
 
   const backToMenu = () => {
-    console.log('Returning to menu - resetting game state');
+    console.log('Returning to menu - complete game reset');
+    
+    // Exit fullscreen when returning to menu
+    if (isFullscreen) {
+      exitFullscreen();
+    }
+    
+    // Complete state reset
     setGameState('menu');
     setScore(0);
     setLevel(1);
     setLives(1);
     setShowWelcome(true);
+    
+    // Clear any potential game loops or timers
+    const highestTimeoutId = setTimeout(() => {}, 0);
+    for (let i = 0; i < highestTimeoutId; i++) {
+      clearTimeout(i);
+    }
   };
 
   const handleScoreUpdate = (newScore: number) => {
@@ -130,6 +190,7 @@ export const useGameState = () => {
     selectedBirdSkin,
     coins,
     musicEnabled,
+    isFullscreen,
     profile,
     setGameState,
     setScore,
@@ -142,6 +203,8 @@ export const useGameState = () => {
     startGame,
     backToMenu,
     handleScoreUpdate,
+    enterFullscreen,
+    exitFullscreen,
     toast
   };
 };

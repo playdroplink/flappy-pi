@@ -93,7 +93,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-400 to-sky-600 relative overflow-hidden">
+    <div className="fixed inset-0 w-full h-full bg-gradient-to-b from-sky-400 to-sky-600 overflow-hidden">
       <GameCanvas 
         gameState={gameState.gameState}
         gameMode={gameState.gameMode}

@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
@@ -79,31 +78,39 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   }, [continueGame, onContinueGameRef]);
 
-  // Input handlers
+  // Enhanced input handlers with better cleanup
   useEffect(() => {
-    // Clean up existing handlers
+    // Force cleanup of any existing handlers
     if (inputHandlersRef.current.handleClick) {
       window.removeEventListener('click', inputHandlersRef.current.handleClick);
+      window.removeEventListener('mousedown', inputHandlersRef.current.handleClick);
+      window.removeEventListener('touchstart', inputHandlersRef.current.handleClick);
     }
     if (inputHandlersRef.current.handleKeyPress) {
       window.removeEventListener('keydown', inputHandlersRef.current.handleKeyPress);
     }
 
     if (gameState === 'playing') {
-      const handleClick = (e: MouseEvent) => {
+      const handleClick = (e: MouseEvent | TouchEvent) => {
         e.preventDefault();
+        e.stopPropagation();
         jump();
       };
       
       const handleKeyPress = (e: KeyboardEvent) => {
         if (e.code === 'Space') {
           e.preventDefault();
+          e.stopPropagation();
           jump();
         }
       };
 
       inputHandlersRef.current = { handleClick, handleKeyPress };
+      
+      // Add multiple event types for better mobile support
       window.addEventListener('click', handleClick);
+      window.addEventListener('mousedown', handleClick);
+      window.addEventListener('touchstart', handleClick);
       window.addEventListener('keydown', handleKeyPress);
     } else {
       inputHandlersRef.current = {};
@@ -112,6 +119,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     return () => {
       if (inputHandlersRef.current.handleClick) {
         window.removeEventListener('click', inputHandlersRef.current.handleClick);
+        window.removeEventListener('mousedown', inputHandlersRef.current.handleClick);
+        window.removeEventListener('touchstart', inputHandlersRef.current.handleClick);
       }
       if (inputHandlersRef.current.handleKeyPress) {
         window.removeEventListener('keydown', inputHandlersRef.current.handleKeyPress);
@@ -119,8 +128,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
   }, [jump, gameState]);
 
-  // Game state management
+  // Enhanced game state management with better cleanup
   useEffect(() => {
+    // Force stop any existing game loop
     if (gameLoopRef.current) {
       cancelAnimationFrame(gameLoopRef.current);
       gameLoopRef.current = undefined;
@@ -128,11 +138,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
     if (gameState === 'playing') {
       const canvas = canvasRef.current;
-      if (canvas && !gameStateRef.current.initialized) {
-        console.log('Starting new game');
+      if (canvas) {
+        // Always reset the game when entering playing state
+        console.log('Entering playing state - resetting game');
         resetGame(canvas.height);
+        
+        // Small delay before starting game loop
+        setTimeout(() => {
+          if (gameState === 'playing') { // Double check state hasn't changed
+            gameLoopRef.current = requestAnimationFrame(gameLoop);
+          }
+        }, 100);
       }
-      gameLoopRef.current = requestAnimationFrame(gameLoop);
     }
 
     return () => {
@@ -169,7 +186,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       style={{ 
         touchAction: 'none',
         userSelect: 'none',
-        WebkitUserSelect: 'none'
+        WebkitUserSelect: 'none',
+        width: '100vw',
+        height: '100vh',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        zIndex: 1
       }}
     />
   );

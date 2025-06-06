@@ -55,9 +55,10 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   });
 
   const resetGame = useCallback((canvasHeight: number) => {
-    console.log('Resetting game completely with canvas height:', canvasHeight);
+    console.log('COMPLETE GAME RESET - Clearing all state');
     const safeY = Math.max(100, canvasHeight / 2);
     
+    // Force complete reset of all game state
     gameStateRef.current = {
       bird: { x: 100, y: safeY, velocity: 0, rotation: 0 },
       pipes: [],
@@ -69,7 +70,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       initialized: true
     };
     
-    console.log('Game reset complete - ready to play');
+    console.log('Game completely reset and ready to play');
   }, []);
 
   const continueGame = useCallback(() => {
@@ -77,6 +78,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     const canvas = document.querySelector('canvas');
     const safeY = canvas ? Math.max(150, canvas.height / 2) : 300;
     
+    // Only reset bird position and game over state for continue
     gameStateRef.current.bird = {
       x: 80,
       y: safeY,
@@ -85,6 +87,8 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     };
     
     gameStateRef.current.gameOver = false;
+    
+    // Remove pipes that are too close to bird
     gameStateRef.current.pipes = gameStateRef.current.pipes.filter(pipe => 
       pipe.x > gameStateRef.current.bird.x + 300
     );
