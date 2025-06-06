@@ -21,9 +21,10 @@ const SplashScreen = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-gradient-to-b from-sky-400 via-sky-500 to-sky-600 flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Animated clouds */}
-      <div className="absolute inset-0">
+    <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-sky-400 via-cyan-400 to-blue-500 flex flex-col overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Floating clouds */}
         {[...Array(8)].map((_, i) => (
           <div
             key={i}
@@ -38,10 +39,15 @@ const SplashScreen = () => {
             }}
           />
         ))}
+        
+        {/* Geometric shapes */}
+        <div className="absolute top-20 right-10 w-16 h-16 bg-white/10 rounded-full animate-bounce" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-32 left-8 w-12 h-12 bg-white/10 rotate-45 animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/3 right-1/4 w-8 h-8 bg-white/10 rounded-full animate-ping" style={{ animationDelay: '3s' }} />
       </div>
 
       <div className="flex-1 flex items-center justify-center w-full px-4">
-        <Card className="p-8 text-center w-full max-w-sm animate-scale-in bg-white/95 backdrop-blur-lg shadow-2xl border-0">
+        <Card className="p-8 text-center w-full max-w-sm animate-scale-in bg-white/95 backdrop-blur-lg shadow-2xl rounded-xl border-0">
           <div className="mb-6">
             <div className="mb-4 flex justify-center">
               <img 
