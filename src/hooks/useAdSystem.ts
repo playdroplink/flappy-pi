@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useToast } from '@/hooks/use-toast';
@@ -92,8 +91,7 @@ export const useAdSystem = () => {
               profile.pi_user_id,
               'power_up',
               'ad_free_month',
-              0, // Pi payments don't deduct coins
-              `pi_tx_adfree_${Date.now()}` // Mock Pi transaction ID
+              0
             );
 
             if (result.success) {

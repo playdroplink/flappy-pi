@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { gameBackendService, UserProfile } from '@/services/gameBackendService';
 import { useToast } from '@/hooks/use-toast';
@@ -9,7 +8,7 @@ interface UseUserProfileReturn {
   loading: boolean;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   refreshProfile: () => Promise<void>;
-  initializeProfile: (piUserId: string, username: string) => Promise<void>;
+  initializeProfile: (piUserId?: string, username?: string) => Promise<void>;
 }
 
 export const useUserProfile = (): UseUserProfileReturn => {
@@ -30,7 +29,7 @@ export const useUserProfile = (): UseUserProfileReturn => {
       const userDisplayName = username || user.user_metadata?.username || user.email?.split('@')[0] || 'Player';
       
       // Try to get existing profile
-      let existingProfile = await gameBackendService.getUserProfile(userId);
+      let existingProfile = await gameBackendService.getUserProfile();
       
       if (!existingProfile) {
         // Create new profile
@@ -94,7 +93,7 @@ export const useUserProfile = (): UseUserProfileReturn => {
     
     setLoading(true);
     try {
-      const refreshedProfile = await gameBackendService.getUserProfile(user.id);
+      const refreshedProfile = await gameBackendService.getUserProfile();
       if (refreshedProfile) {
         setProfile(refreshedProfile);
         localStorage.setItem('flappypi-profile', JSON.stringify(refreshedProfile));

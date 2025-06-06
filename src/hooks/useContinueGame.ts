@@ -1,6 +1,5 @@
 
 import { useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
 
 interface UseContinueGameProps {
   continueGame?: () => void;
@@ -21,31 +20,20 @@ export const useContinueGame = ({
   setGameState,
   resetCollisionLock
 }: UseContinueGameProps) => {
-  const { toast } = useToast();
 
   const handleContinueClick = useCallback(() => {
-    console.log('Continue button clicked - resuming game');
-    
-    // Reset collision lock to allow new collisions
+    console.log('🔄 Continuing game after ad watch');
     resetCollisionLock();
-    
     setShowContinueButton(false);
     setReviveUsed(true);
     setIsPausedForRevive(false);
     setAdWatched(false);
+    setGameState('playing');
     
     if (continueGame) {
       continueGame();
     }
-    
-    setGameState('playing');
-    
-    toast({
-      title: "Welcome Back! 🚀",
-      description: "Continue your flight and reach new heights!",
-      duration: 2000
-    });
-  }, [continueGame, setGameState, toast, setShowContinueButton, setReviveUsed, setIsPausedForRevive, setAdWatched, resetCollisionLock]);
+  }, [continueGame, setShowContinueButton, setReviveUsed, setIsPausedForRevive, setAdWatched, setGameState, resetCollisionLock]);
 
   return {
     handleContinueClick

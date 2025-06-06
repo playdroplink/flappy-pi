@@ -31,6 +31,7 @@ const ShopModal: React.FC<ShopModalProps> = ({
   const { profile, refreshProfile } = useUserProfile();
   const { toast } = useToast();
   const adSystem = useAdSystem();
+  
   const [allSkinsSubscription, setAllSkinsSubscription] = useState<{
     isActive: boolean;
     expiresAt: string | null;
@@ -268,8 +269,7 @@ const ShopModal: React.FC<ShopModalProps> = ({
             profile.pi_user_id,
             'bird_skin',
             skin.id,
-            0,
-            `pi_tx_${Date.now()}`
+            0
           );
 
           if (result.success) {

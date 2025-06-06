@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
@@ -61,7 +62,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Improved game loop with error handling
   const gameLoop = useCallback(() => {
-    if (!canvasReady || !gameStateRef.current?.canvasReady) {
+    if (!canvasReady || !gameStateRef.current) {
       // Still render even if not ready to avoid blank screen
       draw();
       if (gameState === 'playing') {
