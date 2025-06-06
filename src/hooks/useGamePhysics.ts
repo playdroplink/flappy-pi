@@ -51,28 +51,33 @@ export const useGamePhysics = ({
     // Update bird rotation based on velocity
     state.bird.rotation = Math.min(Math.max(state.bird.velocity * 0.1, -0.5), 0.5);
 
-    // Spawn pipes
-    if (state.frameCount - lastPipeSpawn.current > difficulty.pipeSpawnRate) {
-      const gapSize = difficulty.pipeGap;
+    // Spawn pipes - ensure proper spawn rate
+    const pipeSpawnRate = difficulty.pipeSpawnRate || 120;
+    if (state.frameCount - lastPipeSpawn.current > pipeSpawnRate) {
+      const gapSize = difficulty.pipeGap || 150;
       const minPipeHeight = 50;
       const maxPipeHeight = canvas.height - gapSize - 100;
       const topHeight = Math.random() * (maxPipeHeight - minPipeHeight) + minPipeHeight;
 
-      state.pipes.push({
+      const newPipe = {
         x: canvas.width,
         topHeight,
         bottomY: topHeight + gapSize,
         passed: false,
         scored: false,
         width: 80
-      });
+      };
 
+      state.pipes.push(newPipe);
       lastPipeSpawn.current = state.frameCount;
+      
+      console.log('Pipe spawned at:', newPipe.x, 'topHeight:', newPipe.topHeight, 'bottomY:', newPipe.bottomY);
     }
 
     // Update pipes
+    const pipeSpeed = difficulty.pipeSpeed || 2;
     state.pipes = state.pipes.filter((pipe: any) => {
-      pipe.x -= difficulty.pipeSpeed;
+      pipe.x -= pipeSpeed;
 
       // Score when bird passes pipe
       if (!pipe.scored && pipe.x + pipe.width < state.bird.x) {
