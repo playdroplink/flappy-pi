@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -31,7 +30,7 @@ const ShopModal: React.FC<ShopModalProps> = ({ open, onClose }) => {
   const { selectedBirdSkin, setSelectedBirdSkin } = useGameSettings();
   const [coins, setCoins] = useState(0);
 
-  // Mock bird skins data
+  // Enhanced bird skins data with proper elite birds
   const birdSkins = [
     {
       id: 'default',
@@ -45,8 +44,8 @@ const ShopModal: React.FC<ShopModalProps> = ({ open, onClose }) => {
     {
       id: 'red',
       name: 'Red Cardinal',
-      piPrice: 10,
-      coinPrice: 10000,
+      piPrice: 5,
+      coinPrice: 5000,
       priceType: 'premium' as const,
       image: '/lovable-uploads/5a55528e-3d0c-4cd3-91d9-6b8cff953b06.png',
       owned: false
@@ -54,19 +53,58 @@ const ShopModal: React.FC<ShopModalProps> = ({ open, onClose }) => {
     {
       id: 'blue',
       name: 'Blue Jay',
-      piPrice: 10,
-      coinPrice: 10000,
+      piPrice: 5,
+      coinPrice: 5000,
       priceType: 'premium' as const,
       image: '/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png',
       owned: false
     },
     {
+      id: 'green',
+      name: 'Emerald Parrot',
+      piPrice: 5,
+      coinPrice: 5000,
+      priceType: 'premium' as const,
+      image: '/lovable-uploads/b2ccab90-dff7-4e09-9564-3cdd075c6793.png',
+      owned: false
+    },
+    {
       id: 'elite-gold',
       name: 'Golden Phoenix',
+      piPrice: 15,
+      coinPrice: 15000,
+      priceType: 'elite' as const,
+      image: '/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png',
+      owned: false,
+      eliteOnly: true
+    },
+    {
+      id: 'elite-violet',
+      name: 'Violet Storm',
+      piPrice: 15,
+      coinPrice: 15000,
+      priceType: 'elite' as const,
+      image: '/lovable-uploads/d139217c-21c4-42bd-ba26-18c96c98f9b1.png',
+      owned: false,
+      eliteOnly: true
+    },
+    {
+      id: 'elite-eagle',
+      name: 'Royal Eagle',
       piPrice: 20,
       coinPrice: 20000,
       priceType: 'elite' as const,
-      image: '/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png',
+      image: '/lovable-uploads/9acde8f5-e27f-412c-9e12-d5f8a64c4ef2.png',
+      owned: false,
+      eliteOnly: true
+    },
+    {
+      id: 'elite-royal',
+      name: 'Royal Peacock',
+      piPrice: 25,
+      coinPrice: 25000,
+      priceType: 'elite' as const,
+      image: '/lovable-uploads/9553da41-d31b-473b-9951-87e3a0e5987c.png',
       owned: false,
       eliteOnly: true
     }
