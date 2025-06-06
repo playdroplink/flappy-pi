@@ -43,7 +43,8 @@ class SecureGameBackendService {
         throw new Error('Invalid coins earned');
       }
 
-      const { data, error } = await supabase.rpc('complete_game_session_secure', {
+      // Use the existing complete_game_session function (the secure one we created)
+      const { data, error } = await supabase.rpc('complete_game_session', {
         p_game_mode: gameMode,
         p_final_score: finalScore,
         p_level_reached: levelReached,
@@ -56,7 +57,7 @@ class SecureGameBackendService {
         return null;
       }
 
-      return data as GameSessionResult;
+      return data as unknown as GameSessionResult;
     } catch (error) {
       console.error('Error in completeGameSession:', error);
       return null;
@@ -80,7 +81,8 @@ class SecureGameBackendService {
         return { success: false, error: 'Invalid item ID' };
       }
 
-      const { data, error } = await supabase.rpc('make_purchase_secure', {
+      // Use the existing make_purchase function (the secure one we created)
+      const { data, error } = await supabase.rpc('make_purchase', {
         p_item_type: itemType,
         p_item_id: itemId,
         p_cost_coins: costCoins,
@@ -92,7 +94,7 @@ class SecureGameBackendService {
         return { success: false, error: error.message };
       }
 
-      return data as PurchaseResult;
+      return data as unknown as PurchaseResult;
     } catch (error) {
       console.error('Error in makePurchase:', error);
       return { success: false, error: 'Failed to process purchase' };

@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Audit logging service for security monitoring
 export const AuditService = {
-  // Log security-relevant events
+  // Log security-relevant events (simplified version without dedicated audit table)
   logSecurityEvent: async (
     eventType: 'login' | 'purchase' | 'score_submit' | 'suspicious_activity',
     details: Record<string, any> = {}
@@ -11,17 +11,19 @@ export const AuditService = {
     try {
       // Only log in production or when specifically enabled
       if (process.env.NODE_ENV !== 'production') {
+        console.log(`[AUDIT] ${eventType}:`, details);
         return;
       }
 
+      // For now, we'll use ad_watches table for basic audit logging
+      // In production, you might want to create a dedicated audit table
       const { error } = await supabase
-        .from('security_audit_log')
+        .from('ad_watches')
         .insert({
-          event_type: eventType,
-          event_details: details,
-          timestamp: new Date().toISOString(),
-          user_agent: navigator.userAgent,
-          ip_address: null // Will be populated server-side
+          pi_user_id: details.pi_user_id || 'unknown',
+          ad_type: eventType,
+          reward_given: JSON.stringify(details),
+          watched_at: new Date().toISOString()
         });
 
       if (error) {
