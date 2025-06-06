@@ -50,8 +50,8 @@ export const useGameOverHandler = ({
     // Check if mandatory ad should be shown
     adSystem.incrementGameCount();
     
-    // Check if user should see mandatory ad (every 2 games)
-    if (adSystem.shouldShowMandatoryAd()) {
+    // Check if user should see mandatory ad (every 2 games) - fix: remove () since it's a boolean property
+    if (adSystem.shouldShowMandatoryAd) {
       console.log('Showing mandatory ad after game over');
       setShowMandatoryAd(true);
       setGameState('paused');
