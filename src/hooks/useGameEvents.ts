@@ -40,6 +40,13 @@ export const useGameEvents = ({
   const [showMandatoryAd, setShowMandatoryAd] = useState(false);
   const [showAdFreeModal, setShowAdFreeModal] = useState(false);
 
+  // Create a simple collision lock mechanism
+  const collisionLockRef = useRef(false);
+  
+  const resetCollisionLock = useCallback(() => {
+    collisionLockRef.current = false;
+  }, []);
+
   const { handleGameOver } = useGameOverHandler({
     level,
     coins,
@@ -57,16 +64,19 @@ export const useGameEvents = ({
     setReviveUsed
   });
 
-  const { handleCollision, resetCollisionLock } = useCollisionHandler({
-    reviveUsed,
-    score,
-    setGameState,
-    setIsPausedForRevive,
-    setShowContinueButton,
-    setAdWatched,
-    setShowMandatoryAd,
-    onGameOver: handleGameOver
-  });
+  const handleCollision = useCallback(() => {
+    if (collisionLockRef.current) return;
+    collisionLockRef.current = true;
+    
+    if (!reviveUsed) {
+      setIsPausedForRevive(true);
+      setShowContinueButton(false);
+      setAdWatched(false);
+      setShowMandatoryAd(true);
+    } else {
+      handleGameOver(score);
+    }
+  }, [reviveUsed, score, handleGameOver]);
 
   const { handleAdWatch } = useAdRewardHandler({
     coins,

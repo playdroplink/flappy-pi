@@ -8,6 +8,7 @@ export interface UserProfile {
   total_coins: number;
   selected_bird_skin: string;
   music_enabled: boolean;
+  avatar_url?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -29,6 +30,13 @@ export interface DailyRewardResult {
 export interface AdRewardResult {
   success: boolean;
   reward_amount: number;
+  error?: string;
+}
+
+export interface PurchaseResult {
+  success: boolean;
+  purchase_id?: string;
+  remaining_coins?: number;
   error?: string;
 }
 
@@ -63,8 +71,12 @@ class GameBackendService {
       if (!user) throw new Error('No authenticated user');
 
       const profileData = {
-        ...profile,
         pi_user_id: user.id,
+        username: profile.username || 'Player',
+        total_coins: profile.total_coins || 0,
+        selected_bird_skin: profile.selected_bird_skin || 'default',
+        music_enabled: profile.music_enabled !== undefined ? profile.music_enabled : true,
+        avatar_url: profile.avatar_url || null,
         updated_at: new Date().toISOString()
       };
 
@@ -88,7 +100,7 @@ class GameBackendService {
 
   // Game Session Management
   async completeGameSession(
-    gameMode: string,
+    gameMode: 'classic' | 'endless' | 'challenge',
     finalScore: number,
     levelReached: number,
     coinsEarned: number,
@@ -108,10 +120,43 @@ class GameBackendService {
         return null;
       }
 
-      return data;
+      return data as GameSessionResult;
     } catch (error) {
       console.error('Error in completeGameSession:', error);
       return null;
+    }
+  }
+
+  // Purchase Management
+  async makePurchase(
+    itemType: 'skin' | 'power_up',
+    itemId: string,
+    costCoins: number,
+    piTransactionId?: string
+  ): Promise<PurchaseResult> {
+    try {
+      const { data, error } = await supabase.rpc('make_purchase', {
+        p_item_type: itemType,
+        p_item_id: itemId,
+        p_cost_coins: costCoins,
+        p_pi_transaction_id: piTransactionId
+      });
+
+      if (error) {
+        console.error('Error making purchase:', error);
+        return {
+          success: false,
+          error: error.message
+        };
+      }
+
+      return data as PurchaseResult;
+    } catch (error) {
+      console.error('Error in makePurchase:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
     }
   }
 
@@ -180,11 +225,19 @@ class GameBackendService {
 
       if (rewardError) throw rewardError;
 
-      // Update user coins
+      // Update user coins using a direct query
+      const { data: currentProfile } = await supabase
+        .from('user_profiles')
+        .select('total_coins')
+        .eq('pi_user_id', user.id)
+        .single();
+
+      const newTotal = (currentProfile?.total_coins || 0) + rewardAmount;
+
       const { error: profileError } = await supabase
         .from('user_profiles')
         .update({ 
-          total_coins: supabase.raw(`total_coins + ${rewardAmount}`),
+          total_coins: newTotal,
           updated_at: new Date().toISOString()
         })
         .eq('pi_user_id', user.id);
@@ -227,10 +280,18 @@ class GameBackendService {
 
       // Update user coins if applicable
       if (rewardAmount > 0) {
+        const { data: currentProfile } = await supabase
+          .from('user_profiles')
+          .select('total_coins')
+          .eq('pi_user_id', user.id)
+          .single();
+
+        const newTotal = (currentProfile?.total_coins || 0) + rewardAmount;
+
         const { error: profileError } = await supabase
           .from('user_profiles')
           .update({ 
-            total_coins: supabase.raw(`total_coins + ${rewardAmount}`),
+            total_coins: newTotal,
             updated_at: new Date().toISOString()
           })
           .eq('pi_user_id', user.id);

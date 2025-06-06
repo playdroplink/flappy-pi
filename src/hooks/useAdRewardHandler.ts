@@ -49,7 +49,7 @@ export const useAdRewardHandler = ({
           
         case 'coins':
           const coinsResult = await gameBackendService.watchAdReward('coins', 25);
-          if (coinsResult) {
+          if (coinsResult.success) {
             setCoins(coins + coinsResult.reward_amount);
             localStorage.setItem('flappypi-coins', (coins + coinsResult.reward_amount).toString());
             await refreshProfile();
