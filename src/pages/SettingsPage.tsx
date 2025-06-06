@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Volume2, VolumeX, Music, MusicOff } from 'lucide-react';
+import { ArrowLeft, Volume2, VolumeX, Music, MicOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const SettingsPage: React.FC = () => {
@@ -70,7 +70,7 @@ const SettingsPage: React.FC = () => {
                   {musicEnabled ? (
                     <Music className="h-5 w-5 text-blue-500" />
                   ) : (
-                    <MusicOff className="h-5 w-5 text-gray-400" />
+                    <MicOff className="h-5 w-5 text-gray-400" />
                   )}
                   <span>Background Music</span>
                 </div>
