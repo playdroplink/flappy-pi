@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -33,7 +32,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onToggleMusic
 }) => {
   // Add background music
-  useBackgroundMusic({ musicEnabled, gameState: 'menu' });
+  useBackgroundMusic(musicEnabled);
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-sky-400 via-cyan-400 to-blue-500 flex flex-col relative overflow-hidden">

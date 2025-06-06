@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
@@ -36,7 +35,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const previousGameStateRef = useRef(gameState);
   const initializationRef = useRef(false);
 
-  useBackgroundMusic({ musicEnabled, gameState });
+  useBackgroundMusic(musicEnabled);
 
   const { gameStateRef, resetGame, continueGame, jump, checkCollisions } = useGameLoop({
     gameState,

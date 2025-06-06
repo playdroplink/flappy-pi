@@ -19,6 +19,8 @@ import { LogOut, User } from 'lucide-react';
 const Index = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAdPopup, setShowAdPopup] = useState(false);
+  const [adType, setAdType] = useState<'continue' | 'coins' | 'life'>('continue');
   
   const {
     showSplash,
@@ -98,6 +100,12 @@ const Index = () => {
   
   const { canClaim: canClaimDaily, claimReward: claimDailyReward } = useDailyRewards();
 
+  const handleWatchAd = async (adType: 'continue' | 'coins' | 'life') => {
+    setAdType(adType);
+    setShowAdPopup(true);
+    await handleAdWatch(adType);
+  };
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-blue-400 to-blue-600">
@@ -166,13 +174,13 @@ const Index = () => {
       {showWelcome && (
         <WelcomeScreen
           onStartGame={startGame}
-          onShowLeaderboard={() => setShowLeaderboard(true)}
-          onShowHelp={() => setShowHelp(true)}
-          onShowDailyRewards={() => setShowDailyRewards(true)}
-          canClaimDaily={canClaimDaily}
+          onOpenLeaderboard={() => setShowLeaderboard(true)}
+          onOpenShop={() => setShowShop(true)}
+          onOpenHelp={() => setShowHelp(true)}
+          onOpenPrivacy={() => setShowPrivacy(true)}
+          onOpenTerms={() => setShowTerms(true)}
+          onOpenContact={() => setShowContact(true)}
           coins={coins}
-          highScore={highScore}
-          selectedBirdSkin={selectedBirdSkin}
           musicEnabled={musicEnabled}
           onToggleMusic={() => setMusicEnabled(!musicEnabled)}
         />
@@ -182,13 +190,14 @@ const Index = () => {
       {gameState === 'playing' && (
         <GameCanvas
           level={level}
-          lives={lives}
           gameMode={gameMode}
-          selectedBirdSkin={selectedBirdSkin}
+          birdSkin={selectedBirdSkin}
           onScoreUpdate={handleScoreUpdate}
           onCollision={handleCollision}
           onCoinEarned={handleCoinEarned}
           gameState={gameState}
+          musicEnabled={musicEnabled}
+          onGameOver={handleGameOver}
         />
       )}
 
@@ -199,13 +208,16 @@ const Index = () => {
           level={level}
           lives={lives}
           coins={coins}
+          highScore={highScore}
           gameState={gameState}
+          gameMode={gameMode}
           isPausedForRevive={isPausedForRevive}
-          onPause={() => setGameState('paused')}
-          onResume={() => setGameState('playing')}
+          onStartGame={() => setGameState('playing')}
           onBackToMenu={backToMenu}
-          onWatchAd={handleAdWatch}
-          onContinue={handleContinueClick}
+          onOpenShop={() => setShowShop(true)}
+          onOpenLeaderboard={() => setShowLeaderboard(true)}
+          onShowAd={() => handleWatchAd('continue')}
+          onShareScore={() => setShowShareScore(true)}
         />
       )}
 
@@ -218,6 +230,7 @@ const Index = () => {
         level={level}
         showLeaderboard={showLeaderboard}
         showShop={showShop}
+        showAdPopup={showAdPopup}
         showHelp={showHelp}
         showPrivacy={showPrivacy}
         showTerms={showTerms}
@@ -227,6 +240,18 @@ const Index = () => {
         showMandatoryAd={showMandatoryAd}
         showAdFreeModal={showAdFreeModal}
         selectedBirdSkin={selectedBirdSkin}
+        adType={adType}
+        setShowShop={setShowShop}
+        setShowLeaderboard={setShowLeaderboard}
+        setShowAdPopup={setShowAdPopup}
+        setShowShareScore={setShowShareScore}
+        setShowPrivacy={setShowPrivacy}
+        setShowTerms={setShowTerms}
+        setShowContact={setShowContact}
+        setShowHelp={setShowHelp}
+        setShowDailyRewards={setShowDailyRewards}
+        setCoins={setCoins}
+        setSelectedBirdSkin={setSelectedBirdSkin}
         onNewGame={() => startGame('classic')}
         onBackToMenu={backToMenu}
         onCloseLeaderboard={() => setShowLeaderboard(false)}
@@ -239,11 +264,11 @@ const Index = () => {
         onCloseDailyRewards={() => setShowDailyRewards(false)}
         onSkinSelect={setSelectedBirdSkin}
         onPurchase={() => {}}
+        onWatchAd={handleWatchAd}
         onWatchMandatoryAd={handleMandatoryAdWatch}
         onCloseAdFreeModal={() => setShowAdFreeModal(false)}
         onClaimDailyReward={claimDailyReward}
         adSystem={adSystem}
-        setCoins={setCoins}
       />
     </div>
   );

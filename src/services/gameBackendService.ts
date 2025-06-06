@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface UserProfile {
@@ -120,7 +119,7 @@ class GameBackendService {
         return null;
       }
 
-      return data as GameSessionResult;
+      return data as unknown as GameSessionResult;
     } catch (error) {
       console.error('Error in completeGameSession:', error);
       return null;
@@ -129,7 +128,7 @@ class GameBackendService {
 
   // Purchase Management
   async makePurchase(
-    itemType: 'skin' | 'power_up',
+    itemType: 'bird_skin' | 'power_up',
     itemId: string,
     costCoins: number,
     piTransactionId?: string
@@ -150,7 +149,7 @@ class GameBackendService {
         };
       }
 
-      return data as PurchaseResult;
+      return data as unknown as PurchaseResult;
     } catch (error) {
       console.error('Error in makePurchase:', error);
       return {
