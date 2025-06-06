@@ -15,41 +15,12 @@ serve(async (req) => {
   try {
     const { accessToken, piUserId, username } = await req.json()
 
-    // Enhanced input validation
     if (!accessToken || !piUserId || !username) {
       return new Response(
         JSON.stringify({ error: 'Access token, Pi User ID and username are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
-
-    // Validate input format
-    if (typeof accessToken !== 'string' || accessToken.length < 10 || accessToken.length > 500) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid access token format' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    if (typeof piUserId !== 'string' || piUserId.length < 5 || piUserId.length > 100) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid Pi User ID format' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Sanitize username
-    const sanitizedUsername = username.replace(/[<>\"'&]/g, '').trim().substring(0, 50);
-    if (!sanitizedUsername || sanitizedUsername.length < 2) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid username format' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Rate limiting check
-    const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-    console.log(`Pi auth request from IP: ${clientIP} for user: ${piUserId}`)
 
     // Step 1: Verify the Pi access token with Pi Network API
     console.log('Verifying Pi access token...')
@@ -92,16 +63,15 @@ serve(async (req) => {
 
     let user
     if (existingUser.user) {
-      // User exists, update their metadata with security logging
+      // User exists, update their metadata
       const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
         piUserId,
         {
           user_metadata: {
-            username: sanitizedUsername,
+            username: piUserData.username,
             pi_access_token: accessToken,
             last_login: new Date().toISOString(),
-            verified_pi_user: true,
-            login_ip: clientIP
+            verified_pi_user: true
           }
         }
       )
@@ -122,12 +92,11 @@ serve(async (req) => {
         email: `${piUserId}@pi.network`, // Using Pi UID as fake email
         email_confirm: true,
         user_metadata: {
-          username: sanitizedUsername,
+          username: piUserData.username,
           pi_access_token: accessToken,
           provider: 'pi_network',
           created_at: new Date().toISOString(),
-          verified_pi_user: true,
-          signup_ip: clientIP
+          verified_pi_user: true
         }
       })
 
@@ -142,22 +111,38 @@ serve(async (req) => {
       user = newUser.user
     }
 
-    // Step 5: Generate access token for session
-    const { data: tokenData, error: tokenError } = await supabaseAdmin.auth.admin.generateLink({
+    // Step 5: Generate session tokens for the frontend
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'magiclink',
-      email: `${piUserId}@pi.network`
+      email: `${piUserId}@pi.network`,
+      options: {
+        redirectTo: `${req.headers.get('origin') || 'http://localhost:3000'}/`
+      }
     })
 
-    if (tokenError) {
-      console.error('Error generating tokens:', tokenError)
+    if (sessionError) {
+      console.error('Error generating session:', sessionError)
       return new Response(
         JSON.stringify({ error: 'Failed to generate session' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Log successful authentication for security monitoring
-    console.log('Pi authentication successful for user:', sanitizedUsername, 'IP:', clientIP)
+    // Step 6: Create access and refresh tokens for immediate use
+    const { data: tokenData, error: tokenError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'signup',
+      email: `${piUserId}@pi.network`
+    })
+
+    if (tokenError) {
+      console.error('Error generating tokens:', tokenError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to generate tokens' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('Pi authentication successful for user:', piUserData.username)
 
     return new Response(
       JSON.stringify({
@@ -168,7 +153,8 @@ serve(async (req) => {
           username: user?.user_metadata?.username
         },
         access_token: tokenData.properties?.access_token,
-        refresh_token: tokenData.properties?.refresh_token
+        refresh_token: tokenData.properties?.refresh_token,
+        session_url: sessionData.properties?.action_link
       }),
       { 
         status: 200, 

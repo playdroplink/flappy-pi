@@ -13,34 +13,11 @@ serve(async (req) => {
   }
 
   try {
-    const { paymentId, metadata } = await req.json();
+    const { paymentId } = await req.json();
 
-    // Enhanced validation
-    if (!paymentId || typeof paymentId !== 'string') {
+    if (!paymentId) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Valid payment ID is required' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Validate payment ID format
-    if (!/^[a-zA-Z0-9_-]{10,100}$/.test(paymentId)) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Invalid payment ID format' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Validate metadata if provided
-    if (metadata && typeof metadata !== 'object') {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Invalid metadata format' }),
+        JSON.stringify({ success: false, error: 'Payment ID is required' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -60,9 +37,7 @@ serve(async (req) => {
       );
     }
 
-    // Log the approval attempt for security monitoring
-    const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-    console.log(`Payment approval request from IP: ${clientIP} for payment: ${paymentId}`);
+    console.log(`Approving payment: ${paymentId}`);
 
     // Call Pi Network API to approve payment
     const piResponse = await fetch(
@@ -80,10 +55,6 @@ serve(async (req) => {
 
     if (!piResponse.ok) {
       console.error('Pi API approval failed:', piData);
-      
-      // Log failed payment approval
-      console.error(`Payment approval failed for ${paymentId} from IP ${clientIP}:`, piData);
-      
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -97,7 +68,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('Payment approved successfully:', paymentId, 'IP:', clientIP);
+    console.log('Payment approved successfully:', paymentId);
 
     return new Response(
       JSON.stringify({ success: true, data: piData }),
@@ -108,9 +79,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-    console.error(`Error in pi-approve-payment from IP ${clientIP}:`, error);
-    
+    console.error('Error in pi-approve-payment:', error);
     return new Response(
       JSON.stringify({ 
         success: false, 

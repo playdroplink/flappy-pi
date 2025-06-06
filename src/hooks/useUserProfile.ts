@@ -4,7 +4,6 @@ import { purchaseStateService, PurchaseState } from '@/services/purchaseStateSer
 import { subscriptionService } from '@/services/subscriptionService';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseAuth } from './useSupabaseAuth';
-import { secureAuthService } from '@/services/secureAuthService';
 
 interface UseUserProfileReturn {
   profile: UserProfile | null;
@@ -30,60 +29,17 @@ export const useUserProfile = (): UseUserProfileReturn => {
   const [purchaseState, setPurchaseState] = useState<PurchaseState | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { user, session, loading: authLoading } = useSupabaseAuth();
+  const { user, session, loading: authLoading, signInWithPi, signOut } = useSupabaseAuth();
 
-  // Secure sign in with Pi
-  const signInWithPi = async (): Promise<boolean> => {
-    setLoading(true);
-    try {
-      const result = await secureAuthService.authenticateWithPi();
-      
-      if (result.success) {
-        toast({
-          title: "Pi Authentication Successful! 🎉",
-          description: `Welcome ${result.user?.username}! You're now securely connected.`
-        });
-        return true;
-      } else {
-        toast({
-          title: "Authentication Failed",
-          description: result.error || "Could not authenticate with Pi Network",
-          variant: "destructive"
-        });
-        return false;
-      }
-    } catch (error) {
-      console.error('Pi sign in error:', error);
-      toast({
-        title: "Authentication Error",
-        description: "Failed to connect to Pi Network",
-        variant: "destructive"
-      });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Secure sign out
-  const signOut = async (): Promise<void> => {
-    setLoading(true);
-    try {
-      await secureAuthService.signOut();
-      toast({
-        title: "Signed Out",
-        description: "You have been securely signed out."
-      });
-    } catch (error) {
-      console.error('Sign out error:', error);
-      toast({
-        title: "Sign Out Error",
-        description: "Failed to sign out properly",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+  // Generate a mock Pi user ID for demo purposes
+  const generateMockPiUser = () => {
+    const usernames = ['PiFlyer', 'SkyMaster', 'BirdLegend', 'CloudChaser', 'WingCommander', 'PiExplorer'];
+    const randomUsername = usernames[Math.floor(Math.random() * usernames.length)];
+    const randomId = Math.random().toString(36).substr(2, 9);
+    return {
+      piUserId: `pi_user_${randomId}`,
+      username: `${randomUsername}_${randomId.substr(0, 4)}`
+    };
   };
 
   const refreshPurchaseState = async () => {
@@ -115,14 +71,6 @@ export const useUserProfile = (): UseUserProfileReturn => {
     // If user is not authenticated, don't initialize profile
     if (!user?.id) {
       console.log('No authenticated user, skipping profile initialization');
-      return;
-    }
-
-    // Validate session before proceeding
-    const isValidSession = await secureAuthService.validateSession();
-    if (!isValidSession) {
-      console.log('Invalid session, signing out');
-      await signOut();
       return;
     }
 
