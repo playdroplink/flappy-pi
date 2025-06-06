@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -14,7 +15,7 @@ import Index from './pages/Index';
 import NotFound from './pages/NotFound';
 import { loadPiSdk } from './services/piSdkLoader';
 import { piNetworkService } from './services/piNetworkService';
-import { QueryClientProvider, QueryClient } from 'react-query';
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { TooltipProvider } from '@radix-ui/react-tooltip';
 import SubscriptionPlansPage from './pages/SubscriptionPlansPage';
 
@@ -40,7 +41,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <BrowserRouter>
+        <Router>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/shop" element={<ShopPage />} />
@@ -56,7 +57,7 @@ function App() {
             <Route path="/subscription-plans" element={<SubscriptionPlansPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
+        </Router>
       </TooltipProvider>
     </QueryClientProvider>
   );
