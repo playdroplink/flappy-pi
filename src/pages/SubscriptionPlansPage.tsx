@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ArrowLeft, Crown, Star, Zap, Check, Coins } from 'lucide-react';
+import { ArrowLeft, Crown, Star, Zap, Check, Coins, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import EnhancedFooter from '@/components/EnhancedFooter';
@@ -20,7 +20,7 @@ const SubscriptionPlansPage: React.FC = () => {
     {
       id: 'starter',
       name: 'Starter Pack',
-      price: '5 Pi',
+      price: '5 π',
       period: 'one-time',
       description: 'Essential features for new players',
       icon: <Star className="w-6 h-6" />,
@@ -36,7 +36,7 @@ const SubscriptionPlansPage: React.FC = () => {
     {
       id: 'premium',
       name: 'Premium Pack',
-      price: '15 Pi',
+      price: '15 π',
       period: 'one-time',
       description: 'Perfect for serious gamers',
       icon: <Crown className="w-6 h-6" />,
@@ -53,7 +53,7 @@ const SubscriptionPlansPage: React.FC = () => {
     {
       id: 'ultimate',
       name: 'Ultimate Pack',
-      price: '30 Pi',
+      price: '30 π',
       period: 'one-time',
       description: 'Maximum rewards and exclusive content',
       icon: <Zap className="w-6 h-6" />,
@@ -83,6 +83,22 @@ const SubscriptionPlansPage: React.FC = () => {
         description: `Successfully purchased ${plan.name} with ${plan.price}!`
       });
     }, 2000);
+  };
+
+  const handleCancelPlan = async (planId: string) => {
+    toast({
+      title: "Processing Cancellation",
+      description: "Cancelling your subscription..."
+    });
+
+    // Simulate cancellation processing
+    setTimeout(() => {
+      toast({
+        title: "Subscription Cancelled",
+        description: "Your subscription has been cancelled successfully.",
+        variant: "destructive"
+      });
+    }, 1500);
   };
 
   return (
@@ -145,13 +161,25 @@ const SubscriptionPlansPage: React.FC = () => {
                     <span className="text-gray-500 text-sm ml-2">{plan.period}</span>
                   </div>
                   
-                  <Button
-                    onClick={() => handlePurchase(plan)}
-                    className={`w-full mb-6 bg-gradient-to-r ${plan.color} hover:opacity-90`}
-                    size="lg"
-                  >
-                    Buy with Pi
-                  </Button>
+                  <div className="space-y-2 mb-6">
+                    <Button
+                      onClick={() => handlePurchase(plan)}
+                      className={`w-full bg-gradient-to-r ${plan.color} hover:opacity-90`}
+                      size="lg"
+                    >
+                      Buy with Pi
+                    </Button>
+                    
+                    <Button
+                      onClick={() => handleCancelPlan(plan.id)}
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Cancel Plan
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="space-y-3">
