@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
-import BannerAd from './BannerAd';
 import PiPremiumPerks from './PiPremiumPerks';
 import WelcomeHeader from './welcome/WelcomeHeader';
 import UserStatsCard from './welcome/UserStatsCard';
@@ -24,8 +23,6 @@ interface WelcomeScreenProps {
   coins: number;
   musicEnabled: boolean;
   onToggleMusic: (enabled: boolean) => void;
-  userDifficulty?: 'easy' | 'medium' | 'hard';
-  onDifficultyChange?: (difficulty: 'easy' | 'medium' | 'hard') => void;
 }
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
@@ -39,9 +36,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onOpenTutorial,
   coins,
   musicEnabled,
-  onToggleMusic,
-  userDifficulty = 'medium',
-  onDifficultyChange
+  onToggleMusic
 }) => {
   // Add background music
   useBackgroundMusic({ musicEnabled, gameState: 'menu' });
@@ -53,9 +48,6 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
   return (
     <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-sky-400 via-cyan-400 to-blue-500 flex flex-col overflow-hidden">
-      {/* Banner Ad */}
-      <BannerAd position="bottom" autoHide={true} hideDelay={8000} />
-
       {/* Animated background elements */}
       <BackgroundElements />
 
@@ -69,8 +61,6 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           coins={coins}
           musicEnabled={musicEnabled}
           onToggleMusic={onToggleMusic}
-          userDifficulty={userDifficulty}
-          onDifficultyChange={onDifficultyChange}
         />
 
         {/* Pi Premium Perks */}

@@ -75,7 +75,7 @@ const HomePage: React.FC = () => {
           </p>
         </div>
 
-        {/* User Stats Card */}
+        {/* User Stats Card - Simplified without difficulty selection */}
         <Card className="w-full p-4 mb-6 bg-white/95 backdrop-blur-sm shadow-xl animate-fade-in rounded-xl border-0" style={{ animationDelay: '0.2s' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
