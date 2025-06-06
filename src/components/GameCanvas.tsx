@@ -62,7 +62,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Improved game loop with error handling
   const gameLoop = useCallback(() => {
-    if (!canvasReady || !gameStateRef.current) {
+    const canvas = canvasRef.current;
+    if (!canvasReady || !gameStateRef.current || !canvas) {
       // Still render even if not ready to avoid blank screen
       draw();
       if (gameState === 'playing') {

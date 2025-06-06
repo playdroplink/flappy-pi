@@ -268,8 +268,7 @@ const ShopModal: React.FC<ShopModalProps> = ({
           const result = await gameBackendService.makePurchase(
             profile.pi_user_id,
             'bird_skin',
-            skin.id,
-            0
+            skin.id
           );
 
           if (result.success) {
@@ -330,8 +329,7 @@ const ShopModal: React.FC<ShopModalProps> = ({
         const result = await gameBackendService.makePurchase(
           profile.pi_user_id,
           'bird_skin',
-          skin.id,
-          skin.coinPrice
+          skin.id
         );
 
         if (result.success) {

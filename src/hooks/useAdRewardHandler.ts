@@ -36,11 +36,11 @@ export const useAdRewardHandler = ({
       setCoins(newCoins);
       localStorage.setItem('flappypi-coins', newCoins.toString());
     } else if (adType === 'life') {
-      setLives(prevLives => {
-        const newLives = Math.min(prevLives + 1, 3);
-        localStorage.setItem('flappypi-lives', newLives.toString());
-        return newLives;
-      });
+      // Get current lives and add one
+      const currentLives = parseInt(localStorage.getItem('flappypi-lives') || '3');
+      const newLives = Math.min(currentLives + 1, 3);
+      setLives(newLives);
+      localStorage.setItem('flappypi-lives', newLives.toString());
     }
   }, [coins, adWatched, isPausedForRevive, setShowContinueButton, setAdWatched, setCoins, setLives]);
 
