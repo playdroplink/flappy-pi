@@ -13,6 +13,7 @@ interface Pipe {
   topHeight: number;
   bottomY: number;
   passed: boolean;
+  scored: boolean; // Add scored flag
   isMoving?: boolean;
   verticalDirection?: number;
   moveSpeed?: number;
@@ -44,7 +45,7 @@ interface UseGameLoopProps {
 
 export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLoopProps) => {
   const gameStateRef = useRef<GameLoopState>({
-    bird: { x: 100, y: 300, velocity: 0, rotation: 0 },
+    bird: { x: 80, y: 200, velocity: 0, rotation: 0 }, // Adjusted starting position
     pipes: [],
     clouds: [],
     frameCount: 0,
@@ -56,11 +57,10 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
 
   const resetGame = useCallback((canvasHeight: number) => {
     console.log('COMPLETE GAME RESET - Clearing all state');
-    const safeY = Math.max(100, canvasHeight / 2);
+    const safeY = Math.max(100, canvasHeight / 3); // Start higher up
     
-    // Force complete reset of all game state
     gameStateRef.current = {
-      bird: { x: 100, y: safeY, velocity: 0, rotation: 0 },
+      bird: { x: 80, y: safeY, velocity: 0, rotation: 0 },
       pipes: [],
       clouds: [],
       frameCount: 0,
@@ -70,18 +70,15 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       initialized: true
     };
     
-    // Ensure score is reset in UI
     onScoreUpdate(0);
-    
     console.log('Game completely reset and ready to play');
   }, [onScoreUpdate]);
 
   const continueGame = useCallback(() => {
     console.log('Continuing game after revive');
     const canvas = document.querySelector('canvas');
-    const safeY = canvas ? Math.max(150, canvas.height / 2) : 300;
+    const safeY = canvas ? Math.max(150, canvas.height / 3) : 200;
     
-    // Only reset bird position and game over state for continue
     gameStateRef.current.bird = {
       x: 80,
       y: safeY,
@@ -93,7 +90,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     
     // Remove pipes that are too close to bird
     gameStateRef.current.pipes = gameStateRef.current.pipes.filter(pipe => 
-      pipe.x > gameStateRef.current.bird.x + 300
+      pipe.x > gameStateRef.current.bird.x + 200
     );
     gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 120;
     
@@ -102,7 +99,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
 
   const jump = useCallback(() => {
     if (gameState === 'playing' && !gameStateRef.current.gameOver) {
-      gameStateRef.current.bird.velocity = -7;
+      gameStateRef.current.bird.velocity = -8; // Stronger jump for better control
       console.log('Bird jumped! Velocity:', gameStateRef.current.bird.velocity);
     }
   }, [gameState]);
@@ -112,15 +109,15 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     
     if (gameOver || gameState !== 'playing') return false;
     
-    // Mobile-optimized bird hitbox - matches visual size
-    const BIRD_SIZE = 35; // Updated to match renderer
-    const PIPE_WIDTH = 120;
+    // Precise bird hitbox - no visible box around sprite
+    const BIRD_SIZE = 24; // Smaller, more precise hitbox
+    const PIPE_WIDTH = 80;
     
-    // More forgiving collision detection for mobile
-    const birdLeft = bird.x - BIRD_SIZE/2 + 8; // Increased margin for mobile
-    const birdRight = bird.x + BIRD_SIZE/2 - 8;
-    const birdTop = bird.y - BIRD_SIZE/2 + 8;
-    const birdBottom = bird.y + BIRD_SIZE/2 - 8;
+    // Tight collision detection matching sprite exactly
+    const birdLeft = bird.x - BIRD_SIZE/2 + 4; // Small margin for fairness
+    const birdRight = bird.x + BIRD_SIZE/2 - 4;
+    const birdTop = bird.y - BIRD_SIZE/2 + 4;
+    const birdBottom = bird.y + BIRD_SIZE/2 - 4;
     
     // Check ceiling collision
     if (birdTop <= 0) {
@@ -128,28 +125,28 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       return true;
     }
     
-    // Check ground collision
-    if (birdBottom >= canvas.height - 25) { // Account for ground height
+    // Check ground collision (account for ground height)
+    if (birdBottom >= canvas.height - 40) {
       console.log('Bird hit ground! Collision detected');
       return true;
     }
     
-    // Check pipe collisions with improved detection
+    // Check pipe collisions with precise detection
     for (const pipe of pipes) {
       const pipeLeft = pipe.x;
       const pipeRight = pipe.x + PIPE_WIDTH;
       
-      // Check if bird is horizontally aligned with pipe
+      // Only check collision if bird is within pipe horizontal bounds
       if (birdRight > pipeLeft && birdLeft < pipeRight) {
         // Check top pipe collision
         if (birdTop < pipe.topHeight) {
-          console.log('Bird hit top pipe! Collision detected at pipe height:', pipe.topHeight);
+          console.log('Bird hit top pipe! Collision detected');
           return true;
         }
         
         // Check bottom pipe collision
         if (birdBottom > pipe.bottomY) {
-          console.log('Bird hit bottom pipe! Collision detected at pipe bottom:', pipe.bottomY);
+          console.log('Bird hit bottom pipe! Collision detected');
           return true;
         }
       }

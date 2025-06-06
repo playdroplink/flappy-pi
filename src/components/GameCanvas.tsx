@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
@@ -39,13 +40,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   useBackgroundMusic({ musicEnabled, gameState });
   
-  // Initialize sound effects
   const { initializeGameSounds, playWingFlap, playPoint, playHit, playDie } = useSoundEffects();
 
   const { gameStateRef, resetGame, continueGame, jump, checkCollisions } = useGameLoop({
     gameState,
     onCollision: () => {
-      playHit(); // Play hit sound on collision
+      playHit();
       onCollision();
     },
     onScoreUpdate
@@ -54,13 +54,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const { updateGame } = useGamePhysics({
     gameStateRef,
     onScoreUpdate: (score) => {
-      playPoint(); // Play point sound when scoring
+      playPoint();
       onScoreUpdate(score);
     },
     onCoinEarned,
     checkCollisions,
     onCollision: () => {
-      playDie(); // Play die sound on game over
+      playDie();
       onCollision();
     },
     gameMode
@@ -73,7 +73,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     gameMode 
   });
 
-  // Initialize sound effects on component mount
   useEffect(() => {
     initializeGameSounds();
   }, [initializeGameSounds]);
@@ -89,7 +88,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   }, [updateGame, draw, gameState]);
 
-  // Expose continueGame function to parent
   useEffect(() => {
     if (onContinueGameRef) {
       onContinueGameRef(continueGame);
@@ -112,7 +110,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       const handleClick = (e: MouseEvent | TouchEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        playWingFlap(); // Play wing flap sound on jump
+        playWingFlap();
         jump();
       };
       
@@ -120,14 +118,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         if (e.code === 'Space') {
           e.preventDefault();
           e.stopPropagation();
-          playWingFlap(); // Play wing flap sound on space press
+          playWingFlap();
           jump();
         }
       };
 
       inputHandlersRef.current = { handleClick, handleKeyPress };
       
-      // Add multiple event types for better mobile support
       window.addEventListener('click', handleClick);
       window.addEventListener('mousedown', handleClick);
       window.addEventListener('touchstart', handleClick);
@@ -150,7 +147,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Enhanced game state management with better cleanup
   useEffect(() => {
-    // Force stop any existing game loop
     if (gameLoopRef.current) {
       cancelAnimationFrame(gameLoopRef.current);
       gameLoopRef.current = undefined;
@@ -159,13 +155,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     if (gameState === 'playing') {
       const canvas = canvasRef.current;
       if (canvas) {
-        // Always reset the game when entering playing state
         console.log('Entering playing state - resetting game');
         resetGame(canvas.height);
         
-        // Small delay before starting game loop
         setTimeout(() => {
-          if (gameState === 'playing') { // Double check state hasn't changed
+          if (gameState === 'playing') {
             gameLoopRef.current = requestAnimationFrame(gameLoop);
           }
         }, 100);
@@ -180,15 +174,41 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
   }, [gameState, gameLoop, resetGame]);
 
-  // Canvas resize
+  // Optimal Flappy Bird canvas dimensions - 9:16 aspect ratio
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      console.log('Canvas resized to:', canvas.width, 'x', canvas.height);
+      // Optimal Flappy Bird dimensions
+      const gameWidth = 360;
+      const gameHeight = 640;
+      const aspectRatio = gameWidth / gameHeight;
+      
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      const windowAspectRatio = windowWidth / windowHeight;
+      
+      let canvasWidth, canvasHeight;
+      
+      if (windowAspectRatio > aspectRatio) {
+        // Window is wider than game aspect ratio
+        canvasHeight = windowHeight;
+        canvasWidth = canvasHeight * aspectRatio;
+      } else {
+        // Window is taller than game aspect ratio
+        canvasWidth = windowWidth;
+        canvasHeight = canvasWidth / aspectRatio;
+      }
+      
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      
+      // Center the canvas
+      canvas.style.left = `${(windowWidth - canvasWidth) / 2}px`;
+      canvas.style.top = `${(windowHeight - canvasHeight) / 2}px`;
+      
+      console.log('Canvas resized to optimal Flappy Bird dimensions:', canvasWidth, 'x', canvasHeight);
     };
 
     resizeCanvas();
@@ -202,16 +222,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 w-full h-full bg-gradient-to-b from-sky-400 to-sky-600 touch-none"
+      className="fixed bg-gradient-to-b from-sky-400 to-sky-600 touch-none"
       style={{ 
         touchAction: 'none',
         userSelect: 'none',
         WebkitUserSelect: 'none',
-        width: '100vw',
-        height: '100vh',
         position: 'fixed',
-        top: 0,
-        left: 0,
         zIndex: 1
       }}
     />

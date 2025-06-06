@@ -12,6 +12,7 @@ interface UseGameRendererProps {
 export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }: UseGameRendererProps) => {
   const difficultyCache = useRef<{ score: number; difficulty: any } | null>(null);
   const backgroundCache = useRef<{ timeOfDay: string; colors: any } | null>(null);
+  const groundOffset = useRef(0);
 
   const getDifficultyOptimized = useCallback((score: number) => {
     if (difficultyCache.current && difficultyCache.current.score === score) {
@@ -53,9 +54,10 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
     const difficulty = getDifficultyOptimized(state.score);
     const backgroundColors = getBackgroundColorsOptimized(difficulty.timeOfDay);
     
-    // Mobile-optimized bird size - perfect for visibility
-    const BIRD_SIZE = 35; // Increased for mobile visibility
-    const PIPE_WIDTH = 120;
+    // Optimal Flappy Bird dimensions - 24x24 bird sprite
+    const BIRD_SIZE = 32; // Perfect size for visibility and gameplay
+    const PIPE_WIDTH = 80; // Narrower pipes for better gameplay
+    const GROUND_HEIGHT = 40;
 
     // Clear canvas with beautiful gradient background
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
@@ -111,11 +113,11 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
       let pipeGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH, 0);
       
       if (difficulty.timeOfDay === 'evening') {
-        pipeGradient.addColorStop(0, '#FF8C00');
-        pipeGradient.addColorStop(1, '#FF6347');
+        pipeGradient.addColorStop(0, '#4CAF50');
+        pipeGradient.addColorStop(1, '#388E3C');
       } else if (difficulty.timeOfDay === 'night') {
-        pipeGradient.addColorStop(0, '#4169E1');
-        pipeGradient.addColorStop(1, '#191970');
+        pipeGradient.addColorStop(0, '#2E7D32');
+        pipeGradient.addColorStop(1, '#1B5E20');
       } else {
         pipeGradient.addColorStop(0, '#4CAF50');
         pipeGradient.addColorStop(1, '#388E3C');
@@ -123,13 +125,13 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
 
       // Pipe shadows
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
-      ctx.fillRect(pipe.x + 5, 3, PIPE_WIDTH, pipe.topHeight);
-      ctx.fillRect(pipe.x + 5, pipe.bottomY + 3, PIPE_WIDTH, canvas.height - pipe.bottomY);
+      ctx.fillRect(pipe.x + 3, 3, PIPE_WIDTH, pipe.topHeight);
+      ctx.fillRect(pipe.x + 3, pipe.bottomY + 3, PIPE_WIDTH, canvas.height - pipe.bottomY);
 
       // Add glow effect for moving pipes
       if (pipe.isMoving) {
-        ctx.shadowColor = difficulty.timeOfDay === 'night' ? '#6495ED' : '#4CAF50';
-        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#4CAF50';
+        ctx.shadowBlur = 10;
       }
 
       // Top pipe
@@ -141,50 +143,44 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
 
       // Pipe caps with enhanced styling
       const capGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH, 0);
-      if (difficulty.timeOfDay === 'night') {
-        capGradient.addColorStop(0, '#6495ED');
-        capGradient.addColorStop(1, '#4169E1');
-      } else {
-        capGradient.addColorStop(0, '#66BB6A');
-        capGradient.addColorStop(1, '#4CAF50');
-      }
+      capGradient.addColorStop(0, '#66BB6A');
+      capGradient.addColorStop(1, '#4CAF50');
       
       ctx.fillStyle = capGradient;
-      ctx.fillRect(pipe.x - 5, pipe.topHeight - 30, PIPE_WIDTH + 10, 30);
-      ctx.fillRect(pipe.x - 5, pipe.bottomY, PIPE_WIDTH + 10, 30);
+      ctx.fillRect(pipe.x - 5, pipe.topHeight - 25, PIPE_WIDTH + 10, 25);
+      ctx.fillRect(pipe.x - 5, pipe.bottomY, PIPE_WIDTH + 10, 25);
 
       // Reset shadow
       ctx.shadowBlur = 0;
     });
 
-    // Draw bird with enhanced visibility and Flappy Bird style size
+    // Draw bird with NO visible bounding box - precise sprite rendering
     const birdImage = new Image();
     birdImage.src = getBirdImage();
     
     ctx.save();
     
-    // Add glow effect for night time and moving animation
+    // Add glow effect for night time
     if (difficulty.timeOfDay === 'night') {
       ctx.shadowColor = '#FFFF00';
-      ctx.shadowBlur = 20;
+      ctx.shadowBlur = 15;
     }
     
-    // Flapping animation effect - more pronounced for visibility
-    const flapOffset = Math.sin(state.frameCount * 0.3) * 3;
+    // Subtle flapping animation
+    const flapOffset = Math.sin(state.frameCount * 0.25) * 2;
     
-    ctx.translate(state.bird.x + BIRD_SIZE/2, state.bird.y + BIRD_SIZE/2 + flapOffset);
+    ctx.translate(state.bird.x, state.bird.y + flapOffset);
     ctx.rotate(state.bird.rotation * Math.PI / 180);
     
-    // Draw bird with better visibility outline
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(-BIRD_SIZE/2, -BIRD_SIZE/2, BIRD_SIZE, BIRD_SIZE);
-    
+    // Draw bird sprite with precise dimensions - NO visible box
     ctx.drawImage(birdImage, -BIRD_SIZE/2, -BIRD_SIZE/2, BIRD_SIZE, BIRD_SIZE);
     ctx.restore();
 
-    // Draw modern ground with gradient
-    const groundGradient = ctx.createLinearGradient(0, canvas.height - 25, 0, canvas.height);
+    // Draw smooth scrolling ground with NO flickering
+    groundOffset.current += 2; // Smooth ground scroll
+    if (groundOffset.current >= 50) groundOffset.current = 0; // Reset to prevent overflow
+    
+    const groundGradient = ctx.createLinearGradient(0, canvas.height - GROUND_HEIGHT, 0, canvas.height);
     if (difficulty.timeOfDay === 'evening') {
       groundGradient.addColorStop(0, '#8B4513');
       groundGradient.addColorStop(1, '#654321');
@@ -197,15 +193,21 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
     }
     
     ctx.fillStyle = groundGradient;
-    ctx.fillRect(0, canvas.height - 25, canvas.width, 25);
+    ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
+    
+    // Add ground texture pattern for seamless scrolling
+    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+    for (let x = -groundOffset.current; x < canvas.width; x += 50) {
+      ctx.fillRect(x, canvas.height - GROUND_HEIGHT, 2, GROUND_HEIGHT);
+    }
 
-    // Buildings/cityscape in background
-    if (state.frameCount % 2 === 0) { // Optimize rendering
+    // Buildings/cityscape in background (optimized rendering)
+    if (state.frameCount % 2 === 0) {
       ctx.fillStyle = difficulty.timeOfDay === 'night' ? 'rgba(50,50,50,0.8)' : 'rgba(100,100,100,0.6)';
       for (let i = 0; i < 5; i++) {
         const buildingX = (canvas.width / 5) * i;
         const buildingHeight = 50 + Math.sin(buildingX * 0.01 + state.frameCount * 0.001) * 30;
-        ctx.fillRect(buildingX, canvas.height - 25 - buildingHeight, canvas.width / 5, buildingHeight);
+        ctx.fillRect(buildingX, canvas.height - GROUND_HEIGHT - buildingHeight, canvas.width / 5, buildingHeight);
       }
     }
   }, [getBirdImage, canvasRef, gameStateRef, gameMode, getDifficultyOptimized, getBackgroundColorsOptimized]);

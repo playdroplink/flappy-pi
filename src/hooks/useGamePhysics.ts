@@ -1,4 +1,3 @@
-
 import { useCallback, useRef } from 'react';
 import { getDifficulty, getScoreMultiplier } from '../utils/gameDifficulty';
 
@@ -22,7 +21,6 @@ export const useGamePhysics = ({
   const difficultyCache = useRef<{ score: number; difficulty: any } | null>(null);
 
   const getDifficultyOptimized = useCallback((score: number) => {
-    // Cache difficulty to avoid excessive calculations
     if (difficultyCache.current && difficultyCache.current.score === score) {
       return difficultyCache.current.difficulty;
     }
@@ -43,7 +41,9 @@ export const useGamePhysics = ({
     const difficulty = getDifficultyOptimized(state.score);
     const scoreMultiplier = getScoreMultiplier(gameMode);
     const GRAVITY = 0.35;
-    const PIPE_WIDTH = 120;
+    const PIPE_WIDTH = 80; // Reduced for better gameplay
+    const PIPE_GAP = 140; // Optimal gap size
+    const PIPE_SPACING = 240; // Increased spacing between pipes
 
     // Apply wind effect if enabled
     let horizontalForce = 0;
@@ -64,23 +64,19 @@ export const useGamePhysics = ({
       state.bird.x = Math.max(50, Math.min(state.bird.x, canvas.width - 150));
     }
 
-    // Spawn new pipes with better gap management
-    const spawnThreshold = Math.max(difficulty.spawnRate, 120);
+    // Spawn new pipes with improved spacing and gap management
+    const spawnThreshold = Math.max(PIPE_SPACING / 2, 120);
     if (state.frameCount - state.lastPipeSpawn > spawnThreshold) {
-      const minHeight = 80;
-      // Ensure adequate gap size (starts larger, gets smaller with difficulty)
-      const baseGap = 180; // Increased base gap
-      const difficultyGapReduction = Math.min(state.score * 2, 40); // Max reduction of 40px
-      const finalGap = Math.max(baseGap - difficultyGapReduction, 140); // Minimum gap of 140px
-      
-      const maxHeight = canvas.height - finalGap - minHeight - 25; // Account for ground
+      const minHeight = 60;
+      const maxHeight = canvas.height - PIPE_GAP - minHeight - 50; // Account for ground
       const pipeHeight = Math.random() * (maxHeight - minHeight) + minHeight;
       
       const newPipe = {
         x: canvas.width,
         topHeight: pipeHeight,
-        bottomY: pipeHeight + finalGap,
+        bottomY: pipeHeight + PIPE_GAP,
         passed: false,
+        scored: false, // Add scored flag to prevent double scoring
         isMoving: difficulty.hasMovingPipes,
         verticalDirection: difficulty.hasMovingPipes ? (Math.random() > 0.5 ? 1 : -1) : 0,
         moveSpeed: difficulty.hasMovingPipes ? 1 : 0
@@ -100,7 +96,7 @@ export const useGamePhysics = ({
       });
     }
 
-    // Update pipes and check for scoring - FIXED SCORING LOGIC
+    // Update pipes and FIXED scoring logic
     state.pipes = state.pipes.filter((pipe: any) => {
       pipe.x -= difficulty.pipeSpeed;
       
@@ -112,21 +108,20 @@ export const useGamePhysics = ({
         
         // Keep moving pipes within safe bounds
         const minTopHeight = 60;
-        const maxBottomY = canvas.height - 85; // Account for ground
+        const maxBottomY = canvas.height - 85;
         
         if (pipe.topHeight <= minTopHeight || pipe.bottomY >= maxBottomY) {
           pipe.verticalDirection *= -1;
         }
       }
       
-      // FIXED: Score when bird passes pipe center (bird.x > pipe center)
-      const pipeCenterX = pipe.x + (PIPE_WIDTH / 2);
-      if (!pipe.passed && state.bird.x > pipeCenterX) {
-        pipe.passed = true;
+      // FIXED SCORING: Score when bird completely passes pipe (bird.x > pipe.x + PIPE_WIDTH)
+      if (!pipe.scored && state.bird.x > (pipe.x + PIPE_WIDTH)) {
+        pipe.scored = true;
         const newScore = state.score + 1;
         state.score = newScore;
         
-        console.log('SCORE! Bird passed pipe center. New score:', newScore);
+        console.log('SCORE! Bird passed pipe completely. New score:', newScore);
         
         // Immediately update UI score
         onScoreUpdate(newScore);
@@ -147,7 +142,7 @@ export const useGamePhysics = ({
       });
     }
 
-    // Enhanced collision detection - check BEFORE updating frame count
+    // Enhanced collision detection
     if (checkCollisions(canvas)) {
       console.log('Collision detected! Game over triggered');
       state.gameOver = true;
