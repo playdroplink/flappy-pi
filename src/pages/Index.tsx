@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { usePiAuth } from '@/hooks/usePiAuth';
 import { useGameState } from '@/hooks/useGameState';
 import { useGameEvents } from '@/hooks/useGameEvents';
 import { useModals } from '@/hooks/useModals';
@@ -13,12 +13,12 @@ import GameCanvas from '@/components/GameCanvas';
 import GameUI from '@/components/GameUI';
 import GameModals from '@/components/GameModals';
 import GameContinueOverlay from '@/components/GameContinueOverlay';
-import AuthModal from '@/components/AuthModal';
+import PiAuthModal from '@/components/PiAuthModal';
 import { Button } from '@/components/ui/button';
 import { LogOut, User } from 'lucide-react';
 
 const Index = () => {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading, signOut } = usePiAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showAdPopup, setShowAdPopup] = useState(false);
   const [adType, setAdType] = useState<'continue' | 'coins' | 'life'>('continue');
@@ -124,7 +124,7 @@ const Index = () => {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-blue-400 to-blue-600">
-        <div className="text-white text-xl">Loading...</div>
+        <div className="text-white text-xl">Loading Pi Network...</div>
       </div>
     );
   }
@@ -142,18 +142,18 @@ const Index = () => {
           <div className="space-y-4">
             <Button 
               onClick={() => setShowAuthModal(true)}
-              className="w-full text-lg py-3"
+              className="w-full text-lg py-3 bg-purple-600 hover:bg-purple-700"
               size="lg"
             >
-              Play Now - Sign In/Up
+              🥧 Connect with Pi Network
             </Button>
             <p className="text-white/80 text-sm">
-              Sign up to save your progress, compete on leaderboards, and earn rewards!
+              Connect your Pi Network account to save progress, compete on leaderboards, and earn Pi rewards!
             </p>
           </div>
         </div>
         
-        <AuthModal 
+        <PiAuthModal 
           isOpen={showAuthModal} 
           onClose={() => setShowAuthModal(false)} 
         />
@@ -172,7 +172,7 @@ const Index = () => {
         <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 text-white flex items-center space-x-2">
           <User className="h-4 w-4" />
           <span className="text-sm">
-            {profile?.username || user.email?.split('@')[0] || 'Player'}
+            {user.username || 'Pi User'}
           </span>
         </div>
         <Button
