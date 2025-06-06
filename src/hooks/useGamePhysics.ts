@@ -57,14 +57,20 @@ export const useGamePhysics = ({
       // Flash effect
       flashTimer.current = 30; // Flash for 30 frames
       
+      // Calculate safe respawn position
+      const minY = 100;
+      const maxY = canvas.height - 150;
+      const safeY = Math.max(minY, Math.min(maxY, canvas.height * 0.4));
+      
       // Respawn bird at safe position
-      const safeY = Math.max(150, canvas.height / 3);
       gameStateRef.current.bird = {
         x: 80,
         y: safeY,
         velocity: -3, // Small upward boost
         rotation: 0
       };
+      
+      console.log('Bird respawned at safe Y position:', safeY);
       
       return false; // Don't trigger game over
     } else {
@@ -100,6 +106,11 @@ export const useGamePhysics = ({
       state.bird.velocity = 0; // No velocity when not started
       state.bird.rotation = 0; // Keep bird level
       
+      // Ensure bird stays within safe bounds even during floating
+      const minY = 100;
+      const maxY = canvas.height - 150;
+      state.bird.y = Math.max(minY, Math.min(maxY, state.bird.y));
+      
       state.frameCount++;
       return; // Don't process anything else until game starts
     }
@@ -114,6 +125,20 @@ export const useGamePhysics = ({
     state.bird.velocity += GRAVITY;
     state.bird.y += state.bird.velocity;
     state.bird.x += horizontalForce;
+    
+    // Constrain bird within safe vertical bounds to prevent getting stuck
+    const minY = 30; // Top boundary
+    const maxY = canvas.height - 80; // Bottom boundary
+    
+    if (state.bird.y < minY) {
+      state.bird.y = minY;
+      state.bird.velocity = Math.max(0, state.bird.velocity); // Only allow downward velocity
+    }
+    
+    if (state.bird.y > maxY) {
+      state.bird.y = maxY;
+      state.bird.velocity = Math.min(0, state.bird.velocity); // Only allow upward velocity
+    }
     
     // Bird rotation based on velocity - smoother rotation
     state.bird.rotation = Math.min(Math.max(state.bird.velocity * 2, -20), 60);

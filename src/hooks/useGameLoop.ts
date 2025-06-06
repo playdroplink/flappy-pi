@@ -61,8 +61,12 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   const resetGame = useCallback((canvasHeight: number) => {
     console.log('COMPLETE GAME RESET - Clearing all state and resetting bird');
     
-    // Calculate safe vertical position based on canvas height
-    const safeY = Math.max(150, canvasHeight / 2);
+    // Calculate safe vertical position based on canvas height with proper bounds
+    const minY = 100; // Minimum distance from top
+    const maxY = canvasHeight - 150; // Minimum distance from bottom
+    const safeY = Math.max(minY, Math.min(maxY, canvasHeight * 0.4)); // 40% from top, but within safe bounds
+    
+    console.log('Canvas height:', canvasHeight, 'Safe Y position:', safeY);
     
     // Complete state reset with proper bird positioning and physics
     gameStateRef.current = {
@@ -85,7 +89,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     // Reset score display
     onScoreUpdate(0);
     
-    console.log('Game completely reset - bird positioned at center, waiting for tap to start');
+    console.log('Game completely reset - bird positioned at safe Y:', safeY, 'waiting for tap to start');
   }, [onScoreUpdate]);
 
   const startGame = useCallback(() => {
@@ -102,7 +106,14 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   const continueGame = useCallback(() => {
     console.log('Continuing game after revive');
     const canvas = document.querySelector('canvas');
-    const safeY = canvas ? canvas.height / 2 : 200; // Position in vertical center
+    if (!canvas) return;
+    
+    // Calculate safe position for revival with proper bounds
+    const minY = 100;
+    const maxY = canvas.height - 150;
+    const safeY = Math.max(minY, Math.min(maxY, canvas.height * 0.4));
+    
+    console.log('Continue game - canvas height:', canvas.height, 'safe Y:', safeY);
     
     // Reset bird to safe position with small upward velocity
     gameStateRef.current.bird = {
@@ -122,7 +133,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     
     gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 200;
     
-    console.log('Continue complete - bird respawned at center position, waiting for tap');
+    console.log('Continue complete - bird respawned at safe position Y:', safeY, 'waiting for tap');
   }, []);
 
   const jump = useCallback(() => {
@@ -151,15 +162,15 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     const birdTop = bird.y - BIRD_SIZE/2 + 8;
     const birdBottom = bird.y + BIRD_SIZE/2 - 8;
     
-    // Check ceiling collision
-    if (birdTop <= 10) {
-      console.log('Bird hit ceiling! Collision detected');
+    // Check ceiling collision with buffer
+    if (birdTop <= 20) {
+      console.log('Bird hit ceiling! Collision detected at Y:', bird.y);
       return true;
     }
     
-    // Check ground collision
-    if (birdBottom >= canvas.height - 50) {
-      console.log('Bird hit ground! Collision detected');
+    // Check ground collision with buffer
+    if (birdBottom >= canvas.height - 60) {
+      console.log('Bird hit ground! Collision detected at Y:', bird.y, 'canvas height:', canvas.height);
       return true;
     }
     
