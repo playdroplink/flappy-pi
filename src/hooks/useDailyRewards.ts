@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { gameBackendService, DailyRewardResult } from '@/services/gameBackendService';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { usePiAuth } from '@/hooks/usePiAuth'; // Changed from useAuth to usePiAuth
 
 interface DailyRewardStatus {
   reward_day: number;
@@ -23,7 +23,7 @@ export const useDailyRewards = (): UseDailyRewardsReturn => {
   const [rewardStatus, setRewardStatus] = useState<DailyRewardStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user } = usePiAuth(); // Changed from useAuth to usePiAuth
 
   const refreshStatus = async () => {
     if (!user) return;
