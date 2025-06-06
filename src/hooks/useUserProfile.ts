@@ -16,7 +16,7 @@ export const useUserProfile = (): UseUserProfileReturn => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { user } = usePiAuth(); // Use Pi auth instead of Supabase auth
+  const { user } = usePiAuth();
 
   const initializeProfile = async (piUserId?: string, username?: string) => {
     if (!user) {

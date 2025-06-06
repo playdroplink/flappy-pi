@@ -42,7 +42,7 @@ export const useGameOverHandler = ({
   const { toast } = useToast();
   const { submitScore } = useLeaderboard();
   const { profile, refreshProfile } = useUserProfile();
-  const { user } = usePiAuth(); // Changed from useAuth to usePiAuth
+  const { user } = usePiAuth();
 
   const handleGameOver = useCallback(async (finalScore: number) => {
     console.log('Game over with final score:', finalScore);
@@ -115,7 +115,7 @@ export const useGameOverHandler = ({
     // Submit score to leaderboard if it's a decent score (> 0)
     if (finalScore > 0 && user && profile) {
       try {
-        await submitScore(user.uid, profile.username, finalScore); // Changed from user.id to user.uid for Pi Network
+        await submitScore(user.uid, profile.username, finalScore);
       } catch (error) {
         console.error('Failed to submit score:', error);
       }
