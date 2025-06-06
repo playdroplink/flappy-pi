@@ -39,13 +39,20 @@ const GameUI: React.FC<GameUIProps> = ({
   if (gameState === 'playing' && !isPausedForRevive) {
     return (
       <div className="fixed inset-0 pointer-events-none z-10">
-        {/* Top HUD */}
-        <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-          <div className="bg-black/50 rounded-lg px-3 py-2 text-white font-bold text-lg">
+        {/* Top Header with Score */}
+        <div className="absolute top-4 left-4 right-4 flex justify-center">
+          <div className="bg-black/70 rounded-xl px-6 py-3 text-white font-bold text-2xl shadow-lg backdrop-blur-sm">
             Score: {score}
           </div>
-          <div className="bg-black/50 rounded-lg px-3 py-2 text-white font-bold text-lg">
+        </div>
+        
+        {/* Top Side Info */}
+        <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
+          <div className="bg-black/50 rounded-lg px-3 py-2 text-white font-bold text-sm">
             Level: {level}
+          </div>
+          <div className="bg-black/50 rounded-lg px-3 py-2 text-white font-bold text-sm">
+            Mode: {gameMode}
           </div>
         </div>
         
