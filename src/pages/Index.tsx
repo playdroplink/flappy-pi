@@ -98,7 +98,6 @@ const Index = () => {
   
   const { canClaim: canClaimDaily, claimReward: claimDailyReward } = useDailyRewards();
 
-  // Show loading screen while auth is loading
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-blue-400 to-blue-600">
@@ -107,7 +106,6 @@ const Index = () => {
     );
   }
 
-  // Show authentication screen if not logged in
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-blue-400 to-blue-600 p-4">
@@ -140,7 +138,6 @@ const Index = () => {
     );
   }
 
-  // Show splash screen first
   if (showSplash) {
     return <SplashScreen />;
   }
@@ -169,7 +166,6 @@ const Index = () => {
       {showWelcome && (
         <WelcomeScreen
           onStartGame={startGame}
-          onShowShop={() => setShowShop(true)}
           onShowLeaderboard={() => setShowLeaderboard(true)}
           onShowHelp={() => setShowHelp(true)}
           onShowDailyRewards={() => setShowDailyRewards(true)}
@@ -185,7 +181,6 @@ const Index = () => {
       {/* Game Canvas */}
       {gameState === 'playing' && (
         <GameCanvas
-          score={score}
           level={level}
           lives={lives}
           gameMode={gameMode}
@@ -194,7 +189,6 @@ const Index = () => {
           onCollision={handleCollision}
           onCoinEarned={handleCoinEarned}
           gameState={gameState}
-          resetGameEventStates={resetGameEventStates}
         />
       )}
 
@@ -207,7 +201,6 @@ const Index = () => {
           coins={coins}
           gameState={gameState}
           isPausedForRevive={isPausedForRevive}
-          showContinueButton={showContinueButton}
           onPause={() => setGameState('paused')}
           onResume={() => setGameState('playing')}
           onBackToMenu={backToMenu}

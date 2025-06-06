@@ -1,9 +1,16 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
 
-type GameMode = Database['public']['Enums']['game_mode'];
-type ItemType = Database['public']['Enums']['item_type'];
+export interface UserProfile {
+  id?: string;
+  pi_user_id: string;
+  username: string;
+  total_coins: number;
+  selected_bird_skin: string;
+  music_enabled: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
 
 export interface GameSessionResult {
   session_id: string;
@@ -12,43 +19,76 @@ export interface GameSessionResult {
   coins_earned: number;
 }
 
-export interface PurchaseResult {
-  success: boolean;
-  purchase_id?: string;
-  remaining_coins?: number;
-  error?: string;
-}
-
 export interface DailyRewardResult {
   success: boolean;
-  reward_amount?: number;
-  current_day?: number;
-  streak?: number;
+  reward_amount: number;
+  current_day: number;
   error?: string;
 }
 
 export interface AdRewardResult {
   success: boolean;
   reward_amount: number;
-  description: string;
-}
-
-export interface UserProfile {
-  id: string;
-  pi_user_id: string;
-  username: string;
-  avatar_url?: string;
-  total_coins: number;
-  selected_bird_skin: string;
-  music_enabled: boolean;
-  created_at: string;
-  updated_at: string;
+  error?: string;
 }
 
 class GameBackendService {
-  // Complete a game session and update all related data
+  // User Profile Management
+  async getUserProfile(): Promise<UserProfile | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No authenticated user');
+
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('pi_user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in getUserProfile:', error);
+      return null;
+    }
+  }
+
+  async upsertUserProfile(profile: Partial<UserProfile>): Promise<UserProfile | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No authenticated user');
+
+      const profileData = {
+        ...profile,
+        pi_user_id: user.id,
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .upsert(profileData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error upserting user profile:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in upsertUserProfile:', error);
+      return null;
+    }
+  }
+
+  // Game Session Management
   async completeGameSession(
-    gameMode: GameMode,
+    gameMode: string,
     finalScore: number,
     levelReached: number,
     coinsEarned: number,
@@ -68,189 +108,18 @@ class GameBackendService {
         return null;
       }
 
-      return data as any as GameSessionResult;
+      return data;
     } catch (error) {
       console.error('Error in completeGameSession:', error);
       return null;
     }
   }
 
-  // Make a purchase using coins
-  async makePurchase(
-    itemType: ItemType,
-    itemId: string,
-    costCoins: number,
-    piTransactionId?: string
-  ): Promise<PurchaseResult> {
-    try {
-      const { data, error } = await supabase.rpc('make_purchase', {
-        p_item_type: itemType,
-        p_item_id: itemId,
-        p_cost_coins: costCoins,
-        p_pi_transaction_id: piTransactionId
-      });
-
-      if (error) {
-        console.error('Error making purchase:', error);
-        return { success: false, error: error.message };
-      }
-
-      return data as any as PurchaseResult;
-    } catch (error) {
-      console.error('Error in makePurchase:', error);
-      return { success: false, error: 'Failed to process purchase' };
-    }
-  }
-
-  // Claim daily reward
-  async claimDailyReward(): Promise<DailyRewardResult> {
+  // Daily Rewards
+  async getDailyRewardStatus() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return { success: false, error: 'User not authenticated' };
-      }
-
-      const { data, error } = await supabase.rpc('claim_daily_reward', {
-        p_pi_user_id: user.id
-      });
-
-      if (error) {
-        console.error('Error claiming daily reward:', error);
-        return { success: false, error: error.message };
-      }
-
-      return data as any as DailyRewardResult;
-    } catch (error) {
-      console.error('Error in claimDailyReward:', error);
-      return { success: false, error: 'Failed to claim daily reward' };
-    }
-  }
-
-  // Record ad watch and give reward
-  async watchAdReward(
-    adType: string,
-    rewardAmount: number = 25
-  ): Promise<AdRewardResult | null> {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.error('User not authenticated for ad reward');
-        return null;
-      }
-
-      const { data, error } = await supabase.rpc('watch_ad_reward', {
-        p_pi_user_id: user.id,
-        p_ad_type: adType,
-        p_reward_amount: rewardAmount
-      });
-
-      if (error) {
-        console.error('Error recording ad reward:', error);
-        return null;
-      }
-
-      return data as any as AdRewardResult;
-    } catch (error) {
-      console.error('Error in watchAdReward:', error);
-      return null;
-    }
-  }
-
-  // Get user profile
-  async getUserProfile(piUserId: string): Promise<UserProfile | null> {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('pi_user_id', piUserId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
-        console.error('Error fetching user profile:', error);
-        return null;
-      }
-
-      return data as UserProfile;
-    } catch (error) {
-      console.error('Error in getUserProfile:', error);
-      return null;
-    }
-  }
-
-  // Create or update user profile
-  async upsertUserProfile(profile: Partial<UserProfile> & { pi_user_id: string; username: string }): Promise<UserProfile | null> {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .upsert(profile, { onConflict: 'pi_user_id' })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error upserting user profile:', error);
-        return null;
-      }
-
-      return data as UserProfile;
-    } catch (error) {
-      console.error('Error in upsertUserProfile:', error);
-      return null;
-    }
-  }
-
-  // Get user inventory
-  async getUserInventory(): Promise<any[]> {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-
-      const { data, error } = await supabase
-        .from('user_inventory')
-        .select('*')
-        .eq('pi_user_id', user.id);
-
-      if (error) {
-        console.error('Error fetching user inventory:', error);
-        return [];
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Error in getUserInventory:', error);
-      return [];
-    }
-  }
-
-  // Get user's game sessions
-  async getUserGameSessions(limit: number = 10): Promise<any[]> {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-
-      const { data, error } = await supabase
-        .from('game_sessions')
-        .select('*')
-        .eq('pi_user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        console.error('Error fetching game sessions:', error);
-        return [];
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Error in getUserGameSessions:', error);
-      return [];
-    }
-  }
-
-  // Get daily reward status
-  async getDailyRewardStatus(): Promise<any> {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!user) throw new Error('No authenticated user');
 
       const { data, error } = await supabase
         .from('daily_rewards')
@@ -267,6 +136,119 @@ class GameBackendService {
     } catch (error) {
       console.error('Error in getDailyRewardStatus:', error);
       return null;
+    }
+  }
+
+  async claimDailyReward(): Promise<DailyRewardResult> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No authenticated user');
+
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Check if already claimed today
+      const { data: existingReward } = await supabase
+        .from('daily_rewards')
+        .select('*')
+        .eq('pi_user_id', user.id)
+        .single();
+
+      if (existingReward && existingReward.last_claimed_date === today) {
+        return {
+          success: false,
+          reward_amount: 0,
+          current_day: existingReward.reward_day,
+          error: 'Already claimed today'
+        };
+      }
+
+      // Calculate reward day and amount
+      const rewardDay = existingReward ? 
+        (existingReward.reward_day % 7) + 1 : 1;
+      const rewardAmount = rewardDay * 10; // 10, 20, 30, etc.
+
+      // Update daily reward record
+      const { error: rewardError } = await supabase
+        .from('daily_rewards')
+        .upsert({
+          pi_user_id: user.id,
+          reward_day: rewardDay,
+          last_claimed_date: today,
+          streak_count: existingReward ? existingReward.streak_count + 1 : 1,
+          updated_at: new Date().toISOString()
+        });
+
+      if (rewardError) throw rewardError;
+
+      // Update user coins
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .update({ 
+          total_coins: supabase.raw(`total_coins + ${rewardAmount}`),
+          updated_at: new Date().toISOString()
+        })
+        .eq('pi_user_id', user.id);
+
+      if (profileError) throw profileError;
+
+      return {
+        success: true,
+        reward_amount: rewardAmount,
+        current_day: rewardDay
+      };
+    } catch (error) {
+      console.error('Error in claimDailyReward:', error);
+      return {
+        success: false,
+        reward_amount: 0,
+        current_day: 1,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  // Ad Rewards
+  async watchAdReward(adType: string, rewardAmount: number): Promise<AdRewardResult> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No authenticated user');
+
+      // Record ad watch
+      const { error: adError } = await supabase
+        .from('ad_watches')
+        .insert({
+          pi_user_id: user.id,
+          ad_type: adType,
+          reward_given: rewardAmount.toString(),
+          watched_at: new Date().toISOString()
+        });
+
+      if (adError) throw adError;
+
+      // Update user coins if applicable
+      if (rewardAmount > 0) {
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .update({ 
+            total_coins: supabase.raw(`total_coins + ${rewardAmount}`),
+            updated_at: new Date().toISOString()
+          })
+          .eq('pi_user_id', user.id);
+
+        if (profileError) throw profileError;
+      }
+
+      return {
+        success: true,
+        reward_amount: rewardAmount
+      };
+    } catch (error) {
+      console.error('Error in watchAdReward:', error);
+      return {
+        success: false,
+        reward_amount: 0,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
     }
   }
 }
