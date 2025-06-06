@@ -159,7 +159,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
   }, []);
 
-  // Enhanced game state management
+  // Enhanced game state management - Fixed resetGame call
   useEffect(() => {
     const prevState = previousGameStateRef.current;
     previousGameStateRef.current = gameState;
@@ -177,7 +177,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           initializationRef.current = true;
           
           try {
-            await resetGame(level);
+            await resetGame(); // Fixed: removed the level argument
             // Small delay to ensure state is ready
             setTimeout(() => {
               if (gameState === 'playing') {
