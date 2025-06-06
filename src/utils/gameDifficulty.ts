@@ -1,126 +1,168 @@
 export interface DifficultySettings {
-  pipeGap: number;
   pipeSpeed: number;
-  spawnRate: number;
-  timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night';
-  hasMovingPipes: boolean;
-  hasClouds: boolean;
-  hasWind: boolean;
-  windStrength: number;
+  pipeGap: number;
   pipeWidth: number;
+  windStrength: number;
+  hasWind: boolean;
+  hasClouds: boolean;
+  hasMovingPipes: boolean;
+  timeOfDay: string;
+  hasStars: boolean;
+  hasNebulaEffect: boolean;
+  backgroundScrollSpeed: number;
+  level: number;
+  backgroundTheme: string;
 }
 
-const PIPE_GAP_BASE = 220; // Much larger base gap for easier passage
-const PIPE_SPEED_BASE = 1.8; // Slower speed for better control
-const PIPE_SPAWN_RATE_BASE = 180; // More time between pipes
-const PIPE_WIDTH_BASE = 70; // Thinner pipes for easier navigation
-
-export const getTimeOfDay = (level: number): 'morning' | 'afternoon' | 'evening' | 'night' => {
-  if (level <= 3) return 'morning';
-  if (level <= 6) return 'afternoon';
-  if (level <= 10) return 'evening';
-  return 'night';
+const baseClassicDifficulty: Omit<DifficultySettings, 'timeOfDay' | 'level' | 'backgroundTheme' | 'hasStars' | 'hasNebulaEffect' | 'backgroundScrollSpeed'> = {
+  pipeSpeed: 3,
+  pipeGap: 180,
+  pipeWidth: 80,
+  windStrength: 0,
+  hasWind: false,
+  hasClouds: true,
+  hasMovingPipes: false
 };
 
-export const getDifficultyByUserChoice = (
-  userDifficulty: 'easy' | 'medium' | 'hard',
-  currentScore: number,
-  gameMode: 'classic' | 'endless' | 'challenge'
-): DifficultySettings => {
-  const level = Math.floor(currentScore / 5) + 1;
-  const timeOfDay = getTimeOfDay(level);
-  
-  console.log(`Getting difficulty for ${gameMode} mode, user choice: ${userDifficulty}, score: ${currentScore}, level: ${level}`);
-  
-  let baseDifficulty: DifficultySettings = {
-    pipeGap: PIPE_GAP_BASE,
-    pipeSpeed: PIPE_SPEED_BASE,
-    spawnRate: PIPE_SPAWN_RATE_BASE,
-    timeOfDay,
-    hasMovingPipes: false,
-    hasClouds: false,
-    hasWind: false,
-    windStrength: 0,
-    pipeWidth: PIPE_WIDTH_BASE
-  };
-
-  // Apply user difficulty choice with very generous settings
-  if (userDifficulty === 'easy') {
-    baseDifficulty.pipeGap = PIPE_GAP_BASE + 100; // Very wide gap (320px)
-    baseDifficulty.pipeSpeed = PIPE_SPEED_BASE * 0.7; // Much slower
-    baseDifficulty.spawnRate = PIPE_SPAWN_RATE_BASE + 100; // Much more time between pipes
-    baseDifficulty.pipeWidth = PIPE_WIDTH_BASE - 15; // Much thinner pipes
-  } else if (userDifficulty === 'medium') {
-    baseDifficulty.pipeGap = PIPE_GAP_BASE + 50; // Good gap (270px)
-    baseDifficulty.pipeSpeed = PIPE_SPEED_BASE * 0.85; // Moderate speed
-    baseDifficulty.spawnRate = PIPE_SPAWN_RATE_BASE + 50; // More spacing
-    baseDifficulty.pipeWidth = PIPE_WIDTH_BASE; // Normal pipe size
-  } else if (userDifficulty === 'hard') {
-    baseDifficulty.pipeGap = PIPE_GAP_BASE; // Standard gap (220px)
-    baseDifficulty.pipeSpeed = PIPE_SPEED_BASE; // Normal speed
-    baseDifficulty.spawnRate = PIPE_SPAWN_RATE_BASE; // Standard spacing
-    baseDifficulty.pipeWidth = PIPE_WIDTH_BASE + 10; // Slightly bigger pipes
-  }
-
-  // Very minimal progressive difficulty to keep game playable
-  const progressionFactor = Math.min(currentScore / 100, 0.5); // Much slower progression
-  
-  if (gameMode === 'classic') {
-    if (currentScore > 20) {
-      baseDifficulty.pipeSpeed *= (1 + progressionFactor * 0.05); // Very gentle speed increase
-      baseDifficulty.hasClouds = true;
-    }
-    if (currentScore > 40) {
-      baseDifficulty.hasMovingPipes = userDifficulty === 'hard';
-    }
-  } else if (gameMode === 'endless') {
-    baseDifficulty.pipeSpeed *= (1 + progressionFactor * 0.08);
-    if (currentScore > 15) baseDifficulty.hasClouds = true;
-    if (currentScore > 30) baseDifficulty.hasMovingPipes = true;
-    if (currentScore > 50 && userDifficulty !== 'easy') {
-      baseDifficulty.hasWind = true;
-      baseDifficulty.windStrength = Math.min(progressionFactor * 0.1, 0.2);
-    }
-  } else if (gameMode === 'challenge') {
-    baseDifficulty.pipeSpeed *= (1.1 + progressionFactor * 0.05);
-    baseDifficulty.hasMovingPipes = true;
-    baseDifficulty.hasClouds = true;
-    if (userDifficulty !== 'easy') {
-      baseDifficulty.hasWind = true;
-      baseDifficulty.windStrength = 0.15 + (progressionFactor * 0.05);
-    }
-  }
-
-  console.log('Final difficulty settings:', baseDifficulty);
-  return baseDifficulty;
+const baseEndlessDifficulty: Omit<DifficultySettings, 'timeOfDay' | 'level' | 'backgroundTheme' | 'hasStars' | 'hasNebulaEffect' | 'backgroundScrollSpeed'> = {
+  pipeSpeed: 4,
+  pipeGap: 160,
+  pipeWidth: 70,
+  windStrength: 0,
+  hasWind: false,
+  hasClouds: true,
+  hasMovingPipes: false
 };
 
-// Keep the old function for backward compatibility
-export const getDifficulty = (currentScore: number, gameMode: 'classic' | 'endless' | 'challenge'): DifficultySettings => {
-  return getDifficultyByUserChoice('medium', currentScore, gameMode);
+const baseChallengeDifficulty: Omit<DifficultySettings, 'timeOfDay' | 'level' | 'backgroundTheme' | 'hasStars' | 'hasNebulaEffect' | 'backgroundScrollSpeed'> = {
+  pipeSpeed: 5,
+  pipeGap: 140,
+  pipeWidth: 60,
+  windStrength: 0,
+  hasWind: false,
+  hasClouds: false,
+  hasMovingPipes: true
 };
 
-export const getBackgroundGradient = (timeOfDay: string): { top: string; bottom: string } => {
-  switch (timeOfDay) {
-    case 'morning':
-      return { top: '#87CEEB', bottom: '#FFE4B5' }; // Sky blue to moccasin
-    case 'afternoon':
-      return { top: '#87CEEB', bottom: '#98D8E8' }; // Light blue
-    case 'evening':
-      return { top: '#FF7F50', bottom: '#FF6347' }; // Coral to tomato
-    case 'night':
-      return { top: '#191970', bottom: '#000080' }; // Midnight blue to navy
-    default:
-      return { top: '#87CEEB', bottom: '#98D8E8' };
-  }
-};
-
-// Mode-specific scoring multipliers
 export const getScoreMultiplier = (gameMode: 'classic' | 'endless' | 'challenge'): number => {
   switch (gameMode) {
-    case 'classic': return 1;
-    case 'endless': return 1.2;
-    case 'challenge': return 1.5;
-    default: return 1;
+    case 'classic':
+      return 1;
+    case 'endless':
+      return 1.2;
+    case 'challenge':
+      return 1.5;
+    default:
+      return 1;
   }
+};
+
+export const getBackgroundThemeByLevel = (level: number, gameMode: 'classic' | 'endless' | 'challenge') => {
+  // Different progression for different game modes
+  if (gameMode === 'challenge') {
+    // Challenge mode has faster progression
+    if (level >= 15) return 'space';
+    if (level >= 10) return 'night';
+    if (level >= 5) return 'evening';
+    return 'day';
+  } else if (gameMode === 'endless') {
+    // Endless mode has gradual progression
+    if (level >= 25) return 'space';
+    if (level >= 18) return 'night';
+    if (level >= 12) return 'evening';
+    if (level >= 6) return 'sunset';
+    return 'day';
+  } else {
+    // Classic mode - balanced progression
+    if (level >= 20) return 'space';
+    if (level >= 15) return 'night';
+    if (level >= 10) return 'evening';
+    if (level >= 5) return 'sunset';
+    return 'day';
+  }
+};
+
+export const getBackgroundGradient = (theme: string) => {
+  const gradients = {
+    'day': {
+      top: '#87CEEB',     // Sky blue
+      middle: '#98D8E8',  // Light blue
+      bottom: '#B0E0E6'   // Powder blue
+    },
+    'sunset': {
+      top: '#FF6B6B',     // Coral red
+      middle: '#FFE66D',  // Golden yellow
+      bottom: '#FF8E53'   // Orange
+    },
+    'evening': {
+      top: '#667eea',     // Purple blue
+      middle: '#764ba2',  // Deep purple
+      bottom: '#f093fb'   // Pink purple
+    },
+    'night': {
+      top: '#0c0c0c',     // Deep black
+      middle: '#1a1a2e',  // Dark navy
+      bottom: '#16213e'   // Midnight blue
+    },
+    'space': {
+      top: '#000000',     // Pure black
+      middle: '#1a0033',  // Deep purple
+      bottom: '#330066'   // Dark violet
+    }
+  };
+
+  return gradients[theme] || gradients['day'];
+};
+
+// Enhanced difficulty function that includes background theme
+export const getDifficultyByUserChoice = (
+  userDifficulty: 'easy' | 'medium' | 'hard', 
+  score: number, 
+  gameMode: 'classic' | 'endless' | 'challenge'
+) => {
+  const level = Math.floor(score / 5) + 1;
+  const theme = getBackgroundThemeByLevel(level, gameMode);
+  
+  let baseDifficulty;
+  switch (gameMode) {
+    case 'classic':
+      baseDifficulty = { ...baseClassicDifficulty };
+      break;
+    case 'endless':
+      baseDifficulty = { ...baseEndlessDifficulty };
+      break;
+    case 'challenge':
+      baseDifficulty = { ...baseChallengeDifficulty };
+      break;
+    default:
+      baseDifficulty = { ...baseClassicDifficulty };
+      break;
+  }
+
+  // Adjust difficulty based on user choice
+  if (userDifficulty === 'easy') {
+    baseDifficulty.pipeSpeed *= 0.8;
+    baseDifficulty.pipeGap *= 1.2;
+    baseDifficulty.windStrength = 0;
+    baseDifficulty.hasWind = false;
+    baseDifficulty.hasMovingPipes = false;
+  } else if (userDifficulty === 'hard') {
+    baseDifficulty.pipeSpeed *= 1.2;
+    baseDifficulty.pipeGap *= 0.8;
+    baseDifficulty.hasWind = true;
+    baseDifficulty.windStrength = 3;
+    baseDifficulty.hasMovingPipes = true;
+  }
+
+  return {
+    ...baseDifficulty,
+    level,
+    backgroundTheme: theme,
+    timeOfDay: theme, // Keep compatibility with existing code
+    // Add visual effects based on theme
+    hasStars: theme === 'night' || theme === 'space',
+    hasClouds: theme !== 'space',
+    hasNebulaEffect: theme === 'space',
+    backgroundScrollSpeed: theme === 'space' ? 0.3 : theme === 'night' ? 0.5 : 1.0
+  };
 };

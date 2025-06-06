@@ -17,8 +17,9 @@ export const useGameRenderer = ({
   userDifficulty = 'medium'
 }: UseGameRendererProps) => {
   const difficultyCache = useRef<{ score: number; difficulty: any } | null>(null);
-  const backgroundCache = useRef<{ timeOfDay: string; colors: any } | null>(null);
+  const backgroundCache = useRef<{ theme: string; colors: any } | null>(null);
   const groundOffset = useRef(0);
+  const starField = useRef<Array<{x: number, y: number, size: number, twinkle: number}>>([]);
 
   const getDifficultyOptimized = useCallback((score: number) => {
     if (difficultyCache.current && difficultyCache.current.score === score) {
@@ -30,14 +31,27 @@ export const useGameRenderer = ({
     return difficulty;
   }, [gameMode, userDifficulty]);
 
-  const getBackgroundColorsOptimized = useCallback((timeOfDay: string) => {
-    if (backgroundCache.current && backgroundCache.current.timeOfDay === timeOfDay) {
+  const getBackgroundColorsOptimized = useCallback((theme: string) => {
+    if (backgroundCache.current && backgroundCache.current.theme === theme) {
       return backgroundCache.current.colors;
     }
     
-    const colors = getBackgroundGradient(timeOfDay);
-    backgroundCache.current = { timeOfDay, colors };
+    const colors = getBackgroundGradient(theme);
+    backgroundCache.current = { theme, colors };
     return colors;
+  }, []);
+
+  const initializeStarField = useCallback((canvas: HTMLCanvasElement) => {
+    if (starField.current.length === 0) {
+      for (let i = 0; i < 100; i++) {
+        starField.current.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height * 0.8, // Don't place stars too low
+          size: Math.random() * 2 + 0.5,
+          twinkle: Math.random() * Math.PI * 2
+        });
+      }
+    }
   }, []);
 
   const getBirdImage = useCallback(() => {
@@ -58,12 +72,12 @@ export const useGameRenderer = ({
 
     const state = gameStateRef.current;
     const difficulty = getDifficultyOptimized(state.score);
-    const backgroundColors = getBackgroundColorsOptimized(difficulty.timeOfDay);
+    const backgroundColors = getBackgroundColorsOptimized(difficulty.backgroundTheme);
     
     const BIRD_SIZE = 32;
     const GROUND_HEIGHT = 40;
 
-    // Clear canvas with beautiful gradient background
+    // Clear canvas with beautiful gradient background based on level
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, backgroundColors.top);
     gradient.addColorStop(0.7, backgroundColors.middle || backgroundColors.top);
@@ -71,9 +85,51 @@ export const useGameRenderer = ({
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw animated clouds with shadows (only if game started or for atmosphere)
+    // Draw stars for night and space themes
+    if (difficulty.hasStars) {
+      initializeStarField(canvas);
+      ctx.fillStyle = difficulty.backgroundTheme === 'space' ? '#FFFFFF' : '#FFFFCC';
+      
+      starField.current.forEach((star, index) => {
+        const twinkle = Math.sin(state.frameCount * 0.02 + star.twinkle) * 0.3 + 0.7;
+        ctx.globalAlpha = twinkle;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Move stars slowly for parallax effect
+        star.x -= difficulty.backgroundScrollSpeed * 0.1;
+        if (star.x < -10) {
+          star.x = canvas.width + 10;
+          star.y = Math.random() * canvas.height * 0.8;
+        }
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    // Draw nebula effect for space theme
+    if (difficulty.hasNebulaEffect) {
+      const nebulaGradient = ctx.createRadialGradient(
+        canvas.width * 0.7, canvas.height * 0.3, 0,
+        canvas.width * 0.7, canvas.height * 0.3, canvas.width * 0.6
+      );
+      nebulaGradient.addColorStop(0, 'rgba(138, 43, 226, 0.1)');
+      nebulaGradient.addColorStop(0.5, 'rgba(75, 0, 130, 0.05)');
+      nebulaGradient.addColorStop(1, 'rgba(25, 25, 112, 0.02)');
+      
+      ctx.fillStyle = nebulaGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Draw animated clouds with theme-appropriate colors (only if enabled)
     if (difficulty.hasClouds && state.clouds) {
       state.clouds.forEach((cloud: any) => {
+        // Cloud color based on theme
+        let cloudColor = '#FFFFFF';
+        if (difficulty.backgroundTheme === 'evening') cloudColor = '#E8B4FF';
+        else if (difficulty.backgroundTheme === 'sunset') cloudColor = '#FFE4B5';
+        else if (difficulty.backgroundTheme === 'night') cloudColor = '#696969';
+        
         // Cloud shadow
         ctx.fillStyle = 'rgba(0,0,0,0.1)';
         ctx.globalAlpha = 0.3;
@@ -84,7 +140,7 @@ export const useGameRenderer = ({
         ctx.fill();
         
         // Cloud
-        ctx.fillStyle = difficulty.timeOfDay === 'night' ? '#444444' : '#FFFFFF';
+        ctx.fillStyle = cloudColor;
         ctx.globalAlpha = 0.8;
         ctx.beginPath();
         ctx.arc(cloud.x, cloud.y, cloud.size / 2, 0, Math.PI * 2);
@@ -191,7 +247,7 @@ export const useGameRenderer = ({
     ctx.drawImage(birdImage, -BIRD_SIZE/2, -BIRD_SIZE/2, BIRD_SIZE, BIRD_SIZE);
     ctx.restore();
 
-    // Show "Tap to Start" message when game hasn't started
+    // Show level and theme transition message
     if (!state.gameStarted && state.initialized) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -200,6 +256,11 @@ export const useGameRenderer = ({
       ctx.font = 'bold 24px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('Tap to Start!', canvas.width / 2, canvas.height / 2);
+      
+      // Show current theme
+      ctx.font = '14px Arial';
+      const themeText = `${difficulty.backgroundTheme.charAt(0).toUpperCase() + difficulty.backgroundTheme.slice(1)} Theme`;
+      ctx.fillText(themeText, canvas.width / 2, canvas.height / 2 + 60);
       
       ctx.font = '16px Arial';
       ctx.fillText('Touch the screen or press space to begin flying', canvas.width / 2, canvas.height / 2 + 40);
@@ -239,7 +300,7 @@ export const useGameRenderer = ({
         ctx.fillRect(buildingX, canvas.height - GROUND_HEIGHT - buildingHeight, canvas.width / 5, buildingHeight);
       }
     }
-  }, [getBirdImage, canvasRef, gameStateRef, gameMode, getDifficultyOptimized, getBackgroundColorsOptimized]);
+  }, [getBirdImage, canvasRef, gameStateRef, gameMode, getDifficultyOptimized, getBackgroundColorsOptimized, initializeStarField]);
 
   return { draw };
 };
