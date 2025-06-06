@@ -1,9 +1,13 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+
+import React, { useEffect } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
 import { useGameRenderer } from '../hooks/useGameRenderer';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 import { useSoundEffects } from '../hooks/useSoundEffects';
+import { useCanvasSetup } from '../hooks/useCanvasSetup';
+import { useGameInputHandlers } from '../hooks/useGameInputHandlers';
+import { useGameLoopManager } from '../hooks/useGameLoopManager';
 
 interface GameCanvasProps {
   gameState: 'menu' | 'playing' | 'gameOver' | 'paused';
@@ -32,13 +36,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   onContinueGameRef,
   userDifficulty = 'medium'
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gameLoopRef = useRef<number>();
-  const inputHandlersRef = useRef<{
-    handleClick?: (e: MouseEvent) => void;
-    handleKeyPress?: (e: KeyboardEvent) => void;
-  }>({});
-  const gameInitializedRef = useRef(false); // Track initialization state
+  const { canvasRef } = useCanvasSetup();
+  
+  // Create a ref to store the continue game function
+  const continueGameRef = React.useRef<(() => void) | null>(null);
 
   useBackgroundMusic({ musicEnabled, gameState });
   
@@ -77,158 +78,30 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     userDifficulty
   });
 
+  useGameInputHandlers({
+    gameState,
+    jump,
+    playWingFlap
+  });
+
+  useGameLoopManager({
+    gameState,
+    gameStateRef,
+    updateGame,
+    draw,
+    resetGame,
+    canvasRef
+  });
+
   useEffect(() => {
     initializeGameSounds();
   }, [initializeGameSounds]);
-
-  const gameLoop = useCallback(() => {
-    if (gameState === 'playing' && !gameStateRef.current.gameOver) {
-      updateGame();
-    }
-    draw();
-    
-    if (gameState === 'playing') {
-      gameLoopRef.current = requestAnimationFrame(gameLoop);
-    }
-  }, [updateGame, draw, gameState]);
 
   useEffect(() => {
     if (onContinueGameRef) {
       onContinueGameRef(continueGame);
     }
   }, [continueGame, onContinueGameRef]);
-
-  // Enhanced input handlers with sound effects
-  useEffect(() => {
-    // Force cleanup of any existing handlers
-    if (inputHandlersRef.current.handleClick) {
-      window.removeEventListener('click', inputHandlersRef.current.handleClick);
-      window.removeEventListener('mousedown', inputHandlersRef.current.handleClick);
-      window.removeEventListener('touchstart', inputHandlersRef.current.handleClick);
-    }
-    if (inputHandlersRef.current.handleKeyPress) {
-      window.removeEventListener('keydown', inputHandlersRef.current.handleKeyPress);
-    }
-
-    if (gameState === 'playing') {
-      const handleClick = (e: MouseEvent | TouchEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        playWingFlap();
-        jump();
-      };
-      
-      const handleKeyPress = (e: KeyboardEvent) => {
-        if (e.code === 'Space') {
-          e.preventDefault();
-          e.stopPropagation();
-          playWingFlap();
-          jump();
-        }
-      };
-
-      inputHandlersRef.current = { handleClick, handleKeyPress };
-      
-      window.addEventListener('click', handleClick);
-      window.addEventListener('mousedown', handleClick);
-      window.addEventListener('touchstart', handleClick);
-      window.addEventListener('keydown', handleKeyPress);
-    } else {
-      inputHandlersRef.current = {};
-    }
-
-    return () => {
-      if (inputHandlersRef.current.handleClick) {
-        window.removeEventListener('click', inputHandlersRef.current.handleClick);
-        window.removeEventListener('mousedown', inputHandlersRef.current.handleClick);
-        window.removeEventListener('touchstart', inputHandlersRef.current.handleClick);
-      }
-      if (inputHandlersRef.current.handleKeyPress) {
-        window.removeEventListener('keydown', inputHandlersRef.current.handleKeyPress);
-      }
-    };
-  }, [jump, gameState, playWingFlap]);
-
-  // Enhanced game state management with better cleanup and initialization tracking
-  useEffect(() => {
-    if (gameLoopRef.current) {
-      cancelAnimationFrame(gameLoopRef.current);
-      gameLoopRef.current = undefined;
-    }
-
-    if (gameState === 'playing') {
-      const canvas = canvasRef.current;
-      if (canvas && !gameInitializedRef.current) {
-        console.log('Entering playing state - initializing game for first time');
-        gameInitializedRef.current = true;
-        resetGame(canvas.height);
-        
-        setTimeout(() => {
-          if (gameState === 'playing') {
-            gameLoopRef.current = requestAnimationFrame(gameLoop);
-          }
-        }, 100);
-      } else if (canvas && gameInitializedRef.current) {
-        console.log('Game already initialized, starting game loop');
-        gameLoopRef.current = requestAnimationFrame(gameLoop);
-      }
-    } else {
-      // Reset initialization flag when leaving playing state
-      gameInitializedRef.current = false;
-    }
-
-    return () => {
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-        gameLoopRef.current = undefined;
-      }
-    };
-  }, [gameState, gameLoop, resetGame]);
-
-  // Optimal Flappy Bird canvas dimensions - 9:16 aspect ratio
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const resizeCanvas = () => {
-      // Optimal Flappy Bird dimensions
-      const gameWidth = 360;
-      const gameHeight = 640;
-      const aspectRatio = gameWidth / gameHeight;
-      
-      const windowWidth = window.innerWidth;
-      const windowHeight = window.innerHeight;
-      const windowAspectRatio = windowWidth / windowHeight;
-      
-      let canvasWidth, canvasHeight;
-      
-      if (windowAspectRatio > aspectRatio) {
-        // Window is wider than game aspect ratio
-        canvasHeight = windowHeight;
-        canvasWidth = canvasHeight * aspectRatio;
-      } else {
-        // Window is taller than game aspect ratio
-        canvasWidth = windowWidth;
-        canvasHeight = canvasWidth / aspectRatio;
-      }
-      
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
-      
-      // Center the canvas
-      canvas.style.left = `${(windowWidth - canvasWidth) / 2}px`;
-      canvas.style.top = `${(windowHeight - canvasHeight) / 2}px`;
-      
-      console.log('Canvas resized to optimal Flappy Bird dimensions:', canvasWidth, 'x', canvasHeight);
-    };
-
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    return () => {
-      window.removeEventListener('resize', resizeCanvas);
-    };
-  }, []);
 
   return (
     <canvas
