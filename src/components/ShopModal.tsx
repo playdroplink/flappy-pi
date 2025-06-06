@@ -267,7 +267,7 @@ const ShopModal: React.FC<ShopModalProps> = ({
         try {
           const result = await gameBackendService.makePurchase(
             profile.pi_user_id,
-            'bird_skin' as const,
+            "bird_skin",
             skin.id
           );
 
@@ -328,7 +328,7 @@ const ShopModal: React.FC<ShopModalProps> = ({
       try {
         const result = await gameBackendService.makePurchase(
           profile.pi_user_id,
-          'bird_skin' as const,
+          "bird_skin",
           skin.id
         );
 
