@@ -11,7 +11,7 @@ export const useBackgroundMusic = ({ musicEnabled, gameState }: UseBackgroundMus
   const [isMobileAudioUnlocked, setIsMobileAudioUnlocked] = useState(false);
   const [volume, setVolume] = useState(0.3);
 
-  // Function to unlock audio on mobile
+  // Function to unlock audio on mobile with multiple format support
   const unlockAudio = () => {
     if (audioRef.current && !isMobileAudioUnlocked) {
       const playPromise = audioRef.current.play();
@@ -28,17 +28,40 @@ export const useBackgroundMusic = ({ musicEnabled, gameState }: UseBackgroundMus
   };
 
   useEffect(() => {
-    // Initialize audio
+    // Initialize audio with multiple format fallbacks
     if (!audioRef.current) {
-      audioRef.current = new Audio('/sounds/background/Flappy Pi Main Theme Song.mp3');
-      audioRef.current.loop = true;
-      audioRef.current.volume = volume;
-      audioRef.current.preload = 'auto';
+      audioRef.current = new Audio();
+      
+      // Try multiple formats for better compatibility
+      const formats = ['mp3', 'ogg'];
+      let formatIndex = 0;
 
-      // Handle loading errors
-      audioRef.current.addEventListener('error', () => {
-        console.warn('Background music failed to load');
-      });
+      const tryNextFormat = () => {
+        if (formatIndex >= formats.length) {
+          console.warn('Failed to load background music - no supported format found');
+          return;
+        }
+
+        const format = formats[formatIndex];
+        audioRef.current!.src = `/sounds/background/Flappy Pi Main Theme Song.${format}`;
+        
+        audioRef.current!.addEventListener('loadeddata', () => {
+          audioRef.current!.loop = true;
+          audioRef.current!.volume = volume;
+          audioRef.current!.preload = 'auto';
+          console.log(`Background music loaded successfully (${format})`);
+        }, { once: true });
+
+        audioRef.current!.addEventListener('error', () => {
+          console.log(`Format ${format} failed, trying next...`);
+          formatIndex++;
+          tryNextFormat();
+        }, { once: true });
+
+        audioRef.current!.load();
+      };
+
+      tryNextFormat();
     }
 
     const audio = audioRef.current;

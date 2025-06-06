@@ -16,13 +16,21 @@ export const useCanvasSetup = () => {
       const isMobile = windowWidth <= 768;
       
       if (isMobile) {
-        // Full screen on mobile
-        canvas.width = windowWidth;
-        canvas.height = windowHeight;
+        // Full screen on mobile with proper device pixel ratio
+        const devicePixelRatio = window.devicePixelRatio || 1;
+        
+        canvas.width = windowWidth * devicePixelRatio;
+        canvas.height = windowHeight * devicePixelRatio;
         canvas.style.width = `${windowWidth}px`;
         canvas.style.height = `${windowHeight}px`;
         canvas.style.left = '0px';
         canvas.style.top = '0px';
+        
+        // Scale context for high DPI displays
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.scale(devicePixelRatio, devicePixelRatio);
+        }
       } else {
         // Optimal Flappy Bird dimensions for desktop
         const gameWidth = 360;
@@ -40,20 +48,42 @@ export const useCanvasSetup = () => {
           canvasHeight = canvasWidth / aspectRatio;
         }
         
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
+        const devicePixelRatio = window.devicePixelRatio || 1;
+        
+        canvas.width = canvasWidth * devicePixelRatio;
+        canvas.height = canvasHeight * devicePixelRatio;
         canvas.style.width = `${canvasWidth}px`;
         canvas.style.height = `${canvasHeight}px`;
         canvas.style.left = `${(windowWidth - canvasWidth) / 2}px`;
         canvas.style.top = `${(windowHeight - canvasHeight) / 2}px`;
+        
+        // Scale context for high DPI displays
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.scale(devicePixelRatio, devicePixelRatio);
+        }
       }
       
-      console.log('Canvas resized:', canvas.width, 'x', canvas.height, 'Mobile:', isMobile);
+      console.log('Enhanced canvas resized:', canvas.width, 'x', canvas.height, 'Mobile:', isMobile, 'DPR:', window.devicePixelRatio || 1);
     };
 
     resizeCanvas();
+    
+    // Use multiple event listeners for better coverage
     window.addEventListener('resize', resizeCanvas);
     window.addEventListener('orientationchange', resizeCanvas);
+    
+    // Use ResizeObserver for more accurate detection if available
+    if (window.ResizeObserver) {
+      const resizeObserver = new ResizeObserver(resizeCanvas);
+      resizeObserver.observe(document.body);
+      
+      return () => {
+        window.removeEventListener('resize', resizeCanvas);
+        window.removeEventListener('orientationchange', resizeCanvas);
+        resizeObserver.disconnect();
+      };
+    }
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);

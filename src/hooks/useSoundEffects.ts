@@ -6,18 +6,40 @@ export const useSoundEffects = () => {
   const isMuted = useRef<boolean>(false);
   const isInitialized = useRef<boolean>(false);
 
-  const initializeSound = useCallback((key: string, src: string) => {
+  const initializeSound = useCallback((key: string, basePath: string) => {
     if (!audioRefs.current[key]) {
-      const audio = new Audio(src);
-      audio.preload = 'auto';
-      audio.volume = 0.6;
+      const audio = new Audio();
       
-      // Handle loading errors gracefully
-      audio.addEventListener('error', () => {
-        console.warn(`Failed to load sound: ${key}`);
-      });
-      
-      audioRefs.current[key] = audio;
+      // Try multiple formats for better compatibility
+      const formats = ['wav', 'mp3', 'ogg'];
+      let formatIndex = 0;
+
+      const tryNextFormat = () => {
+        if (formatIndex >= formats.length) {
+          console.warn(`Failed to load sound: ${key}`);
+          return;
+        }
+
+        const format = formats[formatIndex];
+        audio.src = `${basePath}.${format}`;
+        
+        audio.addEventListener('loadeddata', () => {
+          audio.preload = 'auto';
+          audio.volume = 0.6;
+          audioRefs.current[key] = audio;
+          console.log(`Sound loaded: ${key} (${format})`);
+        }, { once: true });
+
+        audio.addEventListener('error', () => {
+          console.log(`Format ${format} failed for ${key}, trying next...`);
+          formatIndex++;
+          tryNextFormat();
+        }, { once: true });
+
+        audio.load();
+      };
+
+      tryNextFormat();
     }
   }, []);
 
@@ -27,34 +49,36 @@ export const useSoundEffects = () => {
     const audio = audioRefs.current[key];
     if (audio) {
       try {
-        audio.currentTime = 0;
-        audio.volume = volume;
-        const playPromise = audio.play();
+        // Clone the audio for overlapping sounds
+        const audioClone = audio.cloneNode() as HTMLAudioElement;
+        audioClone.volume = volume;
+        audioClone.currentTime = 0;
         
+        const playPromise = audioClone.play();
         if (playPromise) {
           playPromise.catch(() => {
-            // Ignore play errors - common on mobile
+            // Ignore play errors - common on mobile without interaction
           });
         }
       } catch (error) {
-        // Ignore sound errors
+        // Ignore sound errors to prevent crashes
       }
     }
   }, []);
 
-  // Initialize all game sounds with correct paths
+  // Initialize all game sounds with correct paths and fallbacks
   const initializeGameSounds = useCallback(() => {
     if (isInitialized.current) return;
     
-    console.log('Initializing game sounds...');
+    console.log('Initializing enhanced game sounds...');
     
-    // Initialize with fallback sounds if main ones don't exist
-    initializeSound('wing', '/assets/audio/sfx_wing.wav');
-    initializeSound('point', '/assets/audio/sfx_point.wav');
-    initializeSound('hit', '/assets/audio/sfx_hit.wav');
-    initializeSound('die', '/assets/audio/sfx_die.wav');
-    initializeSound('swoosh', '/assets/audio/sfx_swooshing.wav');
-    initializeSound('heart', '/assets/audio/sfx_heart.wav'); // New heart pickup sound
+    // Initialize with multiple format fallbacks
+    initializeSound('wing', '/assets/audio/sfx_wing');
+    initializeSound('point', '/assets/audio/sfx_point');
+    initializeSound('hit', '/assets/audio/sfx_hit');
+    initializeSound('die', '/assets/audio/sfx_die');
+    initializeSound('swoosh', '/assets/audio/sfx_swooshing');
+    initializeSound('heart', '/assets/audio/sfx_heart');
     
     isInitialized.current = true;
   }, [initializeSound]);
