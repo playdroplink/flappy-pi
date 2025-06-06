@@ -68,15 +68,20 @@ export const useGameEvents = ({
     if (collisionLockRef.current) return;
     collisionLockRef.current = true;
     
+    console.log('💥 Collision detected - processing');
+    
     if (!reviveUsed) {
+      console.log('🎯 First collision - offering revive');
       setIsPausedForRevive(true);
       setShowContinueButton(false);
       setAdWatched(false);
-      setShowMandatoryAd(true);
+      setShowMandatoryAd(false);
+      setGameState('paused');
     } else {
+      console.log('🔚 Second collision - game over');
       handleGameOver(score);
     }
-  }, [reviveUsed, score, handleGameOver]);
+  }, [reviveUsed, score, handleGameOver, setGameState]);
 
   const { handleAdWatch } = useAdRewardHandler({
     coins,
@@ -105,9 +110,10 @@ export const useGameEvents = ({
   }, [coins, setCoins]);
 
   const handleMandatoryAdWatch = useCallback(() => {
-    console.log('Skipping mandatory ad - going straight to game over');
+    console.log('Mandatory ad watched - going to game over');
     resetCollisionLock();
     setShowMandatoryAd(false);
+    setIsPausedForRevive(false);
     handleGameOver(score);
   }, [handleGameOver, score, resetCollisionLock]);
 

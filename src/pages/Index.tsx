@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useGameState } from '@/hooks/useGameState';
 import { useGameEvents } from '@/hooks/useGameEvents';
@@ -12,6 +12,7 @@ import WelcomeScreen from '@/components/WelcomeScreen';
 import GameCanvas from '@/components/GameCanvas';
 import GameUI from '@/components/GameUI';
 import GameModals from '@/components/GameModals';
+import GameContinueOverlay from '@/components/GameContinueOverlay';
 import AuthModal from '@/components/AuthModal';
 import { Button } from '@/components/ui/button';
 import { LogOut, User } from 'lucide-react';
@@ -21,6 +22,7 @@ const Index = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showAdPopup, setShowAdPopup] = useState(false);
   const [adType, setAdType] = useState<'continue' | 'coins' | 'life'>('continue');
+  const continueGameRef = useRef<() => void>();
   
   const {
     showSplash,
@@ -74,7 +76,8 @@ const Index = () => {
     setLives,
     setLevel,
     setHighScore,
-    setCoins
+    setCoins,
+    continueGame: () => continueGameRef.current?.()
   });
 
   const {
@@ -104,6 +107,18 @@ const Index = () => {
     setAdType(adType);
     setShowAdPopup(true);
     await handleAdWatch(adType);
+  };
+
+  const handleStartNewGame = (mode: 'classic' | 'endless' | 'challenge' = 'classic') => {
+    console.log('Starting new game - resetting all states');
+    resetGameEventStates();
+    startGame(mode);
+  };
+
+  const handleBackToMenu = () => {
+    console.log('Back to menu - resetting all states');
+    resetGameEventStates();
+    backToMenu();
   };
 
   if (authLoading) {
@@ -173,7 +188,7 @@ const Index = () => {
       {/* Welcome Screen */}
       {showWelcome && (
         <WelcomeScreen
-          onStartGame={startGame}
+          onStartGame={handleStartNewGame}
           onOpenLeaderboard={() => setShowLeaderboard(true)}
           onOpenShop={() => setShowShop(true)}
           onOpenHelp={() => setShowHelp(true)}
@@ -198,6 +213,9 @@ const Index = () => {
           gameState={gameState}
           musicEnabled={musicEnabled}
           onGameOver={handleGameOver}
+          onContinueGameRef={(fn) => {
+            continueGameRef.current = fn;
+          }}
         />
       )}
 
@@ -209,17 +227,23 @@ const Index = () => {
           lives={lives}
           coins={coins}
           highScore={highScore}
-          gameState={gameState}
+          gameState={isPausedForRevive ? 'paused' : gameState}
           gameMode={gameMode}
           isPausedForRevive={isPausedForRevive}
           onStartGame={() => setGameState('playing')}
-          onBackToMenu={backToMenu}
+          onBackToMenu={handleBackToMenu}
           onOpenShop={() => setShowShop(true)}
           onOpenLeaderboard={() => setShowLeaderboard(true)}
           onShowAd={() => handleWatchAd('continue')}
           onShareScore={() => setShowShareScore(true)}
         />
       )}
+
+      {/* Game Continue Overlay */}
+      <GameContinueOverlay
+        showContinueButton={showContinueButton}
+        onContinue={handleContinueClick}
+      />
 
       {/* All Game Modals */}
       <GameModals
@@ -252,8 +276,8 @@ const Index = () => {
         setShowDailyRewards={setShowDailyRewards}
         setCoins={setCoins}
         setSelectedBirdSkin={setSelectedBirdSkin}
-        onNewGame={() => startGame('classic')}
-        onBackToMenu={backToMenu}
+        onNewGame={() => handleStartNewGame('classic')}
+        onBackToMenu={handleBackToMenu}
         onCloseLeaderboard={() => setShowLeaderboard(false)}
         onCloseShop={() => setShowShop(false)}
         onCloseHelp={() => setShowHelp(false)}

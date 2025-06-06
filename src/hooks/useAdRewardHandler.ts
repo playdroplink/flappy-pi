@@ -1,5 +1,6 @@
 
 import { useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface UseAdRewardHandlerProps {
   coins: number;
@@ -20,29 +21,47 @@ export const useAdRewardHandler = ({
   setCoins,
   setLives
 }: UseAdRewardHandlerProps) => {
+  const { toast } = useToast();
 
   const handleAdWatch = useCallback(async (adType: 'continue' | 'coins' | 'life') => {
-    console.log(`🎬 Watching ${adType} ad`);
+    console.log(`📺 Watching ${adType} ad`);
     
     // Simulate ad watching
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    if (adType === 'continue' && isPausedForRevive) {
-      setAdWatched(true);
-      setShowContinueButton(true);
-    } else if (adType === 'coins') {
-      const bonusCoins = 50;
-      const newCoins = coins + bonusCoins;
-      setCoins(newCoins);
-      localStorage.setItem('flappypi-coins', newCoins.toString());
-    } else if (adType === 'life') {
-      // Get current lives and add one
-      const currentLives = parseInt(localStorage.getItem('flappypi-lives') || '3');
-      const newLives = Math.min(currentLives + 1, 3);
-      setLives(newLives);
-      localStorage.setItem('flappypi-lives', newLives.toString());
+    switch (adType) {
+      case 'continue':
+        if (isPausedForRevive && !adWatched) {
+          console.log('✅ Continue ad watched - showing continue button');
+          setAdWatched(true);
+          setShowContinueButton(true);
+          toast({
+            title: "Ad Watched! 🎉",
+            description: "You can now continue your game!"
+          });
+        }
+        break;
+        
+      case 'coins':
+        const coinReward = 50;
+        const newCoins = coins + coinReward;
+        setCoins(newCoins);
+        localStorage.setItem('flappypi-coins', newCoins.toString());
+        toast({
+          title: "Coins Earned! 💰",
+          description: `You earned ${coinReward} coins!`
+        });
+        break;
+        
+      case 'life':
+        setLives(1);
+        toast({
+          title: "Extra Life! ❤️",
+          description: "You gained an extra life!"
+        });
+        break;
     }
-  }, [coins, adWatched, isPausedForRevive, setShowContinueButton, setAdWatched, setCoins, setLives]);
+  }, [coins, adWatched, isPausedForRevive, setShowContinueButton, setAdWatched, setCoins, setLives, toast]);
 
   return {
     handleAdWatch
