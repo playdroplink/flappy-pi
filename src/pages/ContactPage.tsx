@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -48,30 +49,30 @@ const ContactPage: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 w-full h-full flex flex-col">
-      <ScrollArea className="flex-1">
-        <div className="min-h-screen bg-gradient-to-br from-sky-400 via-cyan-400 to-blue-500 p-4">
-          <div className="max-w-4xl mx-auto">
+    <div className="fixed inset-0 w-full h-full flex flex-col safe-area-top safe-area-bottom">
+      <ScrollArea className="flex-1 smooth-scroll">
+        <div className="min-h-screen bg-gradient-to-br from-sky-400 via-cyan-400 to-blue-500">
+          <div className="mobile-container max-w-4xl mx-auto">
             {/* Header */}
             <div className="flex items-center space-x-4 mb-6 flex-shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate(-1)}
-                className="text-white hover:bg-white/20"
+                className="text-white hover:bg-white/20 no-select touch-action-manipulation"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="flex items-center space-x-2">
                 <Mail className="h-6 w-6 text-white" />
-                <h1 className="text-2xl font-bold text-white">Contact Us</h1>
+                <h1 className="mobile-title text-white">Contact Us</h1>
               </div>
             </div>
 
             {/* Content */}
-            <div className="space-y-6 pr-4">
+            <div className="space-y-6">
               {/* Contact Form */}
-              <Card className="p-6 bg-white/95 backdrop-blur-sm">
+              <Card className="mobile-card">
                 <div className="text-center mb-6">
                   <h2 className="text-xl font-bold text-gray-800 mb-2">Get in Touch</h2>
                   <p className="text-gray-600">We'd love to hear from you! Send us a message.</p>
@@ -89,7 +90,7 @@ const ContactPage: React.FC = () => {
                         onChange={(e) => handleInputChange('name', e.target.value)}
                         placeholder="Your name"
                         required
-                        className="bg-white border-gray-300 text-gray-900"
+                        className="mobile-input bg-white border-gray-300 text-gray-900"
                       />
                     </div>
                     <div>
@@ -102,7 +103,7 @@ const ContactPage: React.FC = () => {
                         onChange={(e) => handleInputChange('email', e.target.value)}
                         placeholder="your@email.com"
                         required
-                        className="bg-white border-gray-300 text-gray-900"
+                        className="mobile-input bg-white border-gray-300 text-gray-900"
                       />
                     </div>
                   </div>
@@ -116,7 +117,7 @@ const ContactPage: React.FC = () => {
                       value={formData.subject}
                       onChange={(e) => handleInputChange('subject', e.target.value)}
                       placeholder="What's this about?"
-                      className="bg-white border-gray-300 text-gray-900"
+                      className="mobile-input bg-white border-gray-300 text-gray-900"
                     />
                   </div>
 
@@ -128,15 +129,14 @@ const ContactPage: React.FC = () => {
                       value={formData.message}
                       onChange={(e) => handleInputChange('message', e.target.value)}
                       placeholder="Tell us what's on your mind..."
-                      rows={5}
                       required
-                      className="bg-white border-gray-300 text-gray-900"
+                      className="mobile-textarea bg-white border-gray-300 text-gray-900"
                     />
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700"
+                    className="mobile-button bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 no-select touch-action-manipulation"
                   >
                     <Send className="mr-2 h-4 w-4" />
                     Send Message
@@ -168,7 +168,7 @@ const ContactPage: React.FC = () => {
               </div>
 
               {/* FAQ Section */}
-              <Card className="p-6 bg-white/95 backdrop-blur-sm">
+              <Card className="mobile-card">
                 <div className="flex items-center space-x-2 mb-4">
                   <HelpCircle className="h-6 w-6 text-blue-600" />
                   <h3 className="text-xl font-bold text-gray-800">Contact FAQ</h3>
@@ -206,7 +206,7 @@ const ContactPage: React.FC = () => {
               </Card>
 
               {/* Community Links */}
-              <Card className="p-6 bg-white/90 backdrop-blur-sm">
+              <Card className="mobile-card">
                 <div className="text-center">
                   <Users className="h-8 w-8 text-purple-600 mx-auto mb-3" />
                   <h3 className="font-semibold text-gray-800 mb-2">Join Our Community</h3>
