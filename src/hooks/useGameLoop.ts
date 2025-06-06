@@ -108,13 +108,28 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     const BIRD_SIZE = 25;
     const PIPE_WIDTH = 120;
     
-    // ONLY check pipe collisions
+    // Check ceiling collision
+    if (bird.y - BIRD_SIZE/2 <= 0) {
+      console.log('Bird hit ceiling! Collision detected');
+      return true;
+    }
+    
+    // Check ground collision
+    if (bird.y + BIRD_SIZE/2 >= canvas.height) {
+      console.log('Bird hit ground! Collision detected');
+      return true;
+    }
+    
+    // Check pipe collisions
     for (const pipe of pipes) {
       if (
-        bird.x + BIRD_SIZE - 12 > pipe.x &&
-        bird.x + 12 < pipe.x + PIPE_WIDTH
+        bird.x + BIRD_SIZE/2 > pipe.x &&
+        bird.x - BIRD_SIZE/2 < pipe.x + PIPE_WIDTH
       ) {
-        if (bird.y + 12 < pipe.topHeight || bird.y + BIRD_SIZE - 12 > pipe.bottomY) {
+        if (
+          bird.y - BIRD_SIZE/2 < pipe.topHeight || 
+          bird.y + BIRD_SIZE/2 > pipe.bottomY
+        ) {
           console.log('Bird hit pipe! Collision detected');
           return true;
         }
