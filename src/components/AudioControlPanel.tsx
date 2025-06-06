@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Volume2, VolumeX, Music, MusicOff, Headphones } from 'lucide-react';
+import { Volume2, VolumeX, Music, MicOff, Headphones } from 'lucide-react';
 import { useCompleteAudioSystem } from '@/hooks/useCompleteAudioSystem';
 
 const AudioControlPanel: React.FC = () => {
@@ -65,7 +65,7 @@ const AudioControlPanel: React.FC = () => {
             {isMusicPlaying ? (
               <Music className="h-5 w-5 text-blue-500" />
             ) : (
-              <MusicOff className="h-5 w-5 text-gray-400" />
+              <MicOff className="h-5 w-5 text-gray-400" />
             )}
             <span>Background Music</span>
           </div>

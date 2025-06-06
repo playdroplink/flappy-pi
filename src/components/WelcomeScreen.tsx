@@ -101,17 +101,18 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
           <UserStatsCard 
             coins={coins}
-            isAuthenticated={isAuthenticated}
-            onOpenAuth={() => setShowPiAuth(true)}
+            musicEnabled={musicEnabled}
+            onToggleMusic={onToggleMusic}
           />
 
-          <GameModeButtons onStartGame={handleStartGame} />
+          <GameModeButtons 
+            onStartGame={handleStartGame}
+            onOpenTutorial={() => handleActionClick(onOpenTutorial)}
+          />
 
           <QuickActionButtons
             onOpenShop={() => handleActionClick(onOpenShop)}
             onOpenLeaderboard={() => handleActionClick(onOpenLeaderboard)}
-            onOpenTutorial={() => handleActionClick(onOpenTutorial)}
-            onOpenHelp={() => handleActionClick(onOpenHelp)}
           />
         </div>
 
@@ -119,6 +120,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           onOpenPrivacy={() => handleActionClick(onOpenPrivacy)}
           onOpenTerms={() => handleActionClick(onOpenTerms)}
           onOpenContact={() => handleActionClick(onOpenContact)}
+          onOpenHelp={() => handleActionClick(onOpenHelp)}
         />
       </div>
 
