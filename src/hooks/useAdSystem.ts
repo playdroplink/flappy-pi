@@ -49,7 +49,10 @@ export const useAdSystem = () => {
   // Show mandatory ad every 3 games (not if user has ad-free)
   const shouldShowMandatoryAd = !isAdFree && gameCount > 0 && gameCount % 3 === 0;
 
-  const purchaseAdFree = useCallback(async () => {
+  // User can continue without ad if they have ad-free subscription
+  const canContinueWithoutAd = isAdFree;
+
+  const purchaseAdFree = useCallback(async (coins?: number) => {
     toast({
       title: "Processing Pi Payment",
       description: "Purchasing ad-free subscription..."
@@ -85,13 +88,19 @@ export const useAdSystem = () => {
   }, [purchaseAdFree]);
 
   const adFreeTimeRemaining = adFreeExpiresAt 
-    ? Math.max(0, Math.ceil((new Date(adFreeExpiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
-    : 0;
+    ? (() => {
+        const timeLeft = new Date(adFreeExpiresAt).getTime() - new Date().getTime();
+        const daysLeft = Math.max(0, Math.ceil(timeLeft / (1000 * 60 * 60 * 24)));
+        const hoursLeft = Math.max(0, Math.ceil((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
+        return { days: daysLeft, hours: hoursLeft };
+      })()
+    : null;
 
   return {
     gameCount,
     isAdFree,
     shouldShowMandatoryAd,
+    canContinueWithoutAd,
     adFreeTimeRemaining,
     incrementGameCount,
     resetAdCounter,
