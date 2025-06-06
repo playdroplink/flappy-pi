@@ -19,9 +19,9 @@ export const useGamePhysics = ({
   gameMode
 }: UseGamePhysicsProps) => {
   const difficultyCache = useRef<{ score: number; difficulty: any } | null>(null);
+  const lastScoreUpdate = useRef<number>(0);
 
   const getDifficultyOptimized = useCallback((score: number) => {
-    // Cache difficulty to avoid excessive calculations
     if (difficultyCache.current && difficultyCache.current.score === score) {
       return difficultyCache.current.difficulty;
     }
@@ -41,107 +41,119 @@ export const useGamePhysics = ({
     
     const difficulty = getDifficultyOptimized(state.score);
     const scoreMultiplier = getScoreMultiplier(gameMode);
-    const GRAVITY = 0.35;
+    const GRAVITY = 0.4;
     const PIPE_WIDTH = 120;
+    const BIRD_SIZE = 25;
 
-    // Apply wind effect if enabled
+    // Apply enhanced wind effect
     let horizontalForce = 0;
     if (difficulty.hasWind) {
       horizontalForce = Math.sin(state.frameCount * 0.02) * difficulty.windStrength;
     }
 
-    // Update bird physics
+    // Enhanced bird physics with better feel
     state.bird.velocity += GRAVITY;
     state.bird.y += state.bird.velocity;
     state.bird.x += horizontalForce;
     
-    // Bird rotation based on velocity
-    state.bird.rotation = Math.min(Math.max(state.bird.velocity * 2.5, -25), 70);
+    // Enhanced bird rotation for better visual feedback
+    state.bird.rotation = Math.min(Math.max(state.bird.velocity * 3, -30), 90);
 
-    // Keep bird within horizontal bounds when wind is active
+    // Keep bird within bounds when wind is active
     if (difficulty.hasWind) {
-      state.bird.x = Math.max(50, Math.min(state.bird.x, canvas.width - 150));
+      state.bird.x = Math.max(60, Math.min(state.bird.x, canvas.width - 160));
     }
 
-    // Spawn new pipes
-    const spawnThreshold = Math.max(difficulty.spawnRate, 120);
+    // Enhanced pipe spawning with better timing
+    const baseSpawnRate = 180;
+    const spawnThreshold = Math.max(baseSpawnRate - (state.score * 2), difficulty.spawnRate);
+    
     if (state.frameCount - state.lastPipeSpawn > spawnThreshold) {
-      const minHeight = 80;
-      const maxHeight = canvas.height - difficulty.pipeGap - minHeight - 25; // Account for ground
+      const minHeight = 100;
+      const maxHeight = canvas.height - difficulty.pipeGap - minHeight - 40;
       const pipeHeight = Math.random() * (maxHeight - minHeight) + minHeight;
       
       const newPipe = {
-        x: canvas.width,
+        x: canvas.width + 50,
         topHeight: pipeHeight,
         bottomY: pipeHeight + difficulty.pipeGap,
         passed: false,
         isMoving: difficulty.hasMovingPipes,
         verticalDirection: difficulty.hasMovingPipes ? (Math.random() > 0.5 ? 1 : -1) : 0,
-        moveSpeed: difficulty.hasMovingPipes ? 1 : 0
+        moveSpeed: difficulty.hasMovingPipes ? 1.2 : 0
       };
       state.pipes.push(newPipe);
       state.lastPipeSpawn = state.frameCount;
     }
 
-    // Spawn clouds if enabled
-    if (difficulty.hasClouds && state.frameCount % 200 === 0) {
+    // Enhanced cloud spawning
+    if (difficulty.hasClouds && state.frameCount % 180 === 0) {
       if (!state.clouds) state.clouds = [];
-      state.clouds.push({
-        x: canvas.width,
-        y: Math.random() * (canvas.height * 0.3) + 50,
-        size: Math.random() * 60 + 40,
-        speed: 0.5 + Math.random() * 0.5
-      });
+      if (state.clouds.length < 6) { // Limit clouds for performance
+        state.clouds.push({
+          x: canvas.width + 100,
+          y: Math.random() * (canvas.height * 0.4) + 40,
+          size: Math.random() * 80 + 60,
+          speed: 0.3 + Math.random() * 0.4
+        });
+      }
     }
 
-    // Update pipes and check for scoring
+    // Enhanced pipe movement and scoring
     state.pipes = state.pipes.filter((pipe: any) => {
       pipe.x -= difficulty.pipeSpeed;
       
-      // Move pipes vertically if enabled
+      // Enhanced moving pipe logic
       if (pipe.isMoving) {
         const moveAmount = pipe.moveSpeed * pipe.verticalDirection;
         pipe.topHeight += moveAmount;
         pipe.bottomY += moveAmount;
         
-        // Keep moving pipes within safe bounds
-        const minTopHeight = 60;
-        const maxBottomY = canvas.height - 85; // Account for ground
+        const minTopHeight = 80;
+        const maxBottomY = canvas.height - 100;
         
         if (pipe.topHeight <= minTopHeight || pipe.bottomY >= maxBottomY) {
           pipe.verticalDirection *= -1;
+          // Add slight randomness to movement
+          pipe.moveSpeed = 0.8 + Math.random() * 0.8;
         }
       }
       
-      // Enhanced scoring logic - score when bird's CENTER passes pipe's RIGHT edge
-      if (!pipe.passed && state.bird.x > (pipe.x + PIPE_WIDTH)) {
+      // Enhanced scoring - only score once per pipe when bird center passes pipe center
+      const birdCenter = state.bird.x;
+      const pipeCenter = pipe.x + (PIPE_WIDTH / 2);
+      
+      if (!pipe.passed && birdCenter > pipeCenter) {
         pipe.passed = true;
         state.score++;
         
         console.log('Score increased to:', state.score);
         
-        // Immediately update UI score
-        onScoreUpdate(state.score);
-        
-        // Award coins based on mode multiplier
-        const coinsEarned = Math.floor(scoreMultiplier);
-        onCoinEarned(coinsEarned);
+        // Throttled UI updates for better performance
+        if (state.score !== lastScoreUpdate.current) {
+          onScoreUpdate(state.score);
+          lastScoreUpdate.current = state.score;
+          
+          // Award coins with mode-based multiplier
+          const coinsEarned = Math.max(1, Math.floor(scoreMultiplier));
+          onCoinEarned(coinsEarned);
+        }
       }
       
-      return pipe.x > -PIPE_WIDTH;
+      return pipe.x > -PIPE_WIDTH - 50;
     });
 
-    // Update clouds
+    // Update clouds with culling
     if (state.clouds) {
       state.clouds = state.clouds.filter((cloud: any) => {
         cloud.x -= cloud.speed;
-        return cloud.x > -cloud.size;
+        return cloud.x > -cloud.size - 50;
       });
     }
 
-    // Enhanced collision detection - check BEFORE updating frame count
+    // Enhanced collision detection - check before updating frame count
     if (checkCollisions(canvas)) {
-      console.log('Collision detected! Game over triggered');
+      console.log('Enhanced collision detected! Triggering game over');
       state.gameOver = true;
       onCollision();
       return;

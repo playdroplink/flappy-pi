@@ -10,16 +10,8 @@ export const useModals = () => {
   const [showTerms, setShowTerms] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [adType, setAdType] = useState<'continue' | 'coins' | 'life'>('continue');
-
-  const handleShareScore = () => {
-    setShowShareScore(true);
-  };
-
-  const handleShowAd = (type: 'continue' | 'coins' | 'life' = 'continue') => {
-    setAdType(type);
-    setShowAdPopup(true);
-  };
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [adType, setAdType] = useState<'continue' | 'coins' | 'life'>('coins');
 
   return {
     showShop,
@@ -30,6 +22,7 @@ export const useModals = () => {
     showTerms,
     showContact,
     showHelp,
+    showTutorial,
     adType,
     setShowShop,
     setShowLeaderboard,
@@ -39,8 +32,7 @@ export const useModals = () => {
     setShowTerms,
     setShowContact,
     setShowHelp,
-    setAdType,
-    handleShareScore,
-    handleShowAd
+    setShowTutorial,
+    setAdType
   };
 };
