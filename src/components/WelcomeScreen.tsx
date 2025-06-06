@@ -36,7 +36,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   useBackgroundMusic({ musicEnabled, gameState: 'menu' });
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-sky-400 via-cyan-400 to-blue-500 flex flex-col relative overflow-hidden">
+    <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-sky-400 via-cyan-400 to-blue-500 flex flex-col overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 pointer-events-none">
         {/* Floating clouds */}
@@ -84,7 +84,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </div>
 
         {/* User Stats Card */}
-        <Card className="w-full p-4 mb-6 bg-white/95 backdrop-blur-sm border-0 shadow-xl animate-fade-in" style={{ animationDelay: '0.2s' }}>
+        <Card className="w-full p-4 mb-6 bg-white/95 backdrop-blur-sm shadow-xl animate-fade-in rounded-xl border-0" style={{ animationDelay: '0.2s' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
@@ -114,7 +114,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           
           <Button 
             onClick={() => onStartGame('classic')}
-            className="w-full h-14 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold text-lg shadow-xl transform hover:scale-105 transition-all duration-200 border-0"
+            className="w-full h-14 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold text-lg shadow-xl transform hover:scale-105 transition-all duration-200 border-0 rounded-xl"
           >
             <Play className="mr-3 h-6 w-6" />
             Classic Mode
@@ -122,7 +122,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           
           <Button 
             onClick={() => onStartGame('endless')}
-            className="w-full h-14 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-bold text-lg shadow-xl transform hover:scale-105 transition-all duration-200 border-0"
+            className="w-full h-14 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-bold text-lg shadow-xl transform hover:scale-105 transition-all duration-200 border-0 rounded-xl"
           >
             <Play className="mr-3 h-6 w-6" />
             Endless Mode
@@ -130,7 +130,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           
           <Button 
             onClick={() => onStartGame('challenge')}
-            className="w-full h-14 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold text-lg shadow-xl transform hover:scale-105 transition-all duration-200 border-0"
+            className="w-full h-14 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold text-lg shadow-xl transform hover:scale-105 transition-all duration-200 border-0 rounded-xl"
           >
             <Play className="mr-3 h-6 w-6" />
             Challenge Mode
@@ -141,7 +141,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         <div className="w-full grid grid-cols-2 gap-3 mb-6 animate-fade-in" style={{ animationDelay: '0.6s' }}>
           <Button 
             onClick={onOpenShop}
-            className="h-12 bg-white/90 hover:bg-white text-gray-800 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200 border-0"
+            className="h-12 bg-white/90 hover:bg-white text-gray-800 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200 border-0 rounded-xl"
           >
             <ShoppingCart className="mr-2 h-5 w-5" />
             Shop
@@ -149,7 +149,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           
           <Button 
             onClick={onOpenLeaderboard}
-            className="h-12 bg-white/90 hover:bg-white text-gray-800 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200 border-0"
+            className="h-12 bg-white/90 hover:bg-white text-gray-800 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200 border-0 rounded-xl"
           >
             <Trophy className="mr-2 h-5 w-5" />
             Leaderboard
@@ -159,13 +159,13 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
       {/* Footer */}
       <div className="px-4 pb-4 animate-fade-in" style={{ animationDelay: '0.8s' }}>
-        <Card className="p-3 bg-white/90 backdrop-blur-sm border-0 shadow-xl">
+        <Card className="p-3 bg-white/90 backdrop-blur-sm shadow-xl rounded-xl border-0">
           <div className="grid grid-cols-4 gap-1 mb-3">
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={onOpenPrivacy}
-              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2 px-1"
+              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2 px-1 rounded-lg"
             >
               <Shield className="h-4 w-4" />
               <span className="text-xs">Privacy</span>
@@ -174,7 +174,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               variant="ghost" 
               size="sm" 
               onClick={onOpenTerms}
-              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2 px-1"
+              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2 px-1 rounded-lg"
             >
               <FileText className="h-4 w-4" />
               <span className="text-xs">Terms</span>
@@ -183,7 +183,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               variant="ghost" 
               size="sm" 
               onClick={onOpenContact}
-              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2 px-1"
+              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2 px-1 rounded-lg"
             >
               <Mail className="h-4 w-4" />
               <span className="text-xs">Contact</span>
@@ -192,7 +192,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               variant="ghost" 
               size="sm" 
               onClick={onOpenHelp}
-              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2 px-1"
+              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2 px-1 rounded-lg"
             >
               <HelpCircle className="h-4 w-4" />
               <span className="text-xs">Help</span>
