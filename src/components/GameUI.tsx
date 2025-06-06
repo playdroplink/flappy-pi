@@ -39,55 +39,52 @@ const GameUI: React.FC<GameUIProps> = ({
   if (gameState === 'playing' && !isPausedForRevive) {
     return (
       <div className="fixed inset-0 pointer-events-none z-10">
-        {/* Modern Header Layout with Flappy Pi Branding */}
-        <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-          {/* Left Side - Flappy Pi Logo */}
-          <div className="flex flex-col gap-2">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl px-4 py-2 text-white font-bold shadow-lg backdrop-blur-sm">
-              <div className="text-lg">🐦 Flappy Pi</div>
-              <div className="text-xs opacity-80">Level {level}</div>
-              <div className="text-xs uppercase tracking-wide">{gameMode}</div>
+        {/* Flappy Bird Style Header - Centered Score */}
+        <div className="absolute top-8 left-0 right-0 flex justify-center">
+          <div className="bg-white/95 rounded-xl px-6 py-3 shadow-xl border-2 border-gray-300">
+            <div className="text-4xl font-black text-gray-800 text-center tracking-tight">
+              {score}
             </div>
           </div>
+        </div>
 
-          {/* Center - Large Floating Score */}
-          <div className="flex justify-center transform -translate-y-2">
-            <div className="bg-white/95 rounded-2xl px-8 py-4 shadow-2xl border-4 border-yellow-400">
-              <div className="text-6xl font-black text-gray-800 text-center tracking-tight animate-pulse">
-                {score}
-              </div>
-            </div>
+        {/* Top Left - Flappy Pi Branding */}
+        <div className="absolute top-4 left-4">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg px-3 py-2 text-white font-bold shadow-lg backdrop-blur-sm">
+            <div className="text-sm">🐦 Flappy Pi</div>
+            <div className="text-xs opacity-80">Level {level}</div>
+            <div className="text-xs uppercase tracking-wide">{gameMode}</div>
           </div>
+        </div>
 
-          {/* Right Side - Shop & Leaderboard Icons */}
-          <div className="flex flex-col gap-2 pointer-events-auto">
-            <Button
-              onClick={onOpenShop}
-              size="sm"
-              className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-lg"
-            >
-              🛒
-            </Button>
-            <Button
-              onClick={onOpenLeaderboard}
-              size="sm"
-              className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white shadow-lg"
-            >
-              🏆
-            </Button>
-          </div>
+        {/* Top Right - Quick Actions */}
+        <div className="absolute top-4 right-4 flex gap-2 pointer-events-auto">
+          <Button
+            onClick={onOpenShop}
+            size="sm"
+            className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-lg w-10 h-10 p-0"
+          >
+            🛒
+          </Button>
+          <Button
+            onClick={onOpenLeaderboard}
+            size="sm"
+            className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white shadow-lg w-10 h-10 p-0"
+          >
+            🏆
+          </Button>
         </div>
         
         {/* Bottom Left - Lives and Flappy Coins */}
         <div className="absolute bottom-4 left-4 flex flex-col gap-2">
-          <div className="flex items-center gap-2 bg-red-500/90 rounded-lg px-4 py-3 backdrop-blur-sm shadow-lg">
-            <Heart className="w-5 h-5 text-red-100" />
-            <span className="text-white font-bold text-lg">{lives}</span>
+          <div className="flex items-center gap-2 bg-red-500/90 rounded-lg px-3 py-2 backdrop-blur-sm shadow-lg">
+            <Heart className="w-4 h-4 text-red-100" />
+            <span className="text-white font-bold text-sm">{lives}</span>
           </div>
-          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg px-4 py-3 text-white font-bold shadow-lg backdrop-blur-sm">
+          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg px-3 py-2 text-white font-bold shadow-lg backdrop-blur-sm">
             <div className="flex items-center gap-2">
-              <Coins className="w-5 h-5 text-yellow-100" />
-              <span className="text-lg font-bold">{coins}</span>
+              <Coins className="w-4 h-4 text-yellow-100" />
+              <span className="text-sm font-bold">{coins}</span>
             </div>
             <div className="text-xs opacity-80">Flappy Coins</div>
           </div>

@@ -119,15 +119,17 @@ export const useGamePhysics = ({
         }
       }
       
-      // FIXED: Score when bird CENTER passes pipe RIGHT edge (not left edge)
-      if (!pipe.passed && state.bird.x > (pipe.x + PIPE_WIDTH)) {
+      // FIXED: Score when bird passes pipe center (bird.x > pipe center)
+      const pipeCenterX = pipe.x + (PIPE_WIDTH / 2);
+      if (!pipe.passed && state.bird.x > pipeCenterX) {
         pipe.passed = true;
-        state.score++;
+        const newScore = state.score + 1;
+        state.score = newScore;
         
-        console.log('SCORE! Bird passed pipe. Score:', state.score);
+        console.log('SCORE! Bird passed pipe center. New score:', newScore);
         
         // Immediately update UI score
-        onScoreUpdate(state.score);
+        onScoreUpdate(newScore);
         
         // Award coins based on mode multiplier
         const coinsEarned = Math.floor(scoreMultiplier);

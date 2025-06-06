@@ -112,15 +112,15 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     
     if (gameOver || gameState !== 'playing') return false;
     
-    // Improved bird hitbox - smaller for better gameplay
-    const BIRD_SIZE = 20; // Reduced from 25
+    // Mobile-optimized bird hitbox - matches visual size
+    const BIRD_SIZE = 35; // Updated to match renderer
     const PIPE_WIDTH = 120;
     
-    // More forgiving collision detection
-    const birdLeft = bird.x - BIRD_SIZE/2 + 5; // Increased margin
-    const birdRight = bird.x + BIRD_SIZE/2 - 5;
-    const birdTop = bird.y - BIRD_SIZE/2 + 5;
-    const birdBottom = bird.y + BIRD_SIZE/2 - 5;
+    // More forgiving collision detection for mobile
+    const birdLeft = bird.x - BIRD_SIZE/2 + 8; // Increased margin for mobile
+    const birdRight = bird.x + BIRD_SIZE/2 - 8;
+    const birdTop = bird.y - BIRD_SIZE/2 + 8;
+    const birdBottom = bird.y + BIRD_SIZE/2 - 8;
     
     // Check ceiling collision
     if (birdTop <= 0) {

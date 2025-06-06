@@ -52,7 +52,9 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
     const state = gameStateRef.current;
     const difficulty = getDifficultyOptimized(state.score);
     const backgroundColors = getBackgroundColorsOptimized(difficulty.timeOfDay);
-    const BIRD_SIZE = 25;
+    
+    // Mobile-optimized bird size - perfect for visibility
+    const BIRD_SIZE = 35; // Increased for mobile visibility
     const PIPE_WIDTH = 120;
 
     // Clear canvas with beautiful gradient background
@@ -155,7 +157,7 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
       ctx.shadowBlur = 0;
     });
 
-    // Draw bird with enhanced visibility and animation
+    // Draw bird with enhanced visibility and Flappy Bird style size
     const birdImage = new Image();
     birdImage.src = getBirdImage();
     
@@ -167,11 +169,17 @@ export const useGameRenderer = ({ canvasRef, gameStateRef, birdSkin, gameMode }:
       ctx.shadowBlur = 20;
     }
     
-    // Flapping animation effect
-    const flapOffset = Math.sin(state.frameCount * 0.3) * 2;
+    // Flapping animation effect - more pronounced for visibility
+    const flapOffset = Math.sin(state.frameCount * 0.3) * 3;
     
     ctx.translate(state.bird.x + BIRD_SIZE/2, state.bird.y + BIRD_SIZE/2 + flapOffset);
     ctx.rotate(state.bird.rotation * Math.PI / 180);
+    
+    // Draw bird with better visibility outline
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-BIRD_SIZE/2, -BIRD_SIZE/2, BIRD_SIZE, BIRD_SIZE);
+    
     ctx.drawImage(birdImage, -BIRD_SIZE/2, -BIRD_SIZE/2, BIRD_SIZE, BIRD_SIZE);
     ctx.restore();
 
