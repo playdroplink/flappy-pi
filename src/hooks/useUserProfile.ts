@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { gameBackendService, UserProfile } from '@/services/gameBackendService';
 import { purchaseStateService, PurchaseState } from '@/services/purchaseStateService';
 import { subscriptionService } from '@/services/subscriptionService';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabaseAuth } from './useSupabaseAuth';
 
 interface UseUserProfileReturn {
   profile: UserProfile | null;
@@ -12,12 +12,16 @@ interface UseUserProfileReturn {
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   refreshProfile: () => Promise<void>;
   refreshPurchaseState: () => Promise<void>;
-  initializeProfile: (piUserId: string, username: string) => Promise<void>;
+  initializeProfile: (piUserId?: string, username?: string) => Promise<void>;
   hasPremium: boolean;
   isAdFree: boolean;
   ownedSkins: string[];
   hasActiveSubscription: boolean;
   subscriptionStatus: string;
+  // Auth methods
+  signInWithPi: () => Promise<boolean>;
+  signOut: () => Promise<void>;
+  isAuthenticated: boolean;
 }
 
 export const useUserProfile = (): UseUserProfileReturn => {
@@ -25,6 +29,7 @@ export const useUserProfile = (): UseUserProfileReturn => {
   const [purchaseState, setPurchaseState] = useState<PurchaseState | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user, session, loading: authLoading, signInWithPi, signOut } = useSupabaseAuth();
 
   // Generate a mock Pi user ID for demo purposes
   const generateMockPiUser = () => {
@@ -38,10 +43,10 @@ export const useUserProfile = (): UseUserProfileReturn => {
   };
 
   const refreshPurchaseState = async () => {
-    if (!profile?.pi_user_id) return;
+    if (!user?.id) return;
 
     try {
-      const state = await purchaseStateService.getPurchaseState(profile.pi_user_id);
+      const state = await purchaseStateService.getPurchaseState(user.id);
       setPurchaseState(state);
       
       // Update localStorage for immediate UI feedback
@@ -52,7 +57,7 @@ export const useUserProfile = (): UseUserProfileReturn => {
   };
 
   const checkSubscriptionExpiry = async () => {
-    if (!profile?.pi_user_id) return;
+    if (!user?.id) return;
 
     try {
       // Check if subscriptions need to be expired
@@ -63,19 +68,26 @@ export const useUserProfile = (): UseUserProfileReturn => {
   };
 
   const initializeProfile = async (piUserId?: string, username?: string) => {
+    // If user is not authenticated, don't initialize profile
+    if (!user?.id) {
+      console.log('No authenticated user, skipping profile initialization');
+      return;
+    }
+
     setLoading(true);
     try {
-      // Use provided credentials or generate mock ones
-      const mockUser = piUserId && username ? { piUserId, username } : generateMockPiUser();
+      // Use the authenticated user's ID and metadata
+      const userId = user.id;
+      const userUsername = user.user_metadata?.username || `Player_${userId.slice(0, 8)}`;
       
       // Try to get existing profile
-      let existingProfile = await gameBackendService.getUserProfile(mockUser.piUserId);
+      let existingProfile = await gameBackendService.getUserProfile(userId);
       
       if (!existingProfile) {
         // Create new profile
         const newProfile = {
-          pi_user_id: mockUser.piUserId,
-          username: mockUser.username,
+          pi_user_id: userId,
+          username: userUsername,
           total_coins: 0,
           selected_bird_skin: 'default',
           music_enabled: true
@@ -109,7 +121,7 @@ export const useUserProfile = (): UseUserProfileReturn => {
   };
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
-    if (!profile) return;
+    if (!profile || !user?.id) return;
     
     setLoading(true);
     try {
@@ -135,7 +147,7 @@ export const useUserProfile = (): UseUserProfileReturn => {
   };
 
   const refreshProfile = async () => {
-    if (!profile) return;
+    if (!profile || !user?.id) return;
     
     setLoading(true);
     try {
@@ -157,38 +169,18 @@ export const useUserProfile = (): UseUserProfileReturn => {
     }
   };
 
-  // Load profile from localStorage on mount
+  // Initialize profile when user authentication state changes
   useEffect(() => {
-    const savedProfile = localStorage.getItem('flappypi-profile');
-    const savedPurchaseState = localStorage.getItem('flappypi-purchase-state');
-    
-    if (savedProfile) {
-      try {
-        const parsedProfile = JSON.parse(savedProfile);
-        setProfile(parsedProfile);
-        
-        // Load cached purchase state if available
-        if (savedPurchaseState) {
-          try {
-            const parsedPurchaseState = JSON.parse(savedPurchaseState);
-            setPurchaseState(parsedPurchaseState);
-          } catch (error) {
-            console.error('Error parsing saved purchase state:', error);
-          }
-        }
-        
-        // Refresh from database in background
-        refreshProfile();
-      } catch (error) {
-        console.error('Error parsing saved profile:', error);
-        // Initialize new profile if saved data is corrupted
-        initializeProfile();
-      }
-    } else {
-      // No saved profile, initialize new one
+    if (user && !authLoading) {
       initializeProfile();
+    } else if (!user && !authLoading) {
+      // Clear profile when user signs out
+      setProfile(null);
+      setPurchaseState(null);
+      localStorage.removeItem('flappypi-profile');
+      localStorage.removeItem('flappypi-purchase-state');
     }
-  }, []);
+  }, [user, authLoading]);
 
   // Computed properties for easier access
   const hasPremium = purchaseState?.hasPremium || false;
@@ -202,7 +194,7 @@ export const useUserProfile = (): UseUserProfileReturn => {
   return {
     profile,
     purchaseState,
-    loading,
+    loading: loading || authLoading,
     updateProfile,
     refreshProfile,
     refreshPurchaseState,
@@ -211,6 +203,10 @@ export const useUserProfile = (): UseUserProfileReturn => {
     isAdFree,
     ownedSkins,
     hasActiveSubscription,
-    subscriptionStatus
+    subscriptionStatus,
+    // Auth methods
+    signInWithPi,
+    signOut,
+    isAuthenticated: !!user
   };
 };

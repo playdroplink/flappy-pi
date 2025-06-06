@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { piNetworkService } from '@/services/piNetworkService';
 import { gameBackendService } from '@/services/gameBackendService';
-import { useUserProfile } from '@/hooks/useUserProfile';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 interface PaymentResult {
   success: boolean;
@@ -13,10 +12,9 @@ interface PaymentResult {
 
 export const usePiPayments = () => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isPiAvailable, setIsPiAvailable] = useState(false);
   const { toast } = useToast();
-  const { profile, refreshProfile } = useUserProfile();
+  const { user, isAuthenticated, signInWithPi } = useSupabaseAuth();
 
   // Check if Pi is available on this platform
   useEffect(() => {
@@ -34,6 +32,10 @@ export const usePiPayments = () => {
   }, []);
 
   const authenticateUser = async (): Promise<boolean> => {
+    if (isAuthenticated) {
+      return true;
+    }
+
     try {
       setIsProcessing(true);
       
@@ -46,23 +48,8 @@ export const usePiPayments = () => {
         return false;
       }
       
-      const user = await piNetworkService.authenticate();
-      
-      if (user) {
-        setIsAuthenticated(true);
-        toast({
-          title: "Pi Authentication Successful! 🎉",
-          description: `Welcome ${user.username}! You can now use Pi payments.`
-        });
-        return true;
-      } else {
-        toast({
-          title: "Authentication Failed",
-          description: "Could not authenticate with Pi Network",
-          variant: "destructive"
-        });
-        return false;
-      }
+      const success = await signInWithPi();
+      return success;
     } catch (error) {
       console.error('Pi authentication error:', error);
       toast({
