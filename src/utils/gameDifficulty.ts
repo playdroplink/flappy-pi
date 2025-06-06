@@ -10,10 +10,10 @@ export interface DifficultySettings {
   pipeWidth: number;
 }
 
-const PIPE_GAP_BASE = 200;
+const PIPE_GAP_BASE = 180; // Increased base gap for easier passage
 const PIPE_SPEED_BASE = 2;
-const PIPE_SPAWN_RATE_BASE = 120;
-const PIPE_WIDTH_BASE = 100; // Bigger pipes for better visibility
+const PIPE_SPAWN_RATE_BASE = 140; // More time between pipes
+const PIPE_WIDTH_BASE = 80; // Reduced pipe width for easier navigation
 
 export const getTimeOfDay = (level: number): 'morning' | 'afternoon' | 'evening' | 'night' => {
   if (level <= 3) return 'morning';
@@ -44,50 +44,50 @@ export const getDifficultyByUserChoice = (
     pipeWidth: PIPE_WIDTH_BASE
   };
 
-  // Apply user difficulty choice first
+  // Apply user difficulty choice with much more generous settings
   if (userDifficulty === 'easy') {
-    baseDifficulty.pipeGap = PIPE_GAP_BASE + 80; // Much wider gap
-    baseDifficulty.pipeSpeed = PIPE_SPEED_BASE * 0.7; // Slower pipes
-    baseDifficulty.spawnRate = PIPE_SPAWN_RATE_BASE + 60; // More time between pipes
-    baseDifficulty.pipeWidth = PIPE_WIDTH_BASE + 20; // Slightly bigger pipes
+    baseDifficulty.pipeGap = PIPE_GAP_BASE + 120; // Very wide gap (300px)
+    baseDifficulty.pipeSpeed = PIPE_SPEED_BASE * 0.6; // Much slower
+    baseDifficulty.spawnRate = PIPE_SPAWN_RATE_BASE + 80; // More time between pipes
+    baseDifficulty.pipeWidth = PIPE_WIDTH_BASE - 10; // Thinner pipes
   } else if (userDifficulty === 'medium') {
-    baseDifficulty.pipeGap = PIPE_GAP_BASE + 40; // Moderate gap
-    baseDifficulty.pipeSpeed = PIPE_SPEED_BASE * 0.85; // Normal speed
-    baseDifficulty.spawnRate = PIPE_SPAWN_RATE_BASE + 20; // Normal spacing
+    baseDifficulty.pipeGap = PIPE_GAP_BASE + 60; // Good gap (240px)
+    baseDifficulty.pipeSpeed = PIPE_SPEED_BASE * 0.8; // Moderate speed
+    baseDifficulty.spawnRate = PIPE_SPAWN_RATE_BASE + 40; // Normal spacing
     baseDifficulty.pipeWidth = PIPE_WIDTH_BASE; // Normal pipe size
   } else if (userDifficulty === 'hard') {
-    baseDifficulty.pipeGap = PIPE_GAP_BASE; // Standard gap
+    baseDifficulty.pipeGap = PIPE_GAP_BASE + 20; // Standard gap (200px)
     baseDifficulty.pipeSpeed = PIPE_SPEED_BASE; // Normal speed
     baseDifficulty.spawnRate = PIPE_SPAWN_RATE_BASE; // Standard spacing
-    baseDifficulty.pipeWidth = PIPE_WIDTH_BASE - 10; // Slightly smaller pipes
+    baseDifficulty.pipeWidth = PIPE_WIDTH_BASE + 10; // Slightly bigger pipes
   }
 
-  // Apply progressive difficulty based on score (but keep user choice as base)
-  const progressionFactor = Math.min(currentScore / 30, 1.5);
+  // Minimal progressive difficulty to keep game playable
+  const progressionFactor = Math.min(currentScore / 50, 1.0); // Slower progression
   
   if (gameMode === 'classic') {
-    if (currentScore > 10) {
-      baseDifficulty.pipeSpeed *= (1 + progressionFactor * 0.2);
+    if (currentScore > 15) {
+      baseDifficulty.pipeSpeed *= (1 + progressionFactor * 0.1); // Very gentle speed increase
       baseDifficulty.hasClouds = true;
     }
-    if (currentScore > 20) {
+    if (currentScore > 30) {
       baseDifficulty.hasMovingPipes = userDifficulty === 'hard';
     }
   } else if (gameMode === 'endless') {
-    baseDifficulty.pipeSpeed *= (1 + progressionFactor * 0.3);
-    if (currentScore > 8) baseDifficulty.hasClouds = true;
-    if (currentScore > 16) baseDifficulty.hasMovingPipes = true;
-    if (currentScore > 24 && userDifficulty !== 'easy') {
+    baseDifficulty.pipeSpeed *= (1 + progressionFactor * 0.15);
+    if (currentScore > 12) baseDifficulty.hasClouds = true;
+    if (currentScore > 25) baseDifficulty.hasMovingPipes = true;
+    if (currentScore > 35 && userDifficulty !== 'easy') {
       baseDifficulty.hasWind = true;
-      baseDifficulty.windStrength = Math.min(progressionFactor * 0.2, 0.5);
+      baseDifficulty.windStrength = Math.min(progressionFactor * 0.15, 0.3);
     }
   } else if (gameMode === 'challenge') {
-    baseDifficulty.pipeSpeed *= (1.5 + progressionFactor * 0.2);
+    baseDifficulty.pipeSpeed *= (1.2 + progressionFactor * 0.1);
     baseDifficulty.hasMovingPipes = true;
     baseDifficulty.hasClouds = true;
     if (userDifficulty !== 'easy') {
       baseDifficulty.hasWind = true;
-      baseDifficulty.windStrength = 0.3 + (progressionFactor * 0.15);
+      baseDifficulty.windStrength = 0.2 + (progressionFactor * 0.1);
     }
   }
 

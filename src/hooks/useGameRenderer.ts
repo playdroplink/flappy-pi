@@ -61,7 +61,6 @@ export const useGameRenderer = ({
     const backgroundColors = getBackgroundColorsOptimized(difficulty.timeOfDay);
     
     const BIRD_SIZE = 32;
-    const PIPE_WIDTH = difficulty.pipeWidth; // Use dynamic pipe width
     const GROUND_HEIGHT = 40;
 
     // Clear canvas with beautiful gradient background
@@ -112,9 +111,9 @@ export const useGameRenderer = ({
       ctx.globalAlpha = 1;
     }
 
-    // Draw pipes with dynamic sizing and enhanced styling
+    // Draw pipes with correct dynamic sizing
     state.pipes.forEach((pipe: any) => {
-      const pipeWidth = pipe.width || PIPE_WIDTH; // Use stored width or default
+      const pipeWidth = pipe.width || difficulty.pipeWidth; // Use correct width
       
       // Pipe colors based on time of day
       let pipeGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + pipeWidth, 0);
@@ -131,14 +130,14 @@ export const useGameRenderer = ({
       }
 
       // Pipe shadows with correct width
-      ctx.fillStyle = 'rgba(0,0,0,0.3)';
-      ctx.fillRect(pipe.x + 3, 3, pipeWidth, pipe.topHeight);
-      ctx.fillRect(pipe.x + 3, pipe.bottomY + 3, pipeWidth, canvas.height - pipe.bottomY);
+      ctx.fillStyle = 'rgba(0,0,0,0.2)';
+      ctx.fillRect(pipe.x + 2, 2, pipeWidth, pipe.topHeight);
+      ctx.fillRect(pipe.x + 2, pipe.bottomY + 2, pipeWidth, canvas.height - pipe.bottomY);
 
       // Add glow effect for moving pipes
       if (pipe.isMoving) {
         ctx.shadowColor = '#4CAF50';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 8;
       }
 
       // Top pipe
@@ -154,14 +153,14 @@ export const useGameRenderer = ({
       capGradient.addColorStop(1, '#4CAF50');
       
       ctx.fillStyle = capGradient;
-      ctx.fillRect(pipe.x - 5, pipe.topHeight - 25, pipeWidth + 10, 25);
-      ctx.fillRect(pipe.x - 5, pipe.bottomY, pipeWidth + 10, 25);
+      ctx.fillRect(pipe.x - 4, pipe.topHeight - 20, pipeWidth + 8, 20);
+      ctx.fillRect(pipe.x - 4, pipe.bottomY, pipeWidth + 8, 20);
 
       // Reset shadow
       ctx.shadowBlur = 0;
     });
 
-    // Draw bird with NO visible bounding box - precise sprite rendering
+    // Draw bird with precise sprite rendering
     const birdImage = new Image();
     birdImage.src = getBirdImage();
     
@@ -170,16 +169,16 @@ export const useGameRenderer = ({
     // Add glow effect for night time
     if (difficulty.timeOfDay === 'night') {
       ctx.shadowColor = '#FFFF00';
-      ctx.shadowBlur = 15;
+      ctx.shadowBlur = 12;
     }
     
     // Subtle flapping animation
-    const flapOffset = Math.sin(state.frameCount * 0.25) * 2;
+    const flapOffset = Math.sin(state.frameCount * 0.2) * 1.5;
     
     ctx.translate(state.bird.x, state.bird.y + flapOffset);
     ctx.rotate(state.bird.rotation * Math.PI / 180);
     
-    // Draw bird sprite with precise dimensions - NO visible box
+    // Draw bird sprite with precise dimensions
     ctx.drawImage(birdImage, -BIRD_SIZE/2, -BIRD_SIZE/2, BIRD_SIZE, BIRD_SIZE);
     ctx.restore();
 

@@ -43,9 +43,9 @@ export const useGamePhysics = ({
     const difficulty = getDifficultyOptimized(state.score);
     const scoreMultiplier = getScoreMultiplier(gameMode);
     const GRAVITY = 0.35;
-    const PIPE_WIDTH = difficulty.pipeWidth; // Use dynamic pipe width
-    const PIPE_GAP = difficulty.pipeGap; // Use dynamic pipe gap
-    const PIPE_SPACING = 280; // Increased spacing for better gameplay
+    const PIPE_WIDTH = difficulty.pipeWidth;
+    const PIPE_GAP = difficulty.pipeGap;
+    const PIPE_SPACING = 320; // Increased spacing for better gameplay
 
     // Apply wind effect if enabled
     let horizontalForce = 0;
@@ -67,10 +67,10 @@ export const useGamePhysics = ({
     }
 
     // Spawn new pipes with improved spacing and dynamic sizing
-    const spawnThreshold = Math.max(PIPE_SPACING / 2, 140);
+    const spawnThreshold = Math.max(PIPE_SPACING / 2, 160);
     if (state.frameCount - state.lastPipeSpawn > spawnThreshold) {
-      const minHeight = 80;
-      const maxHeight = canvas.height - PIPE_GAP - minHeight - 50;
+      const minHeight = 100; // Increased minimum height
+      const maxHeight = canvas.height - PIPE_GAP - minHeight - 80; // More margin
       const pipeHeight = Math.random() * (maxHeight - minHeight) + minHeight;
       
       const newPipe = {
@@ -81,15 +81,15 @@ export const useGamePhysics = ({
         scored: false,
         isMoving: difficulty.hasMovingPipes,
         verticalDirection: difficulty.hasMovingPipes ? (Math.random() > 0.5 ? 1 : -1) : 0,
-        moveSpeed: difficulty.hasMovingPipes ? 1 : 0,
-        width: PIPE_WIDTH // Store pipe width for collision detection
+        moveSpeed: difficulty.hasMovingPipes ? 0.8 : 0, // Slower moving pipes
+        width: PIPE_WIDTH
       };
       state.pipes.push(newPipe);
       state.lastPipeSpawn = state.frameCount;
     }
 
     // Spawn clouds if enabled
-    if (difficulty.hasClouds && state.frameCount % 200 === 0) {
+    if (difficulty.hasClouds && state.frameCount % 250 === 0) {
       if (!state.clouds) state.clouds = [];
       state.clouds.push({
         x: canvas.width,
@@ -110,16 +110,16 @@ export const useGamePhysics = ({
         pipe.bottomY += moveAmount;
         
         // Keep moving pipes within safe bounds
-        const minTopHeight = 60;
-        const maxBottomY = canvas.height - 85;
+        const minTopHeight = 80;
+        const maxBottomY = canvas.height - 100;
         
         if (pipe.topHeight <= minTopHeight || pipe.bottomY >= maxBottomY) {
           pipe.verticalDirection *= -1;
         }
       }
       
-      // FIXED SCORING: Score when bird completely passes pipe
-      if (!pipe.scored && state.bird.x > (pipe.x + PIPE_WIDTH)) {
+      // FIXED SCORING: Score when bird's CENTER passes pipe's RIGHT edge
+      if (!pipe.scored && state.bird.x > (pipe.x + PIPE_WIDTH + 10)) {
         pipe.scored = true;
         const newScore = state.score + 1;
         state.score = newScore;
@@ -132,14 +132,14 @@ export const useGamePhysics = ({
         onCoinEarned(coinsEarned);
       }
       
-      return pipe.x > -PIPE_WIDTH;
+      return pipe.x > -PIPE_WIDTH - 50; // Keep pipes a bit longer for smoother experience
     });
 
     // Update clouds
     if (state.clouds) {
       state.clouds = state.clouds.filter((cloud: any) => {
         cloud.x -= cloud.speed;
-        return cloud.x > -cloud.size;
+        return cloud.x > -cloud.size - 50;
       });
     }
 
