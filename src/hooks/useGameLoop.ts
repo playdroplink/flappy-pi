@@ -1,3 +1,4 @@
+
 import { useRef, useCallback } from 'react';
 
 interface Bird {
@@ -114,11 +115,11 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   }, []);
 
   const continueGame = useCallback(() => {
-    console.log('💫 Continuing game after Pi Ad revive');
+    console.log('💫 Continuing game after revive');
     const canvas = document.querySelector('canvas');
     if (!canvas) return;
     
-    // Reset bird to safe center position with clean physics
+    // Reset bird to center position with clean physics
     const centerY = canvas.height / 2;
     const safeY = Math.max(100, Math.min(canvas.height - 100, centerY));
     
@@ -130,7 +131,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     };
     
     gameStateRef.current.gameOver = false;
-    gameStateRef.current.gameStarted = false; // Reset to show "tap to continue" state
+    gameStateRef.current.gameStarted = false;
     
     // Clear nearby pipes for safe respawn
     gameStateRef.current.pipes = gameStateRef.current.pipes.filter(pipe => 
@@ -139,7 +140,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     
     gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 200;
     
-    console.log('✅ Continue complete - bird respawned safely at Y:', safeY, 'waiting for tap to continue');
+    console.log('✅ Continue complete - bird respawned safely at Y:', safeY);
   }, []);
 
   const jump = useCallback(() => {

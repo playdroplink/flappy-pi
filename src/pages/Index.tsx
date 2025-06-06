@@ -48,7 +48,7 @@ const Index = () => {
   // Track game events
   useEffect(() => {
     if (gameState.gameState === 'playing') {
-      Analytics.gameStarted(gameState.gameMode as 'classic' | 'endless' | 'challenge');
+      Analytics.gameStarted(gameState.gameMode);
     }
   }, [gameState.gameState, gameState.gameMode]);
 
@@ -56,7 +56,7 @@ const Index = () => {
   const handleGameOver = (finalScore: number) => {
     // Calculate session duration (you might want to track this more precisely)
     const sessionDuration = 60; // Default to 60 seconds for now
-    Analytics.gameCompleted(finalScore, gameState.level, gameState.gameMode as 'classic' | 'endless' | 'challenge', sessionDuration);
+    Analytics.gameCompleted(finalScore, gameState.level, gameState.gameMode, sessionDuration);
     gameEvents.handleGameOver(finalScore);
   };
 
@@ -70,7 +70,7 @@ const Index = () => {
         <WelcomeScreen 
           onStartGame={(mode) => {
             // Store difficulty choice before starting game
-            gameState.onStartGame(mode);
+            gameState.startGame(mode);
           }}
           onOpenShop={() => {
             Analytics.track('shop_button_clicked');
@@ -90,13 +90,13 @@ const Index = () => {
           }}
           coins={gameState.coins}
           musicEnabled={gameState.musicEnabled}
-          onToggleMusic={gameState.onToggleMusic}
+          onToggleMusic={gameState.setMusicEnabled}
         />
 
         <TutorialModal
           isOpen={showTutorial}
           onClose={() => setShowTutorial(false)}
-          onStartGame={() => gameState.onStartGame('classic')}
+          onStartGame={() => gameState.startGame('classic')}
         />
         
         <GameModals
@@ -138,7 +138,7 @@ const Index = () => {
     <div className="fixed inset-0 w-full h-full bg-gradient-to-b from-sky-400 to-sky-600 overflow-hidden">
       <GameCanvas 
         gameState={gameState.gameState}
-        gameMode={gameState.gameMode as 'classic' | 'endless' | 'challenge'}
+        gameMode={gameState.gameMode}
         level={gameState.level}
         onCollision={gameEvents.handleCollision}
         onGameOver={handleGameOver}
@@ -159,12 +159,12 @@ const Index = () => {
         lives={gameState.lives}
         highScore={gameState.highScore}
         coins={gameState.coins}
-        gameMode={gameState.gameMode as 'classic' | 'endless' | 'challenge'}
+        gameMode={gameState.gameMode}
         onStartGame={() => {
           // When restarting the game, ensure we properly reset through gameState
           gameState.setGameState('menu'); // First set to menu to trigger proper reset
           setTimeout(() => {
-            gameState.onStartGame(gameState.gameMode as 'classic' | 'endless' | 'challenge'); // Then start game with current mode
+            gameState.startGame(gameState.gameMode); // Then start game with current mode
           }, 100); // Short delay to ensure reset is processed
         }}
         onBackToMenu={gameState.backToMenu}

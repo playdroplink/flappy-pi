@@ -1,77 +1,49 @@
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
-import ErrorBoundary from '@/components/ErrorBoundary';
-import PiBrowserDetector from '@/components/PiBrowserDetector';
-import WelcomeScreen from '@/components/WelcomeScreen';
-import SettingsPage from '@/pages/SettingsPage';
-import GamePage from '@/pages/GamePage';
-import NotFound from '@/pages/NotFound';
-import { useGameState } from '@/hooks/useGameState';
-import { useCompleteAudioSystem } from '@/hooks/useCompleteAudioSystem';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import Index from './pages/Index';
+import GamePage from './pages/GamePage';
+import ShopPage from './pages/ShopPage';
+import LeaderboardPage from './pages/LeaderboardPage';
+import SettingsPage from './pages/SettingsPage';
+import SubscriptionPlansPage from './pages/SubscriptionPlansPage';
+import AccountPage from './pages/AccountPage';
+import HelpPage from './pages/HelpPage';
+import ContactPage from './pages/ContactPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
+import NotFound from './pages/NotFound';
+import PaymentHistoryPage from './pages/PaymentHistoryPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 
-const App: React.FC = () => {
-  const {
-    gameMode,
-    coins,
-    musicEnabled,
-    onToggleMusic,
-    onStartGame,
-    onOpenShop,
-    onOpenLeaderboard,
-    onOpenPrivacy,
-    onOpenTerms,
-    onOpenContact,
-    onOpenHelp,
-    onOpenTutorial
-  } = useGameState();
+const queryClient = new QueryClient();
 
-  const { initializeGameSounds } = useCompleteAudioSystem();
-
-  // Initialize audio system on app load
-  React.useEffect(() => {
-    initializeGameSounds();
-  }, [initializeGameSounds]);
-
+function App() {
   return (
-    <ErrorBoundary>
-      <PiBrowserDetector>
-        <Router>
-          <div className="App">
-            <Routes>
-              <Route 
-                path="/" 
-                element={
-                  gameMode === 'menu' ? (
-                    <WelcomeScreen
-                      onStartGame={onStartGame}
-                      onOpenShop={onOpenShop}
-                      onOpenLeaderboard={onOpenLeaderboard}
-                      onOpenPrivacy={onOpenPrivacy}
-                      onOpenTerms={onOpenTerms}
-                      onOpenContact={onOpenContact}
-                      onOpenHelp={onOpenHelp}
-                      onOpenTutorial={onOpenTutorial}
-                      coins={coins}
-                      musicEnabled={musicEnabled}
-                      onToggleMusic={onToggleMusic}
-                    />
-                  ) : (
-                    <GamePage />
-                  )
-                } 
-              />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/game" element={<GamePage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-          </div>
-        </Router>
-      </PiBrowserDetector>
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Toaster />
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/game" element={<GamePage />} />
+          <Route path="/shop" element={<ShopPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/subscription-plans" element={<SubscriptionPlansPage />} />
+          <Route path="/account" element={<AccountPage />} />
+          <Route path="/help" element={<HelpPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/payment-history" element={<PaymentHistoryPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
-};
+}
 
 export default App;

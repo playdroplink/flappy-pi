@@ -1,41 +1,30 @@
-
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useGameSettings } from '@/hooks/useGameSettings';
+import { useFullscreen } from '@/hooks/useFullscreen';
+import { useGameData } from '@/hooks/useGameData';
 
-type GameMode = 'menu' | 'classic' | 'endless' | 'challenge';
+type GameMode = 'classic' | 'endless' | 'challenge';
 type GameStateType = 'menu' | 'playing' | 'gameOver' | 'paused';
 
 export const useGameState = () => {
-  // Core game state
-  const [gameMode, setGameMode] = useState<GameMode>('menu');
-  const [gameState, setGameState] = useState<GameStateType>('menu');
   const [showSplash, setShowSplash] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
-  
-  // Game data
-  const [score, setScore] = useState(0);
-  const [level, setLevel] = useState(1);
-  const [lives, setLives] = useState(1);
-  const [highScore, setHighScore] = useState(0);
-  const [coins, setCoins] = useState(() => {
-    const saved = localStorage.getItem('flappypi-coins');
-    return saved ? parseInt(saved) : 0;
-  });
-  
-  // Settings
-  const [musicEnabled, setMusicEnabled] = useState(() => {
-    const saved = localStorage.getItem('flappypi-music-enabled');
-    return saved ? JSON.parse(saved) : true;
-  });
-  const [selectedBirdSkin, setSelectedBirdSkin] = useState(() => {
-    const saved = localStorage.getItem('flappypi-skin');
-    return saved || 'default';
-  });
-
+  const [gameState, setGameState] = useState<GameStateType>('menu');
+  const [gameMode, setGameMode] = useState<GameMode>('classic');
   const { toast } = useToast();
+  const { profile } = useUserProfile();
+  const isMobile = useIsMobile();
+  
+  // Use the smaller hooks
+  const gameSettings = useGameSettings();
+  const fullscreen = useFullscreen();
+  const gameData = useGameData();
 
-  // Initialize splash screen behavior
   useEffect(() => {
+    // Hide splash screen after 1 second and show welcome
     const timer = setTimeout(() => {
       setShowSplash(false);
       setShowWelcome(true);
@@ -44,130 +33,68 @@ export const useGameState = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Load saved high score
-  useEffect(() => {
-    const savedHighScore = localStorage.getItem('flappypi-highscore');
-    if (savedHighScore) {
-      setHighScore(parseInt(savedHighScore));
-    }
-  }, []);
-
-  // Save settings to localStorage
-  const onToggleMusic = useCallback((enabled: boolean) => {
-    setMusicEnabled(enabled);
-    localStorage.setItem('flappypi-music-enabled', JSON.stringify(enabled));
-  }, []);
-
-  const handleScoreUpdate = useCallback((newScore: number) => {
-    console.log('Score updated to:', newScore);
-    setScore(newScore);
-    // Level up every 5 points for better progression
-    const newLevel = Math.floor(newScore / 5) + 1;
-    if (newLevel > level) {
-      setLevel(newLevel);
-      toast({
-        title: `Level ${newLevel}! 🎯`,
-        description: "Getting harder now!"
-      });
-    }
-  }, [level, toast]);
-
-  const onStartGame = useCallback((mode: 'classic' | 'endless' | 'challenge') => {
-    console.log('🎮 Starting game mode:', mode);
+  const startGame = (mode: GameMode) => {
+    console.log('Starting game with mode:', mode);
+    
+    // Set the game mode first
     setGameMode(mode);
-    setGameState('playing');
+    
+    // Complete state reset for new game
+    gameData.setScore(0);
+    gameData.setLevel(1);
+    gameData.setLives(1);
+    setGameState('menu'); // Set to menu first for clean transition
     setShowWelcome(false);
-    setScore(0);
-    setLevel(1);
-    setLives(1);
-  }, []);
+    
+    // Show mode-specific toast
+    const modeMessages = {
+      classic: "🎯 Classic Mode: Standard difficulty progression!",
+      endless: "🚀 Endless Mode: Continuous challenge awaits!",
+      challenge: "⚡ Challenge Mode: Maximum difficulty from start!"
+    };
+    
+    toast({
+      title: `${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode Started!`,
+      description: modeMessages[mode]
+    });
+    
+    // Delay transition to playing state
+    setTimeout(() => {
+      setGameState('playing');
+      console.log(`${mode} mode game state set to playing`);
+    }, 200);
+  };
 
-  const startGame = onStartGame; // Alias for compatibility
-
-  const backToMenu = useCallback(() => {
+  const backToMenu = () => {
+    console.log('Returning to menu - complete game reset');
+    
+    // Exit fullscreen when returning to menu (only if currently in fullscreen)
+    if (fullscreen.isFullscreen) {
+      fullscreen.exitFullscreen();
+    }
+    
+    // Complete state reset
     setGameState('menu');
-    setGameMode('menu');
+    setGameMode('classic'); // Reset to default mode
+    gameData.setScore(0);
+    gameData.setLevel(1);
+    gameData.setLives(1);
     setShowWelcome(true);
-    setScore(0);
-    setLevel(1);
-    setLives(1);
-  }, []);
-
-  const onOpenShop = useCallback(() => {
-    console.log('🛍️ Opening shop');
-    // Shop modal logic would be handled by the parent component
-  }, []);
-
-  const onOpenLeaderboard = useCallback(() => {
-    console.log('🏆 Opening leaderboard');
-    // Leaderboard modal logic would be handled by the parent component
-  }, []);
-
-  const onOpenPrivacy = useCallback(() => {
-    console.log('📄 Opening privacy policy');
-    window.open('/privacy', '_blank');
-  }, []);
-
-  const onOpenTerms = useCallback(() => {
-    console.log('📜 Opening terms of service');
-    window.open('/terms', '_blank');
-  }, []);
-
-  const onOpenContact = useCallback(() => {
-    console.log('📧 Opening contact');
-    window.open('mailto:support@flappypi.com', '_blank');
-  }, []);
-
-  const onOpenHelp = useCallback(() => {
-    console.log('❓ Opening help');
-    // Help modal logic would be handled by the parent component
-  }, []);
-
-  const onOpenTutorial = useCallback(() => {
-    console.log('📚 Opening tutorial');
-    // Tutorial modal logic would be handled by the parent component
-  }, []);
+  };
 
   return {
-    // Game state
-    gameMode,
-    gameState,
     showSplash,
     showWelcome,
-    
-    // Game data
-    score,
-    level,
-    lives,
-    highScore,
-    coins,
-    
-    // Settings
-    musicEnabled,
-    selectedBirdSkin,
-    
-    // Setters
+    gameState,
+    gameMode,
+    profile,
     setGameState,
-    setScore,
-    setLevel,
-    setLives,
-    setHighScore,
-    setCoins,
-    setMusicEnabled,
-    setSelectedBirdSkin,
-    
-    // Handlers
-    handleScoreUpdate,
-    onToggleMusic,
-    onStartGame,
-    startGame, // Alias for compatibility
+    startGame,
     backToMenu,
-    onOpenShop,
-    onOpenLeaderboard,
-    onOpenPrivacy,
-    onOpenTerms,
-    onOpenContact,
-    onOpenHelp,
-    onOpenTutorial
+    toast,
+    // Expose all the properties from the smaller hooks
+    ...gameData,
+    ...gameSettings,
+    ...fullscreen
   };
 };

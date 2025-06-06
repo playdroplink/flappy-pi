@@ -1,20 +1,25 @@
 
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Play, Settings, Trophy, ShoppingBag, HelpCircle, Star } from 'lucide-react';
-import { useCompleteAudioSystem } from '@/hooks/useCompleteAudioSystem';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import PiAuthLoginModal from './PiAuthLoginModal';
-import AudioControlPanel from './AudioControlPanel';
+import React from 'react';
+import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
+import PiPremiumPerks from './PiPremiumPerks';
 import WelcomeHeader from './welcome/WelcomeHeader';
 import UserStatsCard from './welcome/UserStatsCard';
 import GameModeButtons from './welcome/GameModeButtons';
 import QuickActionButtons from './welcome/QuickActionButtons';
-import WelcomeFooter from './welcome/WelcomeFooter';
 import BackgroundElements from './welcome/BackgroundElements';
+import EnhancedFooter from './EnhancedFooter';
+import ContactModal from './ContactModal';
+import HelpModal from './HelpModal';
+import PrivacyModal from './PrivacyModal';
+import TermsModal from './TermsModal';
+import PurchaseHistoryModal from './PurchaseHistoryModal';
+import { ScrollArea } from './ui/scroll-area';
+import { useState } from 'react';
+
+type GameMode = 'classic' | 'endless' | 'challenge';
 
 interface WelcomeScreenProps {
-  onStartGame: (mode: 'classic' | 'endless' | 'challenge') => void;
+  onStartGame: (mode: GameMode) => void;
   onOpenShop: () => void;
   onOpenLeaderboard: () => void;
   onOpenPrivacy: () => void;
@@ -40,113 +45,93 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   musicEnabled,
   onToggleMusic
 }) => {
-  const [showPiAuth, setShowPiAuth] = useState(false);
-  const [showAudioPanel, setShowAudioPanel] = useState(false);
-  const { isAuthenticated, user } = useSupabaseAuth();
-  const { playSwoosh, unlockAudio, isAudioUnlocked } = useCompleteAudioSystem();
+  // Add background music
+  useBackgroundMusic({ musicEnabled, gameState: 'menu' });
 
-  // Auto-unlock audio and show Pi auth for new users
-  useEffect(() => {
-    const hasSeenWelcome = localStorage.getItem('flappypi-welcome-seen');
-    const isGuest = localStorage.getItem('flappypi-guest-mode');
-    
-    if (!hasSeenWelcome && !isAuthenticated && !isGuest) {
-      setShowPiAuth(true);
-      localStorage.setItem('flappypi-welcome-seen', 'true');
-    }
+  // Local state for modals
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showContact, setShowContact] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
 
-    // Auto-unlock audio on load
-    const timer = setTimeout(() => {
-      if (!isAudioUnlocked) {
-        unlockAudio();
-      }
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, unlockAudio, isAudioUnlocked]);
-
-  const handleStartGame = (mode: 'classic' | 'endless' | 'challenge') => {
-    playSwoosh();
-    onStartGame(mode);
+  const handlePiPremiumUpgrade = () => {
+    // This could open the shop or a dedicated Pi Premium modal
+    onOpenShop();
   };
 
-  const handleActionClick = (action: () => void) => {
-    playSwoosh();
-    action();
+  const handleOpenPrivacy = () => {
+    setShowPrivacy(true);
+  };
+
+  const handleOpenTerms = () => {
+    setShowTerms(true);
+  };
+
+  const handleOpenContact = () => {
+    setShowContact(true);
+  };
+
+  const handleOpenHelp = () => {
+    setShowHelp(true);
+  };
+
+  const handleOpenPurchaseHistory = () => {
+    setShowPurchaseHistory(true);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-400 via-sky-500 to-sky-600 relative overflow-hidden">
-      <BackgroundElements />
-      
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <WelcomeHeader 
-          onOpenSettings={() => setShowAudioPanel(true)}
-          onOpenAuth={() => setShowPiAuth(true)}
-          isAuthenticated={isAuthenticated}
-          username={user?.user_metadata?.username}
-        />
+    <>
+      <div className="fixed inset-0 w-full h-full flex flex-col">
+        <ScrollArea className="flex-1">
+          <div className="min-h-screen bg-gradient-to-br from-sky-400 via-cyan-400 to-blue-500">
+            {/* Animated background elements */}
+            <BackgroundElements />
 
-        <div className="flex-1 flex flex-col items-center justify-center p-4 space-y-8">
-          {/* Logo and Title */}
-          <div className="text-center space-y-4">
-            <div className="text-8xl animate-bounce">🐦</div>
-            <h1 className="text-5xl font-bold text-white drop-shadow-lg">
-              Flappy Pi
-            </h1>
-            <p className="text-xl text-white/90 drop-shadow">
-              Fly, Earn, and Have Fun on Pi Network!
-            </p>
+            {/* Header Section */}
+            <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-md mx-auto w-full">
+              {/* Logo and Title */}
+              <WelcomeHeader />
+
+              {/* User Stats Card */}
+              <UserStatsCard 
+                coins={coins}
+                musicEnabled={musicEnabled}
+                onToggleMusic={onToggleMusic}
+                onOpenPurchaseHistory={handleOpenPurchaseHistory}
+              />
+
+              {/* Pi Premium Perks */}
+              <div className="w-full mb-4 animate-fade-in" style={{ animationDelay: '0.25s' }}>
+                <PiPremiumPerks onUpgrade={handlePiPremiumUpgrade} />
+              </div>
+
+              {/* Game Mode Buttons */}
+              <GameModeButtons 
+                onStartGame={onStartGame}
+                onOpenTutorial={onOpenTutorial}
+              />
+
+              {/* Quick Actions */}
+              <QuickActionButtons 
+                onOpenShop={onOpenShop}
+                onOpenLeaderboard={onOpenLeaderboard}
+              />
+            </div>
           </div>
-
-          <UserStatsCard 
-            coins={coins}
-            musicEnabled={musicEnabled}
-            onToggleMusic={onToggleMusic}
-          />
-
-          <GameModeButtons 
-            onStartGame={handleStartGame}
-            onOpenTutorial={() => handleActionClick(onOpenTutorial)}
-          />
-
-          <QuickActionButtons
-            onOpenShop={() => handleActionClick(onOpenShop)}
-            onOpenLeaderboard={() => handleActionClick(onOpenLeaderboard)}
-          />
-        </div>
-
-        <WelcomeFooter
-          onOpenPrivacy={() => handleActionClick(onOpenPrivacy)}
-          onOpenTerms={() => handleActionClick(onOpenTerms)}
-          onOpenContact={() => handleActionClick(onOpenContact)}
-          onOpenHelp={() => handleActionClick(onOpenHelp)}
-        />
+          
+          {/* Enhanced Footer */}
+          <EnhancedFooter />
+        </ScrollArea>
       </div>
 
       {/* Modals */}
-      <PiAuthLoginModal
-        isOpen={showPiAuth}
-        onClose={() => setShowPiAuth(false)}
-        onSuccess={() => setShowPiAuth(false)}
-      />
-
-      {showAudioPanel && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute -top-2 -right-2 bg-white rounded-full z-10"
-              onClick={() => setShowAudioPanel(false)}
-            >
-              ✕
-            </Button>
-            <AudioControlPanel />
-          </div>
-        </div>
-      )}
-    </div>
+      <PrivacyModal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
+      <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
+      <ContactModal isOpen={showContact} onClose={() => setShowContact(false)} />
+      <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+      <PurchaseHistoryModal isOpen={showPurchaseHistory} onClose={() => setShowPurchaseHistory(false)} />
+    </>
   );
 };
 

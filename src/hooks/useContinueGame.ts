@@ -22,29 +22,22 @@ export const useContinueGame = ({
   const { toast } = useToast();
 
   const handleContinueClick = useCallback(() => {
-    console.log('Continue button clicked - preparing bird for safe respawn after Pi Ad');
-    
-    // Hide continue UI
+    console.log('Continue button clicked - resuming game');
     setShowContinueButton(false);
+    setReviveUsed(true);
     setIsPausedForRevive(false);
     setAdWatched(false);
     
-    // Mark revive as used for this game session
-    setReviveUsed(true);
-    
-    // Call the game's continue function to respawn bird safely
     if (continueGame) {
-      console.log('Calling game continue function to respawn bird in safe area');
       continueGame();
     }
     
-    // Set game to playing state - the bird will be in "tap to continue" mode
     setGameState('playing');
     
     toast({
-      title: "🚀 Bird Revived!",
-      description: "Your bird is ready! Tap or click to continue flying from a safe position.",
-      duration: 3000
+      title: "Welcome Back! 🚀",
+      description: "Continue your flight and reach new heights!",
+      duration: 2000
     });
   }, [continueGame, setGameState, setShowContinueButton, setReviveUsed, setIsPausedForRevive, setAdWatched, toast]);
 

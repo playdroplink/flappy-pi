@@ -62,7 +62,7 @@ const HomePage: React.FC = () => {
 
   const handleGameModeSelect = (mode: 'classic' | 'endless' | 'challenge') => {
     playSwoosh();
-    gameState.onStartGame(mode);
+    gameState.startGame(mode);
     navigate('/play');
   };
 
@@ -98,7 +98,7 @@ const HomePage: React.FC = () => {
               <UserStatsSection 
                 coins={gameState.coins}
                 musicEnabled={gameState.musicEnabled}
-                onToggleMusic={gameState.onToggleMusic}
+                onToggleMusic={gameState.setMusicEnabled}
               />
 
               {/* Tutorial Button */}
