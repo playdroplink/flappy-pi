@@ -70,8 +70,11 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       initialized: true
     };
     
+    // Ensure score is reset in UI
+    onScoreUpdate(0);
+    
     console.log('Game completely reset and ready to play');
-  }, []);
+  }, [onScoreUpdate]);
 
   const continueGame = useCallback(() => {
     console.log('Continuing game after revive');
@@ -112,29 +115,40 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     const BIRD_SIZE = 25;
     const PIPE_WIDTH = 120;
     
+    // Enhanced collision detection with more precise hitboxes
+    const birdLeft = bird.x - BIRD_SIZE/2 + 3; // Slight margin for better gameplay
+    const birdRight = bird.x + BIRD_SIZE/2 - 3;
+    const birdTop = bird.y - BIRD_SIZE/2 + 3;
+    const birdBottom = bird.y + BIRD_SIZE/2 - 3;
+    
     // Check ceiling collision
-    if (bird.y - BIRD_SIZE/2 <= 0) {
+    if (birdTop <= 0) {
       console.log('Bird hit ceiling! Collision detected');
       return true;
     }
     
     // Check ground collision
-    if (bird.y + BIRD_SIZE/2 >= canvas.height) {
+    if (birdBottom >= canvas.height - 25) { // Account for ground height
       console.log('Bird hit ground! Collision detected');
       return true;
     }
     
-    // Check pipe collisions
+    // Check pipe collisions with more precise detection
     for (const pipe of pipes) {
-      if (
-        bird.x + BIRD_SIZE/2 > pipe.x &&
-        bird.x - BIRD_SIZE/2 < pipe.x + PIPE_WIDTH
-      ) {
-        if (
-          bird.y - BIRD_SIZE/2 < pipe.topHeight || 
-          bird.y + BIRD_SIZE/2 > pipe.bottomY
-        ) {
-          console.log('Bird hit pipe! Collision detected');
+      const pipeLeft = pipe.x;
+      const pipeRight = pipe.x + PIPE_WIDTH;
+      
+      // Check if bird is horizontally aligned with pipe
+      if (birdRight > pipeLeft && birdLeft < pipeRight) {
+        // Check top pipe collision
+        if (birdTop < pipe.topHeight) {
+          console.log('Bird hit top pipe! Collision detected at pipe height:', pipe.topHeight);
+          return true;
+        }
+        
+        // Check bottom pipe collision
+        if (birdBottom > pipe.bottomY) {
+          console.log('Bird hit bottom pipe! Collision detected at pipe bottom:', pipe.bottomY);
           return true;
         }
       }

@@ -24,7 +24,22 @@ export const useCollisionHandler = ({
 }: UseCollisionHandlerProps) => {
 
   const handleCollision = useCallback(() => {
-    console.log('Collision detected! Revive used:', reviveUsed, 'Score:', score);
+    console.log('Collision handler triggered! Revive used:', reviveUsed, 'Score:', score);
+    
+    // Stop any ongoing game logic immediately
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Flash red briefly to indicate collision
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        setTimeout(() => {
+          // Clear the red flash after a brief moment
+        }, 100);
+      }
+    }
     
     // If revive hasn't been used and player has a decent score, offer ad to continue
     if (!reviveUsed && score >= 5) {
@@ -36,7 +51,7 @@ export const useCollisionHandler = ({
       setShowMandatoryAd(false);
     } else {
       // Game over - no revive available
-      console.log('No revive available - game over');
+      console.log('No revive available - triggering game over');
       onGameOver(score);
     }
   }, [reviveUsed, score, setGameState, setIsPausedForRevive, setShowContinueButton, setAdWatched, setShowMandatoryAd, onGameOver]);

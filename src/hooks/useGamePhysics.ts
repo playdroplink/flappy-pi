@@ -1,4 +1,3 @@
-
 import { useCallback, useRef } from 'react';
 import { getDifficulty, getScoreMultiplier } from '../utils/gameDifficulty';
 
@@ -68,7 +67,7 @@ export const useGamePhysics = ({
     const spawnThreshold = Math.max(difficulty.spawnRate, 120);
     if (state.frameCount - state.lastPipeSpawn > spawnThreshold) {
       const minHeight = 80;
-      const maxHeight = canvas.height - difficulty.pipeGap - minHeight;
+      const maxHeight = canvas.height - difficulty.pipeGap - minHeight - 25; // Account for ground
       const pipeHeight = Math.random() * (maxHeight - minHeight) + minHeight;
       
       const newPipe = {
@@ -105,15 +104,23 @@ export const useGamePhysics = ({
         pipe.topHeight += moveAmount;
         pipe.bottomY += moveAmount;
         
-        if (pipe.topHeight <= 60 || pipe.bottomY >= canvas.height - 60) {
+        // Keep moving pipes within safe bounds
+        const minTopHeight = 60;
+        const maxBottomY = canvas.height - 85; // Account for ground
+        
+        if (pipe.topHeight <= minTopHeight || pipe.bottomY >= maxBottomY) {
           pipe.verticalDirection *= -1;
         }
       }
       
-      // Score when bird passes pipe completely
+      // Enhanced scoring logic - score when bird's CENTER passes pipe's RIGHT edge
       if (!pipe.passed && state.bird.x > (pipe.x + PIPE_WIDTH)) {
         pipe.passed = true;
         state.score++;
+        
+        console.log('Score increased to:', state.score);
+        
+        // Immediately update UI score
         onScoreUpdate(state.score);
         
         // Award coins based on mode multiplier
@@ -132,8 +139,9 @@ export const useGamePhysics = ({
       });
     }
 
-    // Check collisions
+    // Enhanced collision detection - check BEFORE updating frame count
     if (checkCollisions(canvas)) {
+      console.log('Collision detected! Game over triggered');
       state.gameOver = true;
       onCollision();
       return;
