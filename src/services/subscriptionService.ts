@@ -36,7 +36,7 @@ class SubscriptionService {
         return { success: false, error: error.message };
       }
 
-      return data as CancelSubscriptionResult;
+      return data as unknown as CancelSubscriptionResult;
     } catch (error) {
       console.error('Error in cancelSubscription:', error);
       return { 
@@ -70,7 +70,7 @@ class SubscriptionService {
         return { success: false, error: error.message };
       }
 
-      return data as ActivateSubscriptionResult;
+      return data as unknown as ActivateSubscriptionResult;
     } catch (error) {
       console.error('Error in activateSubscription:', error);
       return { 
@@ -132,7 +132,7 @@ class SubscriptionService {
         return { success: false, error: error.message };
       }
 
-      return data as { success: boolean; expired_count?: number };
+      return data as unknown as { success: boolean; expired_count?: number };
     } catch (error) {
       console.error('Error in expireSubscriptions:', error);
       return { 
