@@ -3,12 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Coins } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { ArrowLeft, Clock, CheckCircle, XCircle, AlertCircle, Coins } from 'lucide-react';
 import { paymentHistoryService, PaymentHistoryItem } from '@/services/paymentHistoryService';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { format } from 'date-fns';
+import PaymentStatusIndicator from '@/components/PaymentStatusIndicator';
 
 const PaymentHistoryPage: React.FC = () => {
   const [payments, setPayments] = useState<PaymentHistoryItem[]>([]);
@@ -36,34 +36,13 @@ const PaymentHistoryPage: React.FC = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'pending':
-      case 'approved':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
-      case 'failed':
-      case 'cancelled':
-        return <XCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return <AlertCircle className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      completed: 'default',
-      pending: 'secondary',
-      approved: 'secondary',
-      failed: 'destructive',
-      cancelled: 'destructive'
-    };
-
-    return (
-      <Badge variant={variants[status] || 'outline'} className="capitalize">
-        {status}
-      </Badge>
+  const handlePaymentStatusChange = (paymentId: string, newStatus: string) => {
+    setPayments(prevPayments => 
+      prevPayments.map(payment => 
+        payment.pi_transaction_id === paymentId 
+          ? { ...payment, payment_status: newStatus as any }
+          : payment
+      )
     );
   };
 
@@ -115,6 +94,14 @@ const PaymentHistoryPage: React.FC = () => {
             Back
           </Button>
           <h1 className="text-2xl font-bold">Payment History</h1>
+          <Button
+            variant="outline"
+            onClick={loadPaymentHistory}
+            disabled={loading}
+            className="ml-auto"
+          >
+            {loading ? <Spinner className="w-4 h-4" /> : 'Refresh'}
+          </Button>
         </div>
 
         {/* Loading State */}
@@ -154,9 +141,14 @@ const PaymentHistoryPage: React.FC = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        {getStatusIcon(payment.payment_status)}
                         <h3 className="font-semibold text-lg">{payment.item_name}</h3>
-                        {getStatusBadge(payment.payment_status)}
+                        <PaymentStatusIndicator 
+                          paymentId={payment.pi_transaction_id} 
+                          initialStatus={payment.payment_status}
+                          onStatusChange={(newStatus) => 
+                            handlePaymentStatusChange(payment.pi_transaction_id || '', newStatus)
+                          }
+                        />
                       </div>
                       
                       {payment.item_description && (
@@ -195,7 +187,7 @@ const PaymentHistoryPage: React.FC = () => {
           </div>
         )}
 
-        {/* Load More Button (for future pagination) */}
+        {/* Load More Button */}
         {!loading && payments.length >= 50 && (
           <div className="text-center mt-8">
             <Button variant="outline" onClick={loadPaymentHistory}>

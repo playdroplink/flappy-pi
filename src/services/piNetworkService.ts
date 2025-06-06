@@ -53,6 +53,8 @@ declare global {
 import { loadPiSdk, detectEnvironment } from './piSdkLoader';
 import { purchaseStateService, PurchaseUpdate } from './purchaseStateService';
 import { paymentHistoryService } from './paymentHistoryService';
+import { piNetworkRetryService } from './piNetworkRetryService';
+import { piSecurityService } from './piSecurityService';
 
 class PiNetworkService {
   private isInitialized = false;
@@ -87,6 +89,7 @@ class PiNetworkService {
       console.log(`Pi Network SDK initialized successfully in ${this.environment.isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION'} mode (sandbox: ${this.environment.sandbox})`);
     } catch (error) {
       console.error('Failed to initialize Pi SDK:', error);
+      piSecurityService.logSecurityEvent('sdk_init_failed', { error: error instanceof Error ? error.message : 'Unknown error' });
       throw error;
     }
   }
@@ -142,55 +145,81 @@ class PiNetworkService {
         return;
       }
 
-      const paymentData = {
-        amount,
-        memo,
-        metadata: {
-          ...metadata,
-          app_id: this.APP_ID,
-          user_id: this.currentUser?.uid || 'guest',
-          timestamp: Date.now(),
-          environment: this.environment.isDevelopment ? 'development' : 'production'
-        }
-      };
+      // Enhanced security validation
+      try {
+        const sanitizedPaymentData = piSecurityService.sanitizePaymentData({
+          amount,
+          memo,
+          metadata: {
+            ...metadata,
+            app_id: this.APP_ID,
+            user_id: this.currentUser?.uid || 'guest',
+            timestamp: Date.now(),
+            environment: this.environment.isDevelopment ? 'development' : 'production'
+          }
+        });
 
-      console.log('Creating payment with data:', paymentData);
+        console.log('Creating payment with sanitized data:', sanitizedPaymentData);
 
-      const paymentCallbacks = {
-        onReadyForServerApproval: (paymentId: string) => {
-          console.log('Payment ready for server approval:', paymentId);
-          this.approvePayment(paymentId)
-            .then(() => {
+        const paymentCallbacks = {
+          onReadyForServerApproval: async (paymentId: string) => {
+            console.log('Payment ready for server approval:', paymentId);
+            try {
+              const result = await piNetworkRetryService.retryPaymentApproval(paymentId);
               console.log('Payment approved successfully:', paymentId);
-            })
-            .catch((error) => {
+            } catch (error) {
               console.error('Payment approval failed:', error);
+              piSecurityService.logSecurityEvent('payment_approval_failed', { paymentId, error });
               reject(error);
-            });
-        },
-        onReadyForServerCompletion: (paymentId: string, txid: string) => {
-          console.log('Payment ready for server completion:', paymentId, txid);
-          this.completePayment(paymentId, txid, paymentData.metadata)
-            .then(() => {
+            }
+          },
+          onReadyForServerCompletion: async (paymentId: string, txid: string) => {
+            console.log('Payment ready for server completion:', paymentId, txid);
+            try {
+              await piNetworkRetryService.retryPaymentCompletion(paymentId, txid, sanitizedPaymentData.metadata);
               console.log('Payment completed successfully:', paymentId);
+              
+              // Record payment in history
+              await this.recordPaymentInHistory(paymentId, txid, sanitizedPaymentData.metadata);
+              
+              // Update purchase state in Supabase after successful payment
+              if (this.currentUser && sanitizedPaymentData.metadata) {
+                await this.updatePurchaseStateFromMetadata(sanitizedPaymentData.metadata, txid);
+              }
+              
               resolve(paymentId);
-            })
-            .catch((error) => {
+            } catch (error) {
               console.error('Payment completion failed:', error);
+              piSecurityService.logSecurityEvent('payment_completion_failed', { paymentId, txid, error });
               reject(error);
-            });
-        },
-        onCancel: (paymentId: string) => {
-          console.log('Payment cancelled by user:', paymentId);
-          reject(new Error('Payment cancelled by user'));
-        },
-        onError: (error: Error, payment?: PiPayment) => {
-          console.error('Payment error:', error, payment);
-          reject(error);
-        }
-      };
+            }
+          },
+          onCancel: (paymentId: string) => {
+            console.log('Payment cancelled by user:', paymentId);
+            piSecurityService.logSecurityEvent('payment_cancelled', { paymentId });
+            reject(new Error('Payment cancelled by user'));
+          },
+          onError: (error: Error, payment?: PiPayment) => {
+            console.error('Payment error:', error, payment);
+            
+            // Check for token expiry
+            if (piSecurityService.detectTokenExpiry(error)) {
+              piSecurityService.logSecurityEvent('token_expired', { error: error.message });
+              // Trigger re-authentication
+              this.currentUser = null;
+              reject(new Error('Session expired. Please sign in again.'));
+            } else {
+              piSecurityService.logSecurityEvent('payment_error', { error: error.message, payment });
+              reject(error);
+            }
+          }
+        };
 
-      window.Pi.createPayment(paymentData, paymentCallbacks);
+        window.Pi.createPayment(sanitizedPaymentData, paymentCallbacks);
+      } catch (error) {
+        piSecurityService.logSecurityEvent('payment_validation_failed', { error });
+        reject(error);
+      }
     });
   }
 
@@ -363,31 +392,61 @@ class PiNetworkService {
 
   // Enhanced convenience methods with purchase state integration
   async purchasePremiumSubscription(): Promise<string> {
-    const paymentId = await this.createPayment(15, "Unlock Pi Premium", { type: "subscription" });
-    return paymentId;
+    try {
+      const paymentId = await this.createPayment(15, "Unlock Pi Premium", { type: "subscription" });
+      piSecurityService.logSecurityEvent('premium_subscription_purchased', { paymentId });
+      return paymentId;
+    } catch (error) {
+      piSecurityService.logSecurityEvent('premium_subscription_failed', { error });
+      throw error;
+    }
   }
 
   async purchaseEliteSubscription(): Promise<string> {
-    const paymentId = await this.createPayment(20, "Unlock Elite Pack", { type: "elite" });
-    return paymentId;
+    try {
+      const paymentId = await this.createPayment(20, "Unlock Elite Pack", { type: "elite" });
+      piSecurityService.logSecurityEvent('elite_subscription_purchased', { paymentId });
+      return paymentId;
+    } catch (error) {
+      piSecurityService.logSecurityEvent('elite_subscription_failed', { error });
+      throw error;
+    }
   }
 
   async purchaseBirdSkin(skinId: string, skinName: string): Promise<string> {
-    const paymentId = await this.createPayment(2, `Unlock ${skinName} Bird Skin`, { 
-      type: "skin", 
-      itemId: skinId 
-    });
-    return paymentId;
+    try {
+      const paymentId = await this.createPayment(2, `Unlock ${skinName} Bird Skin`, { 
+        type: "skin", 
+        itemId: skinId 
+      });
+      piSecurityService.logSecurityEvent('bird_skin_purchased', { paymentId, skinId });
+      return paymentId;
+    } catch (error) {
+      piSecurityService.logSecurityEvent('bird_skin_purchase_failed', { error, skinId });
+      throw error;
+    }
   }
 
   async purchaseAdRemoval(): Promise<string> {
-    const paymentId = await this.createPayment(10, "Remove All Ads Forever", { type: "no-ads" });
-    return paymentId;
+    try {
+      const paymentId = await this.createPayment(10, "Remove All Ads Forever", { type: "no-ads" });
+      piSecurityService.logSecurityEvent('ad_removal_purchased', { paymentId });
+      return paymentId;
+    } catch (error) {
+      piSecurityService.logSecurityEvent('ad_removal_failed', { error });
+      throw error;
+    }
   }
 
   async purchaseAllSkins(): Promise<string> {
-    const paymentId = await this.createPayment(15, "Unlock All Standard Skins", { type: "all-skins" });
-    return paymentId;
+    try {
+      const paymentId = await this.createPayment(15, "Unlock All Standard Skins", { type: "all-skins" });
+      piSecurityService.logSecurityEvent('all_skins_purchased', { paymentId });
+      return paymentId;
+    } catch (error) {
+      piSecurityService.logSecurityEvent('all_skins_failed', { error });
+      throw error;
+    }
   }
 
   // Get user's purchase state
