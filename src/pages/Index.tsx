@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import SplashScreen from '../components/SplashScreen';
 import WelcomeScreen from '../components/WelcomeScreen';
@@ -18,7 +17,6 @@ const Index = () => {
   const gameState = useGameState();
   const modals = useModals();
   const [showTutorial, setShowTutorial] = useState(false);
-  const [userDifficulty, setUserDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   
   // Create a ref to store the continue game function
   const continueGameRef = React.useRef<(() => void) | null>(null);
@@ -63,8 +61,6 @@ const Index = () => {
           coins={gameState.coins}
           musicEnabled={gameState.musicEnabled}
           onToggleMusic={gameState.setMusicEnabled}
-          userDifficulty={userDifficulty}
-          onDifficultyChange={setUserDifficulty}
         />
 
         <TutorialModal
@@ -123,7 +119,7 @@ const Index = () => {
         onContinueGameRef={(fn) => {
           continueGameRef.current = fn;
         }}
-        userDifficulty={userDifficulty}
+        userDifficulty="medium"
       />
       
       <GameUI 
