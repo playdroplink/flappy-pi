@@ -1,155 +1,45 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
-
-type GameMode = Database['public']['Enums']['game_mode'];
-type ItemType = Database['public']['Enums']['item_type'];
-
-export interface GameSessionResult {
-  session_id: string;
-  is_high_score: boolean;
-  total_coins: number;
-  coins_earned: number;
-}
-
-export interface PurchaseResult {
-  success: boolean;
-  purchase_id?: string;
-  remaining_coins?: number;
-  error?: string;
-}
-
-export interface DailyRewardResult {
-  success: boolean;
-  reward_amount?: number;
-  current_day?: number;
-  streak?: number;
-  error?: string;
-}
-
-export interface AdRewardResult {
-  success: boolean;
-  reward_amount: number;
-  description: string;
-}
 
 export interface UserProfile {
-  id: string;
+  id?: string;
   pi_user_id: string;
   username: string;
-  avatar_url?: string;
   total_coins: number;
   selected_bird_skin: string;
   music_enabled: boolean;
-  created_at: string;
-  updated_at: string;
+  premium_expires_at?: string;
+  ad_free_permanent?: boolean;
+  owned_skins?: string[];
+  avatar_url?: string;
+  created_at?: string;
+  updated_at?: string;
+  // New subscription fields
+  subscription_status?: string;
+  subscription_start?: string;
+  subscription_end?: string;
+  subscription_plan?: string;
+}
+
+export interface GameSession {
+  pi_user_id: string;
+  game_mode: 'classic' | 'endless' | 'challenge';
+  final_score: number;
+  level_reached: number;
+  coins_earned: number;
+  session_duration?: number;
+}
+
+export interface PurchaseItem {
+  pi_user_id: string;
+  item_type: 'bird_skin' | 'power_up' | 'life' | 'coins';
+  item_id: string;
+  cost_coins: number;
+  pi_transaction_id?: string;
 }
 
 class GameBackendService {
-  // Complete a game session and update all related data
-  async completeGameSession(
-    piUserId: string,
-    gameMode: GameMode,
-    finalScore: number,
-    levelReached: number,
-    coinsEarned: number,
-    sessionDuration?: number
-  ): Promise<GameSessionResult | null> {
-    try {
-      const { data, error } = await supabase.rpc('complete_game_session', {
-        p_pi_user_id: piUserId,
-        p_game_mode: gameMode,
-        p_final_score: finalScore,
-        p_level_reached: levelReached,
-        p_coins_earned: coinsEarned,
-        p_session_duration: sessionDuration
-      });
-
-      if (error) {
-        console.error('Error completing game session:', error);
-        return null;
-      }
-
-      return data as any as GameSessionResult;
-    } catch (error) {
-      console.error('Error in completeGameSession:', error);
-      return null;
-    }
-  }
-
-  // Make a purchase using coins
-  async makePurchase(
-    piUserId: string,
-    itemType: ItemType,
-    itemId: string,
-    costCoins: number,
-    piTransactionId?: string
-  ): Promise<PurchaseResult> {
-    try {
-      const { data, error } = await supabase.rpc('make_purchase', {
-        p_pi_user_id: piUserId,
-        p_item_type: itemType,
-        p_item_id: itemId,
-        p_cost_coins: costCoins,
-        p_pi_transaction_id: piTransactionId
-      });
-
-      if (error) {
-        console.error('Error making purchase:', error);
-        return { success: false, error: error.message };
-      }
-
-      return data as any as PurchaseResult;
-    } catch (error) {
-      console.error('Error in makePurchase:', error);
-      return { success: false, error: 'Failed to process purchase' };
-    }
-  }
-
-  // Claim daily reward
-  async claimDailyReward(piUserId: string): Promise<DailyRewardResult> {
-    try {
-      const { data, error } = await supabase.rpc('claim_daily_reward', {
-        p_pi_user_id: piUserId
-      });
-
-      if (error) {
-        console.error('Error claiming daily reward:', error);
-        return { success: false, error: error.message };
-      }
-
-      return data as any as DailyRewardResult;
-    } catch (error) {
-      console.error('Error in claimDailyReward:', error);
-      return { success: false, error: 'Failed to claim daily reward' };
-    }
-  }
-
-  // Record ad watch and give reward
-  async watchAdReward(
-    piUserId: string,
-    adType: string,
-    rewardAmount: number = 25
-  ): Promise<AdRewardResult | null> {
-    try {
-      const { data, error } = await supabase.rpc('watch_ad_reward', {
-        p_pi_user_id: piUserId,
-        p_ad_type: adType,
-        p_reward_amount: rewardAmount
-      });
-
-      if (error) {
-        console.error('Error recording ad reward:', error);
-        return null;
-      }
-
-      return data as any as AdRewardResult;
-    } catch (error) {
-      console.error('Error in watchAdReward:', error);
-      return null;
-    }
-  }
-
-  // Get user profile
+  // Get user profile by Pi user ID
   async getUserProfile(piUserId: string): Promise<UserProfile | null> {
     try {
       const { data, error } = await supabase
@@ -158,7 +48,11 @@ class GameBackendService {
         .eq('pi_user_id', piUserId)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No rows returned - user doesn't exist yet
+          return null;
+        }
         console.error('Error fetching user profile:', error);
         return null;
       }
@@ -170,116 +64,14 @@ class GameBackendService {
     }
   }
 
-  // Get user profile with purchase state
-  async getUserProfileWithPurchases(piUserId: string): Promise<(UserProfile & { purchaseState?: any }) | null> {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*, premium_expires_at, ad_free_permanent, owned_skins')
-        .eq('pi_user_id', piUserId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
-        console.error('Error fetching user profile with purchases:', error);
-        return null;
-      }
-
-      if (!data) return null;
-
-      // Calculate purchase state
-      const now = new Date();
-      const premiumExpiresAt = data.premium_expires_at ? new Date(data.premium_expires_at) : null;
-      const hasPremium = premiumExpiresAt ? premiumExpiresAt > now : false;
-
-      return {
-        ...data,
-        purchaseState: {
-          hasPremium,
-          isAdFree: data.ad_free_permanent || hasPremium,
-          ownedSkins: data.owned_skins || ['default'],
-          premiumExpiresAt: data.premium_expires_at
-        }
-      } as UserProfile & { purchaseState: any };
-    } catch (error) {
-      console.error('Error in getUserProfileWithPurchases:', error);
-      return null;
-    }
-  }
-
-  // Check user's premium status
-  async checkUserPremiumStatus(piUserId: string): Promise<{ hasPremium: boolean; expiresAt: string | null }> {
-    try {
-      const { data, error } = await supabase
-        .rpc('user_has_active_premium', { user_id: piUserId });
-
-      if (error) {
-        console.error('Error checking premium status:', error);
-        return { hasPremium: false, expiresAt: null };
-      }
-
-      // Get expiration date
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('premium_expires_at')
-        .eq('pi_user_id', piUserId)
-        .single();
-
-      return {
-        hasPremium: data || false,
-        expiresAt: profile?.premium_expires_at || null
-      };
-    } catch (error) {
-      console.error('Error in checkUserPremiumStatus:', error);
-      return { hasPremium: false, expiresAt: null };
-    }
-  }
-
-  // Check if user owns a skin
-  async checkSkinOwnership(piUserId: string, skinId: string): Promise<boolean> {
-    try {
-      const { data, error } = await supabase
-        .rpc('user_owns_skin', { user_id: piUserId, skin_id: skinId });
-
-      if (error) {
-        console.error('Error checking skin ownership:', error);
-        return skinId === 'default';
-      }
-
-      return data || skinId === 'default';
-    } catch (error) {
-      console.error('Error in checkSkinOwnership:', error);
-      return skinId === 'default';
-    }
-  }
-
-  // Get user's purchase history
-  async getUserPurchases(piUserId: string, limit: number = 20): Promise<any[]> {
-    try {
-      const { data, error } = await supabase
-        .from('purchases')
-        .select('*')
-        .eq('pi_user_id', piUserId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        console.error('Error fetching user purchases:', error);
-        return [];
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Error in getUserPurchases:', error);
-      return [];
-    }
-  }
-
   // Create or update user profile
-  async upsertUserProfile(profile: Partial<UserProfile> & { pi_user_id: string; username: string }): Promise<UserProfile | null> {
+  async upsertUserProfile(profile: Partial<UserProfile>): Promise<UserProfile | null> {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .upsert(profile, { onConflict: 'pi_user_id' })
+        .upsert(profile, {
+          onConflict: 'pi_user_id'
+        })
         .select()
         .single();
 
@@ -291,6 +83,51 @@ class GameBackendService {
       return data as UserProfile;
     } catch (error) {
       console.error('Error in upsertUserProfile:', error);
+      return null;
+    }
+  }
+
+  // Complete a game session
+  async completeGameSession(session: GameSession): Promise<any> {
+    try {
+      const { data, error } = await supabase.rpc('complete_game_session_secure', {
+        p_game_mode: session.game_mode,
+        p_final_score: session.final_score,
+        p_level_reached: session.level_reached,
+        p_coins_earned: session.coins_earned,
+        p_session_duration: session.session_duration
+      });
+
+      if (error) {
+        console.error('Error completing game session:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in completeGameSession:', error);
+      return null;
+    }
+  }
+
+  // Make a purchase
+  async makePurchase(purchase: PurchaseItem): Promise<any> {
+    try {
+      const { data, error } = await supabase.rpc('make_purchase_secure', {
+        p_item_type: purchase.item_type,
+        p_item_id: purchase.item_id,
+        p_cost_coins: purchase.cost_coins,
+        p_pi_transaction_id: purchase.pi_transaction_id
+      });
+
+      if (error) {
+        console.error('Error making purchase:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in makePurchase:', error);
       return null;
     }
   }
@@ -315,46 +152,24 @@ class GameBackendService {
     }
   }
 
-  // Get user's game sessions
-  async getUserGameSessions(piUserId: string, limit: number = 10): Promise<any[]> {
+  // Get leaderboard
+  async getLeaderboard(limit: number = 10): Promise<any[]> {
     try {
       const { data, error } = await supabase
-        .from('game_sessions')
-        .select('*')
-        .eq('pi_user_id', piUserId)
-        .order('created_at', { ascending: false })
+        .from('user_scores')
+        .select('username, highest_score, total_games, updated_at')
+        .order('highest_score', { ascending: false })
         .limit(limit);
 
       if (error) {
-        console.error('Error fetching game sessions:', error);
+        console.error('Error fetching leaderboard:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error in getUserGameSessions:', error);
+      console.error('Error in getLeaderboard:', error);
       return [];
-    }
-  }
-
-  // Get daily reward status
-  async getDailyRewardStatus(piUserId: string): Promise<any> {
-    try {
-      const { data, error } = await supabase
-        .from('daily_rewards')
-        .select('*')
-        .eq('pi_user_id', piUserId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching daily reward status:', error);
-        return null;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error in getDailyRewardStatus:', error);
-      return null;
     }
   }
 }
