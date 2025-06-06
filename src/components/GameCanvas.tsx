@@ -48,10 +48,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const { gameStateRef, resetGame, continueGame, jump, checkCollisions } = useGameLoop({
     gameState,
     onCollision: () => {
+      console.log('Collision detected in GameCanvas');
       playHit();
       onCollision();
     },
-    onScoreUpdate
+    onScoreUpdate: (score) => {
+      console.log('Score updated in GameCanvas:', score);
+      onScoreUpdate(score);
+    }
   });
 
   // Track the last game state to detect state changes
@@ -60,12 +64,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const { updateGame, resetGameWithLives, livesSystem, heartsSystem, flashTimer } = useGamePhysics({
     gameStateRef,
     onScoreUpdate: (score) => {
+      console.log('Physics score update:', score);
       playPoint();
       onScoreUpdate(score);
     },
-    onCoinEarned,
+    onCoinEarned: (coins) => {
+      console.log('Coins earned:', coins);
+      onCoinEarned(coins);
+    },
     checkCollisions,
     onCollision: () => {
+      console.log('Physics collision detected');
       playDie();
       onCollision();
     },
@@ -86,7 +95,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   useGameInputHandlers({
     gameState,
-    jump,
+    jump: () => {
+      console.log('Jump triggered');
+      jump();
+      playWingFlap();
+    },
     playWingFlap
   });
 
@@ -96,6 +109,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     updateGame,
     draw,
     resetGame: (canvasHeight: number) => {
+      console.log('Resetting game with canvas height:', canvasHeight);
       resetGame(canvasHeight);
       resetGameWithLives();
       if (resetVisuals) {
@@ -107,6 +121,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   });
 
   useEffect(() => {
+    console.log('Initializing game sounds');
     initializeGameSounds();
   }, [initializeGameSounds]);
 
@@ -118,6 +133,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Detect when game transitions from 'gameOver' to 'playing' to ensure proper reset
   useEffect(() => {
+    console.log('Game state changed from', lastGameStateRef.current, 'to', gameState);
     if (lastGameStateRef.current === 'gameOver' && gameState === 'playing') {
       console.log('Detected restart from game over to playing - ensuring proper bird reset');
       const canvas = canvasRef.current;
@@ -130,6 +146,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     lastGameStateRef.current = gameState;
   }, [gameState, resetGame, resetGameWithLives, resetVisuals, canvasRef]);
 
+  // Ensure canvas is properly sized
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const resizeCanvas = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        console.log('Canvas resized to:', canvas.width, 'x', canvas.height);
+      };
+      
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      
+      return () => {
+        window.removeEventListener('resize', resizeCanvas);
+      };
+    }
+  }, [canvasRef]);
+
   return (
     <canvas
       ref={canvasRef}
@@ -139,7 +174,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         userSelect: 'none',
         WebkitUserSelect: 'none',
         position: 'fixed',
-        zIndex: 1
+        zIndex: 1,
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh'
       }}
     />
   );

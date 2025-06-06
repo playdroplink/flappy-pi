@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -15,6 +14,11 @@ import Index from './pages/Index';
 import NotFound from './pages/NotFound';
 import { loadPiSdk } from './services/piSdkLoader';
 import { piNetworkService } from './services/piNetworkService';
+import { QueryClientProvider, QueryClient } from 'react-query';
+import { TooltipProvider } from '@radix-ui/react-tooltip';
+import SubscriptionPlansPage from './pages/SubscriptionPlansPage';
+
+const queryClient = new QueryClient();
 
 function App() {
   // Initialize Pi SDK when app loads
@@ -33,25 +37,28 @@ function App() {
   }, []);
 
   return (
-    <>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/play" element={<GamePage />} />
-          <Route path="/shop" element={<ShopPage />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/help" element={<HelpPage />} />
-          <Route path="/account" element={<SettingsPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
-      <Toaster />
-    </>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/shop" element={<ShopPage />} />
+            <Route path="/game" element={<GamePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/account" element={<SettingsPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/help" element={<HelpPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/subscription-plans" element={<SubscriptionPlansPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 

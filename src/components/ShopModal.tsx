@@ -238,6 +238,25 @@ const ShopModal: React.FC<ShopModalProps> = ({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Subscription Plans Link */}
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 border border-purple-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-gray-800">Pi Premium Packs</h3>
+                <p className="text-sm text-gray-600">One-time purchases with instant rewards</p>
+              </div>
+              <Button
+                onClick={() => {
+                  onClose();
+                  window.location.href = '/subscription-plans';
+                }}
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+              >
+                View Plans
+              </Button>
+            </div>
+          </div>
+
           {/* Bird Characters Section */}
           <BirdCharactersSection 
             birdSkins={birdSkins}
