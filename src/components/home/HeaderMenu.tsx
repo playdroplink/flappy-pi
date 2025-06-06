@@ -5,7 +5,11 @@ import { Menu, Settings, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 
-const HeaderMenu: React.FC = () => {
+interface HeaderMenuProps {
+  onOpenMenu?: () => void;
+}
+
+const HeaderMenu: React.FC<HeaderMenuProps> = ({ onOpenMenu }) => {
   const navigate = useNavigate();
   const { playSwoosh } = useSoundEffects();
 
@@ -14,16 +18,21 @@ const HeaderMenu: React.FC = () => {
     navigate(path);
   };
 
+  const handleMenuClick = () => {
+    playSwoosh();
+    if (onOpenMenu) {
+      onOpenMenu();
+    }
+  };
+
   return (
-    <div className="fixed top-4 left-4 right-4 z-50 flex justify-between items-center">
+    <div className="fixed top-4 left-4 right-4 z-40 flex justify-between items-center">
       {/* Left side - Menu button */}
       <Button
         variant="ghost"
         size="icon"
         className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/20 rounded-xl shadow-lg"
-        onClick={() => {
-          // This will be handled by the existing NavigationMenu
-        }}
+        onClick={handleMenuClick}
       >
         <Menu className="h-6 w-6" />
       </Button>

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { forwardRef, useImperativeHandle, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,12 +8,22 @@ import { Menu, Home, Play, ShoppingCart, Trophy, Settings, HelpCircle, Mail, Shi
 import { useNavigate } from 'react-router-dom';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 
-const NavigationMenu: React.FC = () => {
+export interface NavigationMenuRef {
+  openMenu: () => void;
+}
+
+const NavigationMenu = forwardRef<NavigationMenuRef>((props, ref) => {
   const navigate = useNavigate();
   const { playSwoosh } = useSoundEffects();
+  const [isOpen, setIsOpen] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    openMenu: () => setIsOpen(true)
+  }));
 
   const handleNavigation = (path: string) => {
     playSwoosh();
+    setIsOpen(false);
     navigate(path);
   };
 
@@ -33,17 +43,8 @@ const NavigationMenu: React.FC = () => {
   ];
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="fixed top-4 left-4 z-50 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/20 rounded-xl shadow-lg"
-        >
-          <Menu className="h-6 w-6" />
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="left" className="w-80 bg-gradient-to-b from-sky-400 to-blue-600 border-0">
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetContent side="left" className="w-80 bg-gradient-to-b from-sky-400 to-blue-600 border-0 z-50">
         <SheetHeader className="pb-6">
           <SheetTitle className="text-white text-2xl font-bold flex items-center gap-3">
             <img 
@@ -132,6 +133,8 @@ const NavigationMenu: React.FC = () => {
       </SheetContent>
     </Sheet>
   );
-};
+});
+
+NavigationMenu.displayName = 'NavigationMenu';
 
 export default NavigationMenu;

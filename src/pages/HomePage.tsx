@@ -1,11 +1,11 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { useGameState } from '../hooks/useGameState';
 import { useSoundEffects } from '../hooks/useSoundEffects';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 import { useNavigate } from 'react-router-dom';
 import EnhancedFooter from '../components/EnhancedFooter';
-import NavigationMenu from '../components/NavigationMenu';
+import NavigationMenu, { NavigationMenuRef } from '../components/NavigationMenu';
 import HeaderMenu from '../components/home/HeaderMenu';
 import { ScrollArea } from '../components/ui/scroll-area';
 import HomeHeader from '../components/home/HomeHeader';
@@ -20,6 +20,7 @@ const HomePage: React.FC = () => {
   const gameState = useGameState();
   const { playSwoosh } = useSoundEffects();
   const navigate = useNavigate();
+  const navigationMenuRef = useRef<NavigationMenuRef>(null);
 
   // Add background music
   useBackgroundMusic({ musicEnabled: gameState.musicEnabled, gameState: 'menu' });
@@ -35,13 +36,17 @@ const HomePage: React.FC = () => {
     navigate('/play');
   };
 
+  const handleOpenMenu = () => {
+    navigationMenuRef.current?.openMenu();
+  };
+
   return (
     <div className="fixed inset-0 w-full h-full flex flex-col">
       {/* Navigation Menu */}
-      <NavigationMenu />
+      <NavigationMenu ref={navigationMenuRef} />
       
       {/* Header Menu */}
-      <HeaderMenu />
+      <HeaderMenu onOpenMenu={handleOpenMenu} />
       
       {/* Scrollable Content Area */}
       <ScrollArea className="flex-1">
