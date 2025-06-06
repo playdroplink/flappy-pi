@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Heart, Globe, Mail, Users, Star, Code } from 'lucide-react';
+import { Heart, Globe, Mail, Users, Star, Code, Shield, FileText, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const EnhancedFooter: React.FC = () => {
@@ -75,30 +75,45 @@ const EnhancedFooter: React.FC = () => {
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Documentation */}
           <div>
-            <h4 className="font-semibold text-lg mb-4 text-purple-600">Connect</h4>
+            <h4 className="font-semibold text-lg mb-4 text-purple-600">Documentation</h4>
             <ul className="space-y-3">
+              <li>
+                <button 
+                  onClick={() => handleNavigation('/privacy')}
+                  className="text-gray-700 hover:text-purple-600 transition-colors flex items-center space-x-2"
+                >
+                  <Shield className="w-4 h-4" />
+                  <span>Privacy Policy</span>
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => handleNavigation('/terms')}
+                  className="text-gray-700 hover:text-purple-600 transition-colors flex items-center space-x-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Terms of Service</span>
+                </button>
+              </li>
               <li>
                 <button 
                   onClick={() => handleNavigation('/contact')}
                   className="text-gray-700 hover:text-purple-600 transition-colors flex items-center space-x-2"
                 >
                   <Mail className="w-4 h-4" />
-                  <span>Support</span>
+                  <span>Contact Us</span>
                 </button>
               </li>
               <li>
                 <button 
-                  onClick={() => handleExternalLink('https://mrwain.org')}
+                  onClick={() => handleNavigation('/help')}
                   className="text-gray-700 hover:text-purple-600 transition-colors flex items-center space-x-2"
                 >
-                  <Globe className="w-4 h-4" />
-                  <span>Website</span>
+                  <HelpCircle className="w-4 h-4" />
+                  <span>Help & Support</span>
                 </button>
-              </li>
-              <li>
-                <span className="text-gray-600 text-sm">Pi Network Official</span>
               </li>
             </ul>
           </div>
@@ -122,6 +137,13 @@ const EnhancedFooter: React.FC = () => {
                 className="text-gray-700 hover:text-blue-600 transition-colors"
               >
                 Terms of Service
+              </button>
+              <button 
+                onClick={() => handleExternalLink('https://mrwain.org')}
+                className="text-gray-700 hover:text-purple-600 transition-colors flex items-center space-x-2"
+              >
+                <Globe className="w-4 h-4" />
+                <span>Website</span>
               </button>
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>

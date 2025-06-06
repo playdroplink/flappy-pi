@@ -6,7 +6,6 @@ import WelcomeHeader from './welcome/WelcomeHeader';
 import UserStatsCard from './welcome/UserStatsCard';
 import GameModeButtons from './welcome/GameModeButtons';
 import QuickActionButtons from './welcome/QuickActionButtons';
-import WelcomeFooter from './welcome/WelcomeFooter';
 import BackgroundElements from './welcome/BackgroundElements';
 import EnhancedFooter from './EnhancedFooter';
 import ContactModal from './ContactModal';
@@ -119,14 +118,6 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 onOpenLeaderboard={onOpenLeaderboard}
               />
             </div>
-
-            {/* Footer Navigation Links */}
-            <WelcomeFooter 
-              onOpenPrivacy={handleOpenPrivacy}
-              onOpenTerms={handleOpenTerms}
-              onOpenContact={handleOpenContact}
-              onOpenHelp={handleOpenHelp}
-            />
           </div>
           
           {/* Enhanced Footer */}
