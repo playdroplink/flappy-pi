@@ -52,6 +52,7 @@ declare global {
 
 import { loadPiSdk, detectEnvironment } from './piSdkLoader';
 import { purchaseStateService, PurchaseUpdate } from './purchaseStateService';
+import { paymentHistoryService } from './paymentHistoryService';
 
 class PiNetworkService {
   private isInitialized = false;
@@ -236,6 +237,11 @@ class PiNetworkService {
         throw new Error(`Payment completion failed: ${result.error}`);
       }
       
+      // Record payment in history
+      if (metadata) {
+        await this.recordPaymentInHistory(paymentId, txid, metadata);
+      }
+      
       // Update purchase state in Supabase after successful payment
       if (this.currentUser && metadata) {
         await this.updatePurchaseStateFromMetadata(metadata, txid);
@@ -245,6 +251,78 @@ class PiNetworkService {
     } catch (error) {
       console.error('Payment completion error:', error);
       throw error;
+    }
+  }
+
+  private async recordPaymentInHistory(paymentId: string, txid: string, metadata: any): Promise<void> {
+    try {
+      const itemName = this.getItemNameFromMetadata(metadata);
+      const itemDescription = this.getItemDescriptionFromMetadata(metadata);
+      const amount = this.getAmountFromMetadata(metadata);
+      
+      await paymentHistoryService.recordPayment({
+        payment_type: 'pi_payment',
+        item_name: itemName,
+        item_description: itemDescription,
+        amount_pi: amount,
+        amount_coins: 0,
+        pi_transaction_id: txid,
+        payment_status: 'completed',
+        metadata: metadata
+      });
+    } catch (error) {
+      console.error('Error recording payment in history:', error);
+    }
+  }
+
+  private getItemNameFromMetadata(metadata: any): string {
+    switch (metadata.type) {
+      case 'subscription':
+        return 'Pi Premium Subscription';
+      case 'elite':
+        return 'Elite Pack Subscription';
+      case 'no-ads':
+        return 'Remove All Ads Forever';
+      case 'skin':
+        return `${metadata.itemId} Bird Skin`;
+      case 'all-skins':
+        return 'All Standard Skins Access';
+      default:
+        return 'Flappy Pi Purchase';
+    }
+  }
+
+  private getItemDescriptionFromMetadata(metadata: any): string {
+    switch (metadata.type) {
+      case 'subscription':
+        return '30 days of premium features including ad-free gaming and exclusive skins';
+      case 'elite':
+        return '30 days of elite features with special rewards and bonuses';
+      case 'no-ads':
+        return 'Permanent removal of all advertisements';
+      case 'skin':
+        return `Unlock the ${metadata.itemId} bird skin for customization`;
+      case 'all-skins':
+        return 'Access to all standard bird skins via premium subscription';
+      default:
+        return 'Flappy Pi in-game purchase';
+    }
+  }
+
+  private getAmountFromMetadata(metadata: any): number {
+    switch (metadata.type) {
+      case 'subscription':
+        return 15;
+      case 'elite':
+        return 20;
+      case 'no-ads':
+        return 10;
+      case 'skin':
+        return 2;
+      case 'all-skins':
+        return 15;
+      default:
+        return 0;
     }
   }
 

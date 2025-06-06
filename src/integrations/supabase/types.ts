@@ -96,6 +96,54 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_history: {
+        Row: {
+          amount_coins: number | null
+          amount_pi: number | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          item_description: string | null
+          item_name: string
+          metadata: Json | null
+          payment_status: string
+          payment_type: string
+          pi_transaction_id: string | null
+          pi_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_coins?: number | null
+          amount_pi?: number | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          item_description?: string | null
+          item_name: string
+          metadata?: Json | null
+          payment_status?: string
+          payment_type: string
+          pi_transaction_id?: string | null
+          pi_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_coins?: number | null
+          amount_pi?: number | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          item_description?: string | null
+          item_name?: string
+          metadata?: Json | null
+          payment_status?: string
+          payment_type?: string
+          pi_transaction_id?: string | null
+          pi_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       purchases: {
         Row: {
           cost_coins: number
@@ -374,6 +422,22 @@ export type Database = {
       expire_subscriptions: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      get_user_payment_history: {
+        Args: { user_id: string; limit_count?: number }
+        Returns: {
+          id: string
+          payment_type: string
+          item_name: string
+          item_description: string
+          amount_pi: number
+          amount_coins: number
+          pi_transaction_id: string
+          payment_status: string
+          metadata: Json
+          created_at: string
+          completed_at: string
+        }[]
       }
       make_purchase: {
         Args:
