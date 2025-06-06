@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { gameBackendService } from '@/services/gameBackendService';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { useAuth } from '@/hooks/useAuth';
+import { usePiAuth } from '@/hooks/usePiAuth';
 
 interface UseGameOverHandlerProps {
   level: number;
@@ -42,7 +42,7 @@ export const useGameOverHandler = ({
   const { toast } = useToast();
   const { submitScore } = useLeaderboard();
   const { profile, refreshProfile } = useUserProfile();
-  const { user } = useAuth();
+  const { user } = usePiAuth(); // Changed from useAuth to usePiAuth
 
   const handleGameOver = useCallback(async (finalScore: number) => {
     console.log('Game over with final score:', finalScore);
@@ -55,7 +55,7 @@ export const useGameOverHandler = ({
     setShowMandatoryAd(false);
     
     if (!user || !profile) {
-      console.warn('No authenticated user or profile available for game over handling');
+      console.warn('No authenticated Pi user or profile available for game over handling');
       return;
     }
     
@@ -115,7 +115,7 @@ export const useGameOverHandler = ({
     // Submit score to leaderboard if it's a decent score (> 0)
     if (finalScore > 0 && user && profile) {
       try {
-        await submitScore(user.id, profile.username, finalScore);
+        await submitScore(user.uid, profile.username, finalScore); // Changed from user.id to user.uid for Pi Network
       } catch (error) {
         console.error('Failed to submit score:', error);
       }
