@@ -30,7 +30,8 @@ export const useBackgroundRenderer = ({
     if (starField.current.length === 0) {
       for (let i = 0; i < 100; i++) {
         starField.current.push({
-          x: Math.random() * canvas.width,
+          // Position stars further back (more towards the right side of screen)
+          x: Math.random() * canvas.width + 200, // Start stars 200px further back
           y: Math.random() * canvas.height * 0.8,
           size: Math.random() * 2 + 0.5,
           twinkle: Math.random() * Math.PI * 2
@@ -66,9 +67,9 @@ export const useBackgroundRenderer = ({
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Update background offset only when game is started
+    // Update background offset only when game is started - slower scroll for deeper background
     if (gameStarted) {
-      backgroundOffset.current += difficulty.backgroundScrollSpeed * 0.3;
+      backgroundOffset.current += difficulty.backgroundScrollSpeed * 0.2; // Reduced from 0.3 to 0.2
     }
 
     // Draw stars for night and space themes
@@ -83,11 +84,11 @@ export const useBackgroundRenderer = ({
         ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
         ctx.fill();
         
-        // Only move stars when game is started
+        // Only move stars when game is started - slower movement for depth
         if (gameStarted) {
-          star.x -= difficulty.backgroundScrollSpeed * 0.1;
+          star.x -= difficulty.backgroundScrollSpeed * 0.05; // Reduced from 0.1 to 0.05
           if (star.x < -10) {
-            star.x = canvas.width + 10;
+            star.x = canvas.width + 210; // Respawn further back
             star.y = Math.random() * canvas.height * 0.8;
           }
         }
@@ -95,11 +96,11 @@ export const useBackgroundRenderer = ({
       ctx.globalAlpha = 1;
     }
 
-    // Draw nebula effect for space theme
+    // Draw nebula effect for space theme - positioned further back
     if (difficulty.hasNebulaEffect) {
       const nebulaGradient = ctx.createRadialGradient(
-        canvas.width * 0.7, canvas.height * 0.3, 0,
-        canvas.width * 0.7, canvas.height * 0.3, canvas.width * 0.6
+        canvas.width * 0.8, canvas.height * 0.3, 0, // Moved further back (0.7 to 0.8)
+        canvas.width * 0.8, canvas.height * 0.3, canvas.width * 0.6
       );
       nebulaGradient.addColorStop(0, 'rgba(138, 43, 226, 0.1)');
       nebulaGradient.addColorStop(0.5, 'rgba(75, 0, 130, 0.05)');
