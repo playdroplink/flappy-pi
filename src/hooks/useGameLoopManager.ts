@@ -22,6 +22,7 @@ export const useGameLoopManager = ({
 }: UseGameLoopManagerProps) => {
   const animationFrameRef = useRef<number>();
   const lastResetState = useRef<string>('');
+  const isResetting = useRef<boolean>(false);
 
   const gameLoop = useCallback(() => {
     if (gameState === 'playing') {
@@ -36,11 +37,12 @@ export const useGameLoopManager = ({
     if (!canvas) return;
 
     const updateCanvasSize = () => {
-      const rect = canvas.getBoundingClientRect();
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       canvas.style.width = `${window.innerWidth}px`;
       canvas.style.height = `${window.innerHeight}px`;
+      
+      console.log('📐 Canvas resized:', canvas.width, 'x', canvas.height);
     };
 
     updateCanvasSize();
@@ -51,6 +53,37 @@ export const useGameLoopManager = ({
     };
   }, [canvasRef]);
 
+  const performGameReset = useCallback(() => {
+    if (isResetting.current) return;
+    
+    isResetting.current = true;
+    console.log('🔄 Performing complete game reset...');
+    
+    const canvas = canvasRef.current;
+    if (canvas) {
+      // Stop any ongoing animations
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      
+      // Reset game state
+      resetGame(canvas.height);
+      
+      // Reset visuals
+      if (resetVisuals) {
+        resetVisuals();
+      }
+      
+      // Small delay to ensure everything is reset
+      setTimeout(() => {
+        // Restart animation loop
+        animationFrameRef.current = requestAnimationFrame(gameLoop);
+        isResetting.current = false;
+        console.log('✅ Game reset complete');
+      }, 100);
+    }
+  }, [resetGame, canvasRef, resetVisuals, gameLoop]);
+
   useEffect(() => {
     const cleanup = setupCanvas();
     return cleanup;
@@ -58,19 +91,16 @@ export const useGameLoopManager = ({
 
   useEffect(() => {
     if (gameState === 'playing' && lastResetState.current !== 'playing') {
-      const canvas = canvasRef.current;
-      if (canvas) {
-        resetGame(canvas.height);
-        if (resetVisuals) {
-          resetVisuals();
-        }
-      }
+      console.log('🎮 Game state changed to playing - triggering reset');
+      performGameReset();
       lastResetState.current = 'playing';
     }
-  }, [gameState, resetGame, canvasRef, resetVisuals]);
+  }, [gameState, performGameReset]);
 
   useEffect(() => {
-    animationFrameRef.current = requestAnimationFrame(gameLoop);
+    if (!isResetting.current) {
+      animationFrameRef.current = requestAnimationFrame(gameLoop);
+    }
 
     return () => {
       if (animationFrameRef.current) {

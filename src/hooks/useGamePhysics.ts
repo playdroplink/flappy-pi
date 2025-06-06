@@ -1,4 +1,3 @@
-
 import { useCallback, useRef } from 'react';
 import { getDifficultyByUserChoice, getScoreMultiplier } from '../utils/gameDifficulty';
 import { useHeartsSystem } from './useHeartsSystem';
@@ -42,40 +41,34 @@ export const useGamePhysics = ({
   }, [gameMode, userDifficulty]);
 
   const handleCollisionWithLives = useCallback((canvas: HTMLCanvasElement) => {
-    // Don't process collision if invulnerable
     if (livesSystem.isInvulnerable) return false;
     
     const hasCollision = checkCollisions(canvas);
     if (!hasCollision) return false;
     
-    console.log('Collision detected! Current lives:', livesSystem.currentLives);
+    console.log('💥 Collision detected! Current lives:', livesSystem.currentLives);
     
-    // Try to use a life
     if (livesSystem.useLife()) {
-      console.log('Life used! Respawning bird. Lives remaining:', livesSystem.currentLives - 1);
+      console.log('❤️ Life used! Respawning bird. Lives remaining:', livesSystem.currentLives - 1);
       
-      // Flash effect
-      flashTimer.current = 30; // Flash for 30 frames
+      flashTimer.current = 30;
       
-      // Calculate safe respawn position
-      const minY = 100;
-      const maxY = canvas.height - 150;
-      const safeY = Math.max(minY, Math.min(maxY, canvas.height * 0.4));
+      // Respawn at center
+      const centerY = canvas.height / 2;
+      const safeY = Math.max(100, Math.min(canvas.height - 100, centerY));
       
-      // Respawn bird at safe position
       gameStateRef.current.bird = {
         x: 80,
         y: safeY,
-        velocity: -3, // Small upward boost
+        velocity: -3,
         rotation: 0
       };
       
-      console.log('Bird respawned at safe Y position:', safeY);
-      
-      return false; // Don't trigger game over
+      console.log('✅ Bird respawned at center Y:', safeY);
+      return false;
     } else {
-      console.log('No lives left - triggering game over');
-      return true; // Trigger normal collision/game over
+      console.log('💀 No lives left - game over');
+      return true;
     }
   }, [checkCollisions, livesSystem]);
 
@@ -94,59 +87,67 @@ export const useGamePhysics = ({
     const PIPE_GAP = difficulty.pipeGap;
     const PIPE_SPACING = 400;
 
-    // Calculate level from score
+    // Calculate level
     const currentLevel = Math.floor(state.score / 5) + 1;
     state.level = currentLevel;
 
-    // If game hasn't started, just do gentle floating animation
+    // Handle pre-game state
     if (!state.gameStarted) {
-      // Gentle floating animation for bird
-      const floatOffset = Math.sin(state.frameCount * 0.08) * 0.8;
-      state.bird.y += floatOffset;
-      state.bird.velocity = 0; // No velocity when not started
-      state.bird.rotation = 0; // Keep bird level
+      // Gentle floating animation
+      const floatOffset = Math.sin(state.frameCount * 0.06) * 1.2;
+      state.bird.y += floatOffset * 0.5;
+      state.bird.velocity = 0;
+      state.bird.rotation = 0;
       
-      // Ensure bird stays within safe bounds even during floating
-      const minY = 100;
-      const maxY = canvas.height - 150;
-      state.bird.y = Math.max(minY, Math.min(maxY, state.bird.y));
+      // Keep bird centered
+      const centerY = canvas.height / 2;
+      const targetY = Math.max(100, Math.min(canvas.height - 100, centerY));
+      
+      // Smoothly move to center if displaced
+      if (Math.abs(state.bird.y - targetY) > 50) {
+        state.bird.y += (targetY - state.bird.y) * 0.05;
+      }
       
       state.frameCount++;
-      return; // Don't process anything else until game starts
+      return;
     }
 
-    // Apply wind effect if enabled
+    // Apply wind effect
     let horizontalForce = 0;
     if (difficulty.hasWind) {
       horizontalForce = Math.sin(state.frameCount * 0.02) * difficulty.windStrength;
     }
 
-    // Update bird physics - only when game has started
+    // Update bird physics
     state.bird.velocity += GRAVITY;
     state.bird.y += state.bird.velocity;
     state.bird.x += horizontalForce;
     
-    // Constrain bird within safe vertical bounds to prevent getting stuck
-    const minY = 30; // Top boundary
-    const maxY = canvas.height - 80; // Bottom boundary
+    // Strict boundary constraints
+    const minY = 35;
+    const maxY = canvas.height - 75;
     
     if (state.bird.y < minY) {
       state.bird.y = minY;
-      state.bird.velocity = Math.max(0, state.bird.velocity); // Only allow downward velocity
+      state.bird.velocity = Math.max(0, state.bird.velocity);
     }
     
     if (state.bird.y > maxY) {
       state.bird.y = maxY;
-      state.bird.velocity = Math.min(0, state.bird.velocity); // Only allow upward velocity
+      state.bird.velocity = Math.min(0, state.bird.velocity);
     }
     
-    // Bird rotation based on velocity - smoother rotation
+    // Bird rotation
     state.bird.rotation = Math.min(Math.max(state.bird.velocity * 2, -20), 60);
 
-    // Keep bird within horizontal bounds when wind is active
+    // Keep bird in horizontal bounds
     if (difficulty.hasWind) {
       state.bird.x = Math.max(60, Math.min(state.bird.x, canvas.width - 200));
     }
+
+    // Update background offsets
+    state.backgroundOffset += difficulty.backgroundScrollSpeed * 0.5;
+    state.foregroundOffset += difficulty.backgroundScrollSpeed * 0.8;
 
     // Update hearts system
     heartsSystem.spawnHeart(canvas.width, canvas.height, state.frameCount);
@@ -157,7 +158,7 @@ export const useGamePhysics = ({
       flashTimer.current--;
     }
 
-    // Spawn new pipes with much better spacing - only after game started
+    // Spawn pipes
     const spawnThreshold = Math.max(PIPE_SPACING, 300);
     if (state.frameCount - state.lastPipeSpawn > spawnThreshold) {
       const minHeight = 120;
@@ -177,10 +178,9 @@ export const useGamePhysics = ({
       };
       state.pipes.push(newPipe);
       state.lastPipeSpawn = state.frameCount;
-      console.log('New pipe spawned at x:', newPipe.x, 'gap:', PIPE_GAP);
     }
 
-    // Spawn clouds if enabled
+    // Spawn clouds
     if (difficulty.hasClouds && state.frameCount % 300 === 0) {
       if (!state.clouds) state.clouds = [];
       state.clouds.push({
@@ -191,7 +191,7 @@ export const useGamePhysics = ({
       });
     }
 
-    // Update pipes with proper scoring logic
+    // Update pipes
     state.pipes = state.pipes.filter((pipe: any) => {
       pipe.x -= difficulty.pipeSpeed;
       
@@ -201,7 +201,6 @@ export const useGamePhysics = ({
         pipe.topHeight += moveAmount;
         pipe.bottomY += moveAmount;
         
-        // Keep moving pipes within safe bounds
         const minTopHeight = 100;
         const maxBottomY = canvas.height - 120;
         
@@ -210,13 +209,13 @@ export const useGamePhysics = ({
         }
       }
       
-      // FIXED SCORING: Score when bird completely passes pipe center
+      // Scoring logic
       if (!pipe.scored && state.bird.x > (pipe.x + PIPE_WIDTH/2)) {
         pipe.scored = true;
         const newScore = state.score + 1;
         state.score = newScore;
         
-        console.log('SCORE! Bird passed pipe center. New score:', newScore);
+        console.log('🎯 SCORE! New score:', newScore);
         
         onScoreUpdate(newScore);
         
@@ -235,9 +234,9 @@ export const useGamePhysics = ({
       });
     }
 
-    // Check collisions with lives system
+    // Check collisions
     if (handleCollisionWithLives(canvas)) {
-      console.log('Collision detected! Game over triggered');
+      console.log('💀 Game over triggered');
       state.gameOver = true;
       onCollision();
       return;
@@ -247,9 +246,11 @@ export const useGamePhysics = ({
   }, [gameStateRef, onScoreUpdate, onCoinEarned, onCollision, gameMode, getDifficultyOptimized, heartsSystem, livesSystem, handleCollisionWithLives]);
 
   const resetGameWithLives = useCallback(() => {
+    console.log('🔄 Resetting game systems');
     livesSystem.resetLives();
     heartsSystem.resetHearts();
     flashTimer.current = 0;
+    difficultyCache.current = null;
   }, [livesSystem, heartsSystem]);
 
   return { 
