@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import ShopHeader from './shop/ShopHeader';
@@ -136,12 +137,32 @@ const ShopModal: React.FC<ShopModalProps> = ({
       owned: false 
     },
     { 
-      id: 'elite', 
-      name: 'Elite Champion', 
+      id: 'elite-violet', 
+      name: 'Elite Violet Champion', 
       piPrice: 0,
       coinPrice: 0,
       priceType: 'elite' as const,
-      image: '/lovable-uploads/5a55528e-3d0c-4cd3-91d9-6b8cff953b06.png',
+      image: '/lovable-uploads/d139217c-21c4-42bd-ba26-18c96c98f9b1.png',
+      owned: false,
+      eliteOnly: true
+    },
+    { 
+      id: 'elite-eagle', 
+      name: 'Elite Eagle Warrior', 
+      piPrice: 0,
+      coinPrice: 0,
+      priceType: 'elite' as const,
+      image: '/lovable-uploads/9acde8f5-e27f-412c-9e12-d5f8a64c4ef2.png',
+      owned: false,
+      eliteOnly: true
+    },
+    { 
+      id: 'elite-royal', 
+      name: 'Elite Royal Guardian', 
+      piPrice: 0,
+      coinPrice: 0,
+      priceType: 'elite' as const,
+      image: '/lovable-uploads/9553da41-d31b-473b-9951-87e3a0e5987c.png',
       owned: false,
       eliteOnly: true
     },
