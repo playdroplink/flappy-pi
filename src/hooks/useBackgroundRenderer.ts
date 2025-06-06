@@ -13,6 +13,8 @@ export const useBackgroundRenderer = ({
 }: UseBackgroundRendererProps) => {
   const backgroundCache = useRef<{ theme: string; colors: any } | null>(null);
   const starField = useRef<Array<{x: number, y: number, size: number, twinkle: number}>>([]);
+  const backgroundOffset = useRef<number>(0);
+  const isInitialized = useRef<boolean>(false);
 
   const getBackgroundColorsOptimized = useCallback((theme: string) => {
     if (backgroundCache.current && backgroundCache.current.theme === theme) {
@@ -37,11 +39,21 @@ export const useBackgroundRenderer = ({
     }
   }, []);
 
+  const resetBackground = useCallback(() => {
+    console.log('🎨 Resetting background renderer');
+    backgroundOffset.current = 0;
+    starField.current = [];
+    isInitialized.current = false;
+    backgroundCache.current = null;
+    console.log('✅ Background renderer reset complete');
+  }, []);
+
   const renderBackground = useCallback((
     ctx: CanvasRenderingContext2D,
     canvas: HTMLCanvasElement,
     score: number,
-    frameCount: number
+    frameCount: number,
+    gameStarted: boolean = false
   ) => {
     const difficulty = getDifficultyByUserChoice(userDifficulty, score, gameMode);
     const backgroundColors = getBackgroundColorsOptimized(difficulty.backgroundTheme);
@@ -53,6 +65,11 @@ export const useBackgroundRenderer = ({
     gradient.addColorStop(1, backgroundColors.bottom);
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Update background offset only when game is started
+    if (gameStarted) {
+      backgroundOffset.current += difficulty.backgroundScrollSpeed * 0.3;
+    }
 
     // Draw stars for night and space themes
     if (difficulty.hasStars) {
@@ -66,10 +83,13 @@ export const useBackgroundRenderer = ({
         ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
         ctx.fill();
         
-        star.x -= difficulty.backgroundScrollSpeed * 0.1;
-        if (star.x < -10) {
-          star.x = canvas.width + 10;
-          star.y = Math.random() * canvas.height * 0.8;
+        // Only move stars when game is started
+        if (gameStarted) {
+          star.x -= difficulty.backgroundScrollSpeed * 0.1;
+          if (star.x < -10) {
+            star.x = canvas.width + 10;
+            star.y = Math.random() * canvas.height * 0.8;
+          }
         }
       });
       ctx.globalAlpha = 1;
@@ -92,5 +112,5 @@ export const useBackgroundRenderer = ({
     return difficulty;
   }, [gameMode, userDifficulty, getBackgroundColorsOptimized, initializeStarField]);
 
-  return { renderBackground };
+  return { renderBackground, resetBackground };
 };

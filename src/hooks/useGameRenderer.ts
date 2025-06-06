@@ -1,3 +1,4 @@
+
 import { useCallback, useRef } from 'react';
 import { getDifficultyByUserChoice } from '../utils/gameDifficulty';
 import { useBackgroundRenderer } from './useBackgroundRenderer';
@@ -32,11 +33,11 @@ export const useGameRenderer = ({
   const difficultyCache = useRef<{ score: number; difficulty: any } | null>(null);
   const lastLevelRef = useRef<number>(1);
 
-  const { renderBackground } = useBackgroundRenderer({ gameMode, userDifficulty });
+  const { renderBackground, resetBackground } = useBackgroundRenderer({ gameMode, userDifficulty });
   const { renderClouds, renderWindEffect } = useCloudsRenderer();
   const { renderBird } = useBirdRenderer({ birdSkin });
   const { renderPipes } = usePipesRenderer();
-  const { renderGround, renderBuildings } = useGroundRenderer();
+  const { renderGround, renderBuildings, resetGround } = useGroundRenderer();
   const { renderTapToStart } = useUIRenderer();
   const { 
     triggerLevelVisual, 
@@ -91,8 +92,8 @@ export const useGameRenderer = ({
       ctx.restore();
     }
     
-    // Render background and get difficulty
-    const difficulty = renderBackground(ctx, canvas, state.score, state.frameCount);
+    // Render background with proper game started flag
+    const difficulty = renderBackground(ctx, canvas, state.score, state.frameCount, state.gameStarted);
     
     // Render clouds and wind effects
     renderClouds(ctx, state.clouds, difficulty);
@@ -123,7 +124,7 @@ export const useGameRenderer = ({
     // Render "Tap to Start" overlay
     renderTapToStart(ctx, canvas, state.gameStarted, state.initialized, state.frameCount, difficulty);
     
-    // Render ground and buildings
+    // Render ground and buildings with proper game started flag
     renderGround(ctx, canvas, difficulty, state.gameStarted);
     renderBuildings(ctx, canvas, difficulty, state.frameCount);
     
@@ -174,9 +175,14 @@ export const useGameRenderer = ({
 
   // Reset visual effects when game resets
   const resetVisuals = useCallback(() => {
+    console.log('🎨 Resetting all visual systems');
     lastLevelRef.current = 1;
+    difficultyCache.current = null;
     resetEffects();
-  }, [resetEffects]);
+    resetBackground();
+    resetGround();
+    console.log('✅ All visual systems reset complete');
+  }, [resetEffects, resetBackground, resetGround]);
 
   return { draw, resetVisuals };
 };

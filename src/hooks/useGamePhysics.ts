@@ -114,6 +114,10 @@ export const useGamePhysics = ({
       state.bird.rotation = 0;
       state.bird.x = 80; // Ensure X position stays consistent
       
+      // Keep background and foreground offsets at 0 when game hasn't started
+      state.backgroundOffset = 0;
+      state.foregroundOffset = 0;
+      
       state.frameCount++;
       return;
     }
@@ -153,7 +157,7 @@ export const useGamePhysics = ({
       state.bird.x = 80; // Reset to standard position when no wind
     }
 
-    // Update background offsets (reset to 0 on game start for clean restart)
+    // Update background offsets properly - only when game is started
     state.backgroundOffset += difficulty.backgroundScrollSpeed * 0.5;
     state.foregroundOffset += difficulty.backgroundScrollSpeed * 0.8;
 
@@ -265,6 +269,12 @@ export const useGamePhysics = ({
     flashTimer.current = 0;
     redFlashTimer.current = 0;
     difficultyCache.current = null;
+    
+    // Reset background offsets completely
+    if (gameStateRef.current) {
+      gameStateRef.current.backgroundOffset = 0;
+      gameStateRef.current.foregroundOffset = 0;
+    }
     
     console.log('✅ All game systems reset and ready');
   }, [livesSystem, heartsSystem]);

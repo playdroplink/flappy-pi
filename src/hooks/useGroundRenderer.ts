@@ -4,6 +4,12 @@ import { useCallback, useRef } from 'react';
 export const useGroundRenderer = () => {
   const groundOffset = useRef(0);
 
+  const resetGround = useCallback(() => {
+    console.log('🌍 Resetting ground renderer');
+    groundOffset.current = 0;
+    console.log('✅ Ground renderer reset complete');
+  }, []);
+
   const renderGround = useCallback((
     ctx: CanvasRenderingContext2D,
     canvas: HTMLCanvasElement,
@@ -12,7 +18,13 @@ export const useGroundRenderer = () => {
   ) => {
     const GROUND_HEIGHT = 40;
     
-    groundOffset.current += gameStarted ? 2 : 0.5;
+    // Only update ground offset when game is started
+    if (gameStarted) {
+      groundOffset.current += 2;
+    } else {
+      groundOffset.current += 0.5; // Slow movement when not started
+    }
+    
     if (groundOffset.current >= 50) groundOffset.current = 0;
     
     const groundGradient = ctx.createLinearGradient(0, canvas.height - GROUND_HEIGHT, 0, canvas.height);
@@ -55,5 +67,5 @@ export const useGroundRenderer = () => {
     }
   }, []);
 
-  return { renderGround, renderBuildings };
+  return { renderGround, renderBuildings, resetGround };
 };
