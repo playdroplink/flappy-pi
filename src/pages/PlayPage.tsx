@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useGameState } from '@/hooks/useGameState';
@@ -52,7 +53,7 @@ const PlayPage = () => {
   } = useGameState();
 
   // If user tries to access /play directly, redirect to home
-  if (gameState.showSplash || gameState.showWelcome) {
+  if (showSplash || showWelcome) {
     return <Navigate to="/home" replace />;
   }
 
