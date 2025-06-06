@@ -44,6 +44,7 @@ const HeaderMenu: React.FC<HeaderMenuProps> = ({ onOpenMenu }) => {
           size="icon"
           className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/20 rounded-xl shadow-lg"
           onClick={() => handleNavigation('/settings')}
+          title="Settings"
         >
           <Settings className="h-5 w-5" />
         </Button>
@@ -53,6 +54,7 @@ const HeaderMenu: React.FC<HeaderMenuProps> = ({ onOpenMenu }) => {
           size="icon"
           className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/20 rounded-xl shadow-lg"
           onClick={() => handleNavigation('/account')}
+          title="Account"
         >
           <User className="h-5 w-5" />
         </Button>

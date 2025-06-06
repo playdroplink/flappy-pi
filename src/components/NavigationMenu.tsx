@@ -28,8 +28,8 @@ const NavigationMenu = forwardRef<NavigationMenuRef>((props, ref) => {
   };
 
   const menuItems = [
-    { icon: Home, label: 'Home', path: '/home' },
-    { icon: Play, label: 'Play Game', path: '/play' },
+    { icon: Home, label: 'Home', path: '/' },
+    { icon: Play, label: 'Play Game', path: '/game' },
     { icon: ShoppingCart, label: 'Shop', path: '/shop' },
     { icon: Trophy, label: 'Leaderboard', path: '/leaderboard' },
     { icon: Settings, label: 'Settings', path: '/settings' },
@@ -115,7 +115,7 @@ const NavigationMenu = forwardRef<NavigationMenuRef>((props, ref) => {
               </h3>
               <div className="space-y-2">
                 <Button
-                  onClick={() => handleNavigation('/play')}
+                  onClick={() => handleNavigation('/game')}
                   className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl h-12 font-bold"
                 >
                   🎮 Start Playing
