@@ -32,7 +32,7 @@ export const useShopPurchases = (coins: number, setCoins: (coins: number) => voi
     try {
       const result = await gameBackendService.makePurchase(
         profile.pi_user_id,
-        "bird_skin",
+        "bird_skin" as const,
         skinId
       );
 
@@ -83,7 +83,7 @@ export const useShopPurchases = (coins: number, setCoins: (coins: number) => voi
     try {
       const result = await gameBackendService.makePurchase(
         profile.pi_user_id,
-        "power_up",
+        "power_up" as const,
         powerUpId
       );
 
