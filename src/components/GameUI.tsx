@@ -42,7 +42,7 @@ const GameUI: React.FC<GameUIProps> = ({
         <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
           {/* Left Side - Mode and Level Info */}
           <div className="flex flex-col gap-2">
-            <div className="bg-blue-600/90 rounded-xl px-4 py-2 text-white font-bold text-sm shadow-lg backdrop-blur-sm border border-white/20">
+            <div className="bg-blue-600/90 rounded-xl px-4 py-2 text-white font-bold text-sm shadow-lg backdrop-blur-sm">
               <div className="text-xs opacity-80">Level {level}</div>
               <div className="text-sm">{gameMode === 'classic' ? 'Morning' : gameMode === 'endless' ? 'Day' : 'Night'}</div>
               <div className="text-xs uppercase tracking-wide">{gameMode}</div>
@@ -51,7 +51,7 @@ const GameUI: React.FC<GameUIProps> = ({
 
           {/* Center - Score (Large and Prominent) */}
           <div className="flex justify-center">
-            <div className="bg-white/95 rounded-2xl px-8 py-4 shadow-2xl border-2 border-gray-200">
+            <div className="bg-white/95 rounded-2xl px-8 py-4 shadow-2xl">
               <div className="text-6xl font-black text-gray-800 text-center tracking-tight">
                 {score}
               </div>
@@ -60,7 +60,7 @@ const GameUI: React.FC<GameUIProps> = ({
 
           {/* Right Side - Coins */}
           <div className="flex flex-col gap-2">
-            <div className="bg-yellow-500/90 rounded-xl px-4 py-3 text-white font-bold shadow-lg backdrop-blur-sm border border-white/20">
+            <div className="bg-yellow-500/90 rounded-xl px-4 py-3 text-white font-bold shadow-lg backdrop-blur-sm">
               <div className="flex items-center gap-2">
                 <Coins className="w-5 h-5 text-yellow-100" />
                 <span className="text-lg font-bold">{coins}</span>
@@ -71,7 +71,7 @@ const GameUI: React.FC<GameUIProps> = ({
         
         {/* Bottom HUD - Lives Only */}
         <div className="absolute bottom-4 left-4">
-          <div className="flex items-center gap-2 bg-red-500/90 rounded-lg px-4 py-3 backdrop-blur-sm border border-white/20">
+          <div className="flex items-center gap-2 bg-red-500/90 rounded-lg px-4 py-3 backdrop-blur-sm">
             <Heart className="w-5 h-5 text-red-100" />
             <span className="text-white font-bold text-lg">{lives}</span>
           </div>
