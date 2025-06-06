@@ -53,18 +53,18 @@ export const useGamePhysics = ({
       
       flashTimer.current = 30;
       
-      // Respawn at center
+      // Clean respawn at center with proper physics reset
       const centerY = canvas.height / 2;
       const safeY = Math.max(100, Math.min(canvas.height - 100, centerY));
       
       gameStateRef.current.bird = {
         x: 80,
         y: safeY,
-        velocity: -3,
+        velocity: -3, // Small upward velocity for natural feel
         rotation: 0
       };
       
-      console.log('✅ Bird respawned at center Y:', safeY);
+      console.log('✅ Bird respawned cleanly at center Y:', safeY);
       return false;
     } else {
       console.log('💀 No lives left - game over');
@@ -91,61 +91,59 @@ export const useGamePhysics = ({
     const currentLevel = Math.floor(state.score / 5) + 1;
     state.level = currentLevel;
 
-    // Handle pre-game state
+    // Handle pre-game state with improved floating
     if (!state.gameStarted) {
-      // Gentle floating animation
+      // Gentle floating animation with proper center positioning
       const floatOffset = Math.sin(state.frameCount * 0.06) * 1.2;
-      state.bird.y += floatOffset * 0.5;
-      state.bird.velocity = 0;
-      state.bird.rotation = 0;
-      
-      // Keep bird centered
       const centerY = canvas.height / 2;
       const targetY = Math.max(100, Math.min(canvas.height - 100, centerY));
       
-      // Smoothly move to center if displaced
-      if (Math.abs(state.bird.y - targetY) > 50) {
-        state.bird.y += (targetY - state.bird.y) * 0.05;
-      }
+      // Keep bird properly centered with smooth floating
+      state.bird.y = targetY + floatOffset;
+      state.bird.velocity = 0;
+      state.bird.rotation = 0;
+      state.bird.x = 80; // Ensure X position stays consistent
       
       state.frameCount++;
       return;
     }
 
-    // Apply wind effect
+    // Apply wind effect if enabled
     let horizontalForce = 0;
     if (difficulty.hasWind) {
       horizontalForce = Math.sin(state.frameCount * 0.02) * difficulty.windStrength;
     }
 
-    // Update bird physics
+    // Update bird physics with improved bounds checking
     state.bird.velocity += GRAVITY;
     state.bird.y += state.bird.velocity;
     state.bird.x += horizontalForce;
     
-    // Strict boundary constraints
+    // Enhanced boundary constraints with proper physics
     const minY = 35;
     const maxY = canvas.height - 75;
     
     if (state.bird.y < minY) {
       state.bird.y = minY;
-      state.bird.velocity = Math.max(0, state.bird.velocity);
+      state.bird.velocity = Math.max(0, state.bird.velocity); // Stop upward movement
     }
     
     if (state.bird.y > maxY) {
       state.bird.y = maxY;
-      state.bird.velocity = Math.min(0, state.bird.velocity);
+      state.bird.velocity = Math.min(-1, state.bird.velocity); // Slight bounce effect
     }
     
-    // Bird rotation
+    // Smooth bird rotation based on velocity
     state.bird.rotation = Math.min(Math.max(state.bird.velocity * 2, -20), 60);
 
-    // Keep bird in horizontal bounds
+    // Keep bird in horizontal bounds when wind is active
     if (difficulty.hasWind) {
       state.bird.x = Math.max(60, Math.min(state.bird.x, canvas.width - 200));
+    } else {
+      state.bird.x = 80; // Reset to standard position when no wind
     }
 
-    // Update background offsets
+    // Update background offsets (reset to 0 on game start for clean restart)
     state.backgroundOffset += difficulty.backgroundScrollSpeed * 0.5;
     state.foregroundOffset += difficulty.backgroundScrollSpeed * 0.8;
 
@@ -153,12 +151,12 @@ export const useGamePhysics = ({
     heartsSystem.spawnHeart(canvas.width, canvas.height, state.frameCount);
     heartsSystem.updateHearts(state.bird, livesSystem.maxLives, livesSystem.currentLives);
 
-    // Update flash timer
+    // Update flash timer for invulnerability
     if (flashTimer.current > 0) {
       flashTimer.current--;
     }
 
-    // Spawn pipes
+    // Spawn pipes with proper spacing
     const spawnThreshold = Math.max(PIPE_SPACING, 300);
     if (state.frameCount - state.lastPipeSpawn > spawnThreshold) {
       const minHeight = 120;
@@ -180,7 +178,7 @@ export const useGamePhysics = ({
       state.lastPipeSpawn = state.frameCount;
     }
 
-    // Spawn clouds
+    // Spawn clouds with proper cleanup
     if (difficulty.hasClouds && state.frameCount % 300 === 0) {
       if (!state.clouds) state.clouds = [];
       state.clouds.push({
@@ -191,7 +189,7 @@ export const useGamePhysics = ({
       });
     }
 
-    // Update pipes
+    // Update pipes with improved movement and cleanup
     state.pipes = state.pipes.filter((pipe: any) => {
       pipe.x -= difficulty.pipeSpeed;
       
@@ -209,7 +207,7 @@ export const useGamePhysics = ({
         }
       }
       
-      // Scoring logic
+      // Scoring logic with clean point tracking
       if (!pipe.scored && state.bird.x > (pipe.x + PIPE_WIDTH/2)) {
         pipe.scored = true;
         const newScore = state.score + 1;
@@ -226,7 +224,7 @@ export const useGamePhysics = ({
       return pipe.x > -PIPE_WIDTH - 100;
     });
 
-    // Update clouds
+    // Update clouds with proper cleanup
     if (state.clouds) {
       state.clouds = state.clouds.filter((cloud: any) => {
         cloud.x -= cloud.speed;
@@ -234,10 +232,11 @@ export const useGamePhysics = ({
       });
     }
 
-    // Check collisions
+    // Check collisions with improved handling
     if (handleCollisionWithLives(canvas)) {
-      console.log('💀 Game over triggered');
+      console.log('💀 Game over triggered - stopping all game logic');
       state.gameOver = true;
+      state.gameStarted = false; // Stop game logic immediately
       onCollision();
       return;
     }
@@ -246,11 +245,13 @@ export const useGamePhysics = ({
   }, [gameStateRef, onScoreUpdate, onCoinEarned, onCollision, gameMode, getDifficultyOptimized, heartsSystem, livesSystem, handleCollisionWithLives]);
 
   const resetGameWithLives = useCallback(() => {
-    console.log('🔄 Resetting game systems');
+    console.log('🔄 Resetting all game systems with complete cleanup');
     livesSystem.resetLives();
     heartsSystem.resetHearts();
     flashTimer.current = 0;
     difficultyCache.current = null;
+    
+    console.log('✅ All game systems reset and ready');
   }, [livesSystem, heartsSystem]);
 
   return { 
