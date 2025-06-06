@@ -177,7 +177,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           initializationRef.current = true;
           
           try {
-            await resetGame();
+            await resetGame(gameMode);
             // Small delay to ensure state is ready
             setTimeout(() => {
               if (gameState === 'playing') {
@@ -210,7 +210,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         gameLoopRef.current = undefined;
       }
     };
-  }, [gameState, canvasReady, gameLoop, resetGame]);
+  }, [gameState, canvasReady, gameLoop, resetGame, gameMode]);
 
   return (
     <canvas

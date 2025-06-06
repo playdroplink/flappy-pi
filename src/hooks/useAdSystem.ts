@@ -89,7 +89,7 @@ export const useAdSystem = () => {
             // Record purchase in backend
             const result = await gameBackendService.makePurchase(
               profile.pi_user_id,
-              'power_up',
+              'power_up' as const,
               'ad_free_month'
             );
 
@@ -176,3 +176,5 @@ export const useAdSystem = () => {
     purchaseAdFree
   };
 };
+
+export { useAdSystem };
