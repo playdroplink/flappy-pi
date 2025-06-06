@@ -35,22 +35,34 @@ export const useGameState = () => {
   }, []);
 
   const startGame = (mode: GameMode) => {
-    console.log('Starting completely new game with mode:', mode);
+    console.log('Starting game with mode:', mode);
     
-    // Force complete state reset
+    // Set the game mode first
     setGameMode(mode);
+    
+    // Complete state reset for new game
     gameData.setScore(0);
     gameData.setLevel(1);
     gameData.setLives(1);
-    setGameState('menu'); // Set to menu first
+    setGameState('menu'); // Set to menu first for clean transition
     setShowWelcome(false);
     
-    // No auto-fullscreen for mobile games - let users play in browser
+    // Show mode-specific toast
+    const modeMessages = {
+      classic: "🎯 Classic Mode: Standard difficulty progression!",
+      endless: "🚀 Endless Mode: Continuous challenge awaits!",
+      challenge: "⚡ Challenge Mode: Maximum difficulty from start!"
+    };
     
-    // Use a longer delay to ensure complete state reset
+    toast({
+      title: `${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode Started!`,
+      description: modeMessages[mode]
+    });
+    
+    // Delay transition to playing state
     setTimeout(() => {
       setGameState('playing');
-      console.log('Game state set to playing after reset');
+      console.log(`${mode} mode game state set to playing`);
     }, 200);
   };
 
@@ -64,6 +76,7 @@ export const useGameState = () => {
     
     // Complete state reset
     setGameState('menu');
+    setGameMode('classic'); // Reset to default mode
     gameData.setScore(0);
     gameData.setLevel(1);
     gameData.setLives(1);
