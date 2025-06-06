@@ -54,7 +54,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     onScoreUpdate
   });
 
-  const { updateGame } = useGamePhysics({
+  const { updateGame, resetGameWithLives, livesSystem, heartsSystem, flashTimer } = useGamePhysics({
     gameStateRef,
     onScoreUpdate: (score) => {
       playPoint();
@@ -75,7 +75,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     gameStateRef, 
     birdSkin,
     gameMode,
-    userDifficulty
+    userDifficulty,
+    livesSystem,
+    heartsSystem,
+    flashTimer
   });
 
   useGameInputHandlers({
@@ -89,7 +92,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     gameStateRef,
     updateGame,
     draw,
-    resetGame,
+    resetGame: (canvasHeight: number) => {
+      resetGame(canvasHeight);
+      resetGameWithLives();
+    },
     canvasRef
   });
 

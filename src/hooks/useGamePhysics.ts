@@ -1,6 +1,8 @@
 
 import { useCallback, useRef } from 'react';
 import { getDifficultyByUserChoice, getScoreMultiplier } from '../utils/gameDifficulty';
+import { useHeartsSystem } from './useHeartsSystem';
+import { useLivesSystem } from './useLivesSystem';
 
 interface UseGamePhysicsProps {
   gameStateRef: React.MutableRefObject<any>;
@@ -22,6 +24,12 @@ export const useGamePhysics = ({
   userDifficulty = 'medium'
 }: UseGamePhysicsProps) => {
   const difficultyCache = useRef<{ score: number; difficulty: any } | null>(null);
+  const livesSystem = useLivesSystem();
+  const heartsSystem = useHeartsSystem({
+    level: gameStateRef.current?.level || 1,
+    onHeartCollected: livesSystem.addLife
+  });
+  const flashTimer = useRef<number>(0);
 
   const getDifficultyOptimized = useCallback((score: number) => {
     if (difficultyCache.current && difficultyCache.current.score === score) {
@@ -32,6 +40,38 @@ export const useGamePhysics = ({
     difficultyCache.current = { score, difficulty };
     return difficulty;
   }, [gameMode, userDifficulty]);
+
+  const handleCollisionWithLives = useCallback((canvas: HTMLCanvasElement) => {
+    // Don't process collision if invulnerable
+    if (livesSystem.isInvulnerable) return false;
+    
+    const hasCollision = checkCollisions(canvas);
+    if (!hasCollision) return false;
+    
+    console.log('Collision detected! Current lives:', livesSystem.currentLives);
+    
+    // Try to use a life
+    if (livesSystem.useLife()) {
+      console.log('Life used! Respawning bird. Lives remaining:', livesSystem.currentLives - 1);
+      
+      // Flash effect
+      flashTimer.current = 30; // Flash for 30 frames
+      
+      // Respawn bird at safe position
+      const safeY = Math.max(150, canvas.height / 3);
+      gameStateRef.current.bird = {
+        x: 80,
+        y: safeY,
+        velocity: -3, // Small upward boost
+        rotation: 0
+      };
+      
+      return false; // Don't trigger game over
+    } else {
+      console.log('No lives left - triggering game over');
+      return true; // Trigger normal collision/game over
+    }
+  }, [checkCollisions, livesSystem]);
 
   const updateGame = useCallback(() => {
     const canvas = document.querySelector('canvas') as HTMLCanvasElement;
@@ -47,6 +87,10 @@ export const useGamePhysics = ({
     const PIPE_WIDTH = difficulty.pipeWidth;
     const PIPE_GAP = difficulty.pipeGap;
     const PIPE_SPACING = 400;
+
+    // Calculate level from score
+    const currentLevel = Math.floor(state.score / 5) + 1;
+    state.level = currentLevel;
 
     // If game hasn't started, just do gentle floating animation
     if (!state.gameStarted) {
@@ -77,6 +121,15 @@ export const useGamePhysics = ({
     // Keep bird within horizontal bounds when wind is active
     if (difficulty.hasWind) {
       state.bird.x = Math.max(60, Math.min(state.bird.x, canvas.width - 200));
+    }
+
+    // Update hearts system
+    heartsSystem.spawnHeart(canvas.width, canvas.height, state.frameCount);
+    heartsSystem.updateHearts(state.bird, livesSystem.maxLives, livesSystem.currentLives);
+
+    // Update flash timer
+    if (flashTimer.current > 0) {
+      flashTimer.current--;
     }
 
     // Spawn new pipes with much better spacing - only after game started
@@ -157,8 +210,8 @@ export const useGamePhysics = ({
       });
     }
 
-    // Check collisions - only when game has started
-    if (checkCollisions(canvas)) {
+    // Check collisions with lives system
+    if (handleCollisionWithLives(canvas)) {
       console.log('Collision detected! Game over triggered');
       state.gameOver = true;
       onCollision();
@@ -166,7 +219,19 @@ export const useGamePhysics = ({
     }
 
     state.frameCount++;
-  }, [gameStateRef, onScoreUpdate, onCoinEarned, checkCollisions, onCollision, gameMode, getDifficultyOptimized]);
+  }, [gameStateRef, onScoreUpdate, onCoinEarned, onCollision, gameMode, getDifficultyOptimized, heartsSystem, livesSystem, handleCollisionWithLives]);
 
-  return { updateGame };
+  const resetGameWithLives = useCallback(() => {
+    livesSystem.resetLives();
+    heartsSystem.resetHearts();
+    flashTimer.current = 0;
+  }, [livesSystem, heartsSystem]);
+
+  return { 
+    updateGame, 
+    resetGameWithLives,
+    livesSystem,
+    heartsSystem,
+    flashTimer
+  };
 };

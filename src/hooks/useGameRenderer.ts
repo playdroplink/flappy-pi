@@ -14,6 +14,9 @@ interface UseGameRendererProps {
   birdSkin: string;
   gameMode: 'classic' | 'endless' | 'challenge';
   userDifficulty?: 'easy' | 'medium' | 'hard';
+  livesSystem?: any;
+  heartsSystem?: any;
+  flashTimer?: React.MutableRefObject<number>;
 }
 
 export const useGameRenderer = ({ 
@@ -21,7 +24,10 @@ export const useGameRenderer = ({
   gameStateRef, 
   birdSkin, 
   gameMode,
-  userDifficulty = 'medium'
+  userDifficulty = 'medium',
+  livesSystem,
+  heartsSystem,
+  flashTimer
 }: UseGameRendererProps) => {
   const difficultyCache = useRef<{ score: number; difficulty: any } | null>(null);
 
@@ -51,6 +57,15 @@ export const useGameRenderer = ({
 
     const state = gameStateRef.current;
     
+    // Apply flash effect if active
+    if (flashTimer && flashTimer.current > 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+    }
+    
     // Render background and get difficulty
     const difficulty = renderBackground(ctx, canvas, state.score, state.frameCount);
     
@@ -61,6 +76,11 @@ export const useGameRenderer = ({
     // Render pipes
     renderPipes(ctx, canvas, state.pipes, difficulty, state.gameStarted);
     
+    // Render floating hearts (if hearts system available)
+    if (heartsSystem && state.level >= 5) {
+      heartsSystem.renderHearts(ctx);
+    }
+    
     // Render bird
     renderBird(ctx, state.bird, state.frameCount, state.gameStarted, difficulty);
     
@@ -70,6 +90,23 @@ export const useGameRenderer = ({
     // Render ground and buildings
     renderGround(ctx, canvas, difficulty, state.gameStarted);
     renderBuildings(ctx, canvas, difficulty, state.frameCount);
+    
+    // Render lives UI (hearts in corner)
+    if (livesSystem) {
+      livesSystem.renderLivesUI(ctx, canvas);
+    }
+    
+    // Show heart collection message at level 5
+    if (state.level === 5 && state.gameStarted && state.frameCount % 180 < 90) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(canvas.width / 2 - 150, canvas.height / 2 - 30, 300, 60);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 16px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('❤️ Hearts unlocked! Collect for extra lives!', canvas.width / 2, canvas.height / 2);
+      ctx.restore();
+    }
   }, [
     canvasRef, 
     gameStateRef, 
@@ -80,7 +117,10 @@ export const useGameRenderer = ({
     renderBird, 
     renderTapToStart, 
     renderGround, 
-    renderBuildings
+    renderBuildings,
+    livesSystem,
+    heartsSystem,
+    flashTimer
   ]);
 
   return { draw };
