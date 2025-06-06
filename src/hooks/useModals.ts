@@ -10,7 +10,6 @@ export const useModals = () => {
   const [showTerms, setShowTerms] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [showMandatoryAd, setShowMandatoryAd] = useState(false);
   const [adType, setAdType] = useState<'continue' | 'coins' | 'life'>('continue');
 
   const handleShareScore = () => {
@@ -31,7 +30,6 @@ export const useModals = () => {
     showTerms,
     showContact,
     showHelp,
-    showMandatoryAd,
     adType,
     setShowShop,
     setShowLeaderboard,
@@ -41,7 +39,6 @@ export const useModals = () => {
     setShowTerms,
     setShowContact,
     setShowHelp,
-    setShowMandatoryAd,
     setAdType,
     handleShareScore,
     handleShowAd

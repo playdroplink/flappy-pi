@@ -6,7 +6,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useGameSettings } from '@/hooks/useGameSettings';
 import { useFullscreen } from '@/hooks/useFullscreen';
 import { useGameData } from '@/hooks/useGameData';
-import { useModals } from '@/hooks/useModals';
 
 type GameMode = 'classic' | 'endless' | 'challenge';
 type GameStateType = 'menu' | 'playing' | 'gameOver' | 'paused';
@@ -24,7 +23,6 @@ export const useGameState = () => {
   const gameSettings = useGameSettings();
   const fullscreen = useFullscreen();
   const gameData = useGameData();
-  const modals = useModals();
 
   useEffect(() => {
     // Hide splash screen after 3 seconds and show welcome
@@ -85,12 +83,6 @@ export const useGameState = () => {
     setShowWelcome(true);
   };
 
-  // Add toggleMusic function
-  const toggleMusic = (enabled?: boolean) => {
-    const newValue = enabled !== undefined ? enabled : !gameSettings.musicEnabled;
-    gameSettings.setMusicEnabled(newValue);
-  };
-
   return {
     showSplash,
     showWelcome,
@@ -101,11 +93,9 @@ export const useGameState = () => {
     startGame,
     backToMenu,
     toast,
-    toggleMusic,
     // Expose all the properties from the smaller hooks
     ...gameData,
     ...gameSettings,
-    ...fullscreen,
-    ...modals
+    ...fullscreen
   };
 };

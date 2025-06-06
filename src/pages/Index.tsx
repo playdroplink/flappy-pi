@@ -1,27 +1,193 @@
 
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import SplashScreen from '@/components/SplashScreen';
+import React, { useState } from 'react';
+import SplashScreen from '../components/SplashScreen';
+import WelcomeScreen from '../components/WelcomeScreen';
+import GameCanvas from '../components/GameCanvas';
+import GameUI from '../components/GameUI';
+import GameModals from '../components/GameModals';
+import GameContinueOverlay from '../components/GameContinueOverlay';
+import MandatoryAdModal from '../components/MandatoryAdModal';
+import AdFreeSubscriptionModal from '../components/AdFreeSubscriptionModal';
+import TutorialModal from '../components/TutorialModal';
+import { useGameState } from '../hooks/useGameState';
+import { useGameEvents } from '../hooks/useGameEvents';
+import { useModals } from '../hooks/useModals';
 
 const Index = () => {
-  const navigate = useNavigate();
-  const [showSplash, setShowSplash] = useState(true);
+  const gameState = useGameState();
+  const modals = useModals();
+  const [showTutorial, setShowTutorial] = useState(false);
+  
+  // Create a ref to store the continue game function
+  const continueGameRef = React.useRef<(() => void) | null>(null);
+  
+  const gameEvents = useGameEvents({
+    score: gameState.score,
+    coins: gameState.coins,
+    highScore: gameState.highScore,
+    level: gameState.level,
+    setGameState: gameState.setGameState,
+    setScore: gameState.setScore,
+    setLives: gameState.setLives,
+    setLevel: gameState.setLevel,
+    setHighScore: gameState.setHighScore,
+    setCoins: gameState.setCoins,
+    continueGame: () => {
+      if (continueGameRef.current) {
+        continueGameRef.current();
+      }
+    }
+  });
 
-  useEffect(() => {
-    // Show splash for 3 seconds, then redirect to home
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-      navigate('/home');
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [navigate]);
-
-  if (!showSplash) {
-    return null; // Brief moment before navigation
+  if (gameState.showSplash) {
+    return <SplashScreen />;
   }
 
-  return <SplashScreen />;
+  if (gameState.showWelcome) {
+    return (
+      <>
+        <WelcomeScreen 
+          onStartGame={gameState.startGame}
+          onOpenShop={() => modals.setShowShop(true)}
+          onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
+          onOpenPrivacy={() => modals.setShowPrivacy(true)}
+          onOpenTerms={() => modals.setShowTerms(true)}
+          onOpenContact={() => modals.setShowContact(true)}
+          onOpenHelp={() => modals.setShowHelp(true)}
+          onOpenTutorial={() => setShowTutorial(true)}
+          coins={gameState.coins}
+          musicEnabled={gameState.musicEnabled}
+          onToggleMusic={gameState.setMusicEnabled}
+        />
+
+        <TutorialModal
+          isOpen={showTutorial}
+          onClose={() => setShowTutorial(false)}
+          onStartGame={() => gameState.startGame('classic')}
+        />
+        
+        <GameModals
+          showShop={modals.showShop}
+          showLeaderboard={modals.showLeaderboard}
+          showAdPopup={modals.showAdPopup}
+          showShareScore={modals.showShareScore}
+          showPrivacy={modals.showPrivacy}
+          showTerms={modals.showTerms}
+          showContact={modals.showContact}
+          showHelp={modals.showHelp}
+          showMandatoryAd={gameEvents.showMandatoryAd}
+          adType={modals.adType}
+          coins={gameState.coins}
+          score={gameState.score}
+          level={gameState.level}
+          highScore={gameState.highScore}
+          selectedBirdSkin={gameState.selectedBirdSkin}
+          gameState={gameState.gameState}
+          setShowShop={modals.setShowShop}
+          setShowLeaderboard={modals.setShowLeaderboard}
+          setShowAdPopup={modals.setShowAdPopup}
+          setShowShareScore={modals.setShowShareScore}
+          setShowPrivacy={modals.setShowPrivacy}
+          setShowTerms={modals.setShowTerms}
+          setShowContact={modals.setShowContact}
+          setShowHelp={modals.setShowHelp}
+          setShowMandatoryAd={gameEvents.setShowMandatoryAd}
+          setCoins={gameState.setCoins}
+          setSelectedBirdSkin={gameState.setSelectedBirdSkin}
+          onWatchAd={gameEvents.handleAdWatch}
+          onMandatoryAdWatch={gameEvents.handleMandatoryAdWatch}
+        />
+      </>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 w-full h-full bg-gradient-to-b from-sky-400 to-sky-600 overflow-hidden">
+      <GameCanvas 
+        gameState={gameState.gameState}
+        gameMode={gameState.gameMode}
+        level={gameState.level}
+        onCollision={gameEvents.handleCollision}
+        onGameOver={gameEvents.handleGameOver}
+        onScoreUpdate={gameState.handleScoreUpdate}
+        onCoinEarned={gameEvents.handleCoinEarned}
+        birdSkin={gameState.selectedBirdSkin}
+        musicEnabled={gameState.musicEnabled}
+        onContinueGameRef={(fn) => {
+          continueGameRef.current = fn;
+        }}
+      />
+      
+      <GameUI 
+        gameState={gameState.gameState}
+        score={gameState.score}
+        level={gameState.level}
+        lives={gameState.lives}
+        highScore={gameState.highScore}
+        coins={gameState.coins}
+        gameMode={gameState.gameMode}
+        onStartGame={() => gameState.startGame(gameState.gameMode)}
+        onBackToMenu={gameState.backToMenu}
+        onOpenShop={() => modals.setShowShop(true)}
+        onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
+        onShowAd={() => modals.handleShowAd('continue')}
+        onShareScore={modals.handleShareScore}
+        isPausedForRevive={gameEvents.isPausedForRevive}
+      />
+
+      <GameContinueOverlay
+        showContinueButton={gameEvents.showContinueButton}
+        onContinue={gameEvents.handleContinueClick}
+      />
+
+      <MandatoryAdModal
+        isOpen={gameEvents.showMandatoryAd}
+        onWatchAd={gameEvents.handleMandatoryAdWatch}
+        onUpgradeToPremium={() => gameEvents.setShowAdFreeModal(true)}
+        canUpgrade={true}
+      />
+
+      <AdFreeSubscriptionModal
+        isOpen={gameEvents.showAdFreeModal}
+        onClose={() => gameEvents.setShowAdFreeModal(false)}
+        onPurchase={gameEvents.adSystem.purchaseAdFree}
+        isAdFree={gameEvents.adSystem.isAdFree}
+        adFreeTimeRemaining={gameEvents.adSystem.adFreeTimeRemaining}
+      />
+
+      <GameModals
+        showShop={modals.showShop}
+        showLeaderboard={modals.showLeaderboard}
+        showAdPopup={modals.showAdPopup}
+        showShareScore={modals.showShareScore}
+        showPrivacy={modals.showPrivacy}
+        showTerms={modals.showTerms}
+        showContact={modals.showContact}
+        showHelp={modals.showHelp}
+        showMandatoryAd={gameEvents.showMandatoryAd}
+        adType={modals.adType}
+        coins={gameState.coins}
+        score={gameState.score}
+        level={gameState.level}
+        highScore={gameState.highScore}
+        selectedBirdSkin={gameState.selectedBirdSkin}
+        gameState={gameState.gameState}
+        setShowShop={modals.setShowShop}
+        setShowLeaderboard={modals.setShowLeaderboard}
+        setShowAdPopup={modals.setShowAdPopup}
+        setShowShareScore={modals.setShowShareScore}
+        setShowPrivacy={modals.setShowPrivacy}
+        setShowTerms={modals.setShowTerms}
+        setShowContact={modals.setShowContact}
+        setShowHelp={modals.setShowHelp}
+        setShowMandatoryAd={gameEvents.setShowMandatoryAd}
+        setCoins={gameState.setCoins}
+        setSelectedBirdSkin={gameState.setSelectedBirdSkin}
+        onWatchAd={gameEvents.handleAdWatch}
+        onMandatoryAdWatch={gameEvents.handleMandatoryAdWatch}
+      />
+    </div>
+  );
 };
 
 export default Index;
