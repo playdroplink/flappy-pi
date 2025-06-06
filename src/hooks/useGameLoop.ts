@@ -77,7 +77,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       lastPipeSpawn: 0,
       gameOver: false,
       initialized: true,
-      gameStarted: false // Bird waits for first tap
+      gameStarted: false // Bird waits for first tap - crucial for restart behavior
     };
     
     // Reset score display

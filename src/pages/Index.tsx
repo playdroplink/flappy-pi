@@ -131,7 +131,13 @@ const Index = () => {
         highScore={gameState.highScore}
         coins={gameState.coins}
         gameMode={gameState.gameMode}
-        onStartGame={() => gameState.startGame(gameState.gameMode)}
+        onStartGame={() => {
+          // When restarting the game, ensure we properly reset through gameState
+          gameState.setGameState('menu'); // First set to menu to trigger proper reset
+          setTimeout(() => {
+            gameState.startGame(gameState.gameMode); // Then start game with current mode
+          }, 100); // Short delay to ensure reset is processed
+        }}
         onBackToMenu={gameState.backToMenu}
         onOpenShop={() => modals.setShowShop(true)}
         onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
