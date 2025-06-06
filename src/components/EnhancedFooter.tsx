@@ -4,7 +4,7 @@ import { Heart, Globe, Mail, Users, Star, Code } from 'lucide-react';
 
 const EnhancedFooter: React.FC = () => {
   return (
-    <footer className="bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 text-white py-8 px-4">
+    <footer className="bg-gradient-to-r from-gray-900 via-gray-800 to-black text-white py-8 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand Section */}
@@ -19,11 +19,11 @@ const EnhancedFooter: React.FC = () => {
                 Flappy Pi
               </h3>
             </div>
-            <p className="text-gray-300 mb-4 leading-relaxed">
+            <p className="text-white mb-4 leading-relaxed">
               Experience the ultimate Flappy Bird adventure with Pi Network integration. 
               Earn Pi coins while having fun and competing with players worldwide.
             </p>
-            <div className="flex items-center space-x-2 text-sm text-gray-400">
+            <div className="flex items-center space-x-2 text-sm text-white">
               <Heart className="w-4 h-4 text-red-400" />
               <span>Made with love by</span>
               <span className="text-blue-400 font-medium">mrwain organization</span>
@@ -35,19 +35,19 @@ const EnhancedFooter: React.FC = () => {
             <h4 className="font-semibold text-lg mb-4 text-blue-400">Quick Links</h4>
             <ul className="space-y-3">
               <li>
-                <button className="text-gray-300 hover:text-white transition-colors flex items-center space-x-2">
+                <button className="text-white hover:text-blue-300 transition-colors flex items-center space-x-2">
                   <Star className="w-4 h-4" />
                   <span>Leaderboard</span>
                 </button>
               </li>
               <li>
-                <button className="text-gray-300 hover:text-white transition-colors flex items-center space-x-2">
+                <button className="text-white hover:text-blue-300 transition-colors flex items-center space-x-2">
                   <Users className="w-4 h-4" />
                   <span>Community</span>
                 </button>
               </li>
               <li>
-                <button className="text-gray-300 hover:text-white transition-colors flex items-center space-x-2">
+                <button className="text-white hover:text-blue-300 transition-colors flex items-center space-x-2">
                   <Code className="w-4 h-4" />
                   <span>Open Source</span>
                 </button>
@@ -62,7 +62,7 @@ const EnhancedFooter: React.FC = () => {
               <li>
                 <a 
                   href="mailto:support@mrwain.org" 
-                  className="text-gray-300 hover:text-white transition-colors flex items-center space-x-2"
+                  className="text-white hover:text-purple-300 transition-colors flex items-center space-x-2"
                 >
                   <Mail className="w-4 h-4" />
                   <span>Support</span>
@@ -73,30 +73,30 @@ const EnhancedFooter: React.FC = () => {
                   href="https://mrwain.org" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-gray-300 hover:text-white transition-colors flex items-center space-x-2"
+                  className="text-white hover:text-purple-300 transition-colors flex items-center space-x-2"
                 >
                   <Globe className="w-4 h-4" />
                   <span>Website</span>
                 </a>
               </li>
               <li>
-                <span className="text-gray-400 text-sm">Pi Network Official</span>
+                <span className="text-white text-sm">Pi Network Official</span>
               </li>
             </ul>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-700 pt-6">
+        <div className="border-t border-gray-600 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="text-gray-400 text-sm">
+            <div className="text-white text-sm">
               © 2025 mrwain organization. All rights reserved.
             </div>
             <div className="flex items-center space-x-6 text-sm">
-              <button className="text-gray-400 hover:text-white transition-colors">
+              <button className="text-white hover:text-blue-300 transition-colors">
                 Privacy Policy
               </button>
-              <button className="text-gray-400 hover:text-white transition-colors">
+              <button className="text-white hover:text-blue-300 transition-colors">
                 Terms of Service
               </button>
               <div className="flex items-center space-x-2">
