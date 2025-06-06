@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -94,7 +95,7 @@ export const useGameState = () => {
     localStorage.setItem('flappypi-skin', skin);
     
     // Update in backend if profile exists
-    if (profile) {
+    if (profile && updateProfile) {
       await updateProfile({ selected_bird_skin: skin });
     }
   };
@@ -105,7 +106,7 @@ export const useGameState = () => {
     localStorage.setItem('flappypi-music', enabled.toString());
     
     // Update in backend if profile exists
-    if (profile) {
+    if (profile && updateProfile) {
       await updateProfile({ music_enabled: enabled });
     }
   };

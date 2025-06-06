@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { gameBackendService, UserProfile } from '@/services/gameBackendService';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { usePiAuth } from '@/hooks/usePiAuth';
 
 interface UseUserProfileReturn {
   profile: UserProfile | null;
@@ -15,41 +16,33 @@ export const useUserProfile = (): UseUserProfileReturn => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { user, session } = useAuth();
+  const { user } = usePiAuth(); // Use Pi auth instead of Supabase auth
 
   const initializeProfile = async (piUserId?: string, username?: string) => {
-    if (!user || !session) {
-      console.log('No authenticated user, skipping profile initialization');
+    if (!user) {
+      console.log('No authenticated Pi user, skipping profile initialization');
       return;
     }
 
     setLoading(true);
     try {
-      const userId = user.id;
-      const userDisplayName = username || user.user_metadata?.username || user.email?.split('@')[0] || 'Player';
+      const userId = piUserId || user.uid;
+      const userDisplayName = username || user.username || 'Player';
       
-      // Try to get existing profile
-      let existingProfile = await gameBackendService.getUserProfile();
-      
-      if (!existingProfile) {
-        // Create new profile
-        const newProfile = {
-          pi_user_id: userId,
-          username: userDisplayName,
-          total_coins: 0,
-          selected_bird_skin: 'default',
-          music_enabled: true
-        };
-        
-        existingProfile = await gameBackendService.upsertUserProfile(newProfile);
-      }
+      // Try to get existing profile - Note: This might not work without proper backend
+      // For now, we'll create a mock profile based on Pi user data
+      let existingProfile: UserProfile = {
+        pi_user_id: userId,
+        username: userDisplayName,
+        total_coins: parseInt(localStorage.getItem('flappypi-coins') || '0'),
+        selected_bird_skin: localStorage.getItem('flappypi-skin') || 'default',
+        music_enabled: localStorage.getItem('flappypi-music') !== 'false'
+      };
       
       setProfile(existingProfile);
       
       // Store in localStorage for quick access
-      if (existingProfile) {
-        localStorage.setItem('flappypi-profile', JSON.stringify(existingProfile));
-      }
+      localStorage.setItem('flappypi-profile', JSON.stringify(existingProfile));
     } catch (error) {
       console.error('Error initializing profile:', error);
       toast({
@@ -67,14 +60,20 @@ export const useUserProfile = (): UseUserProfileReturn => {
     
     setLoading(true);
     try {
-      const updatedProfile = await gameBackendService.upsertUserProfile({
-        ...profile,
-        ...updates
-      });
+      // Update the local profile
+      const updatedProfile = { ...profile, ...updates };
+      setProfile(updatedProfile);
+      localStorage.setItem('flappypi-profile', JSON.stringify(updatedProfile));
       
-      if (updatedProfile) {
-        setProfile(updatedProfile);
-        localStorage.setItem('flappypi-profile', JSON.stringify(updatedProfile));
+      // Also update individual localStorage items for backward compatibility
+      if (updates.total_coins !== undefined) {
+        localStorage.setItem('flappypi-coins', updates.total_coins.toString());
+      }
+      if (updates.selected_bird_skin !== undefined) {
+        localStorage.setItem('flappypi-skin', updates.selected_bird_skin);
+      }
+      if (updates.music_enabled !== undefined) {
+        localStorage.setItem('flappypi-music', updates.music_enabled.toString());
       }
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -93,10 +92,13 @@ export const useUserProfile = (): UseUserProfileReturn => {
     
     setLoading(true);
     try {
-      const refreshedProfile = await gameBackendService.getUserProfile();
-      if (refreshedProfile) {
-        setProfile(refreshedProfile);
-        localStorage.setItem('flappypi-profile', JSON.stringify(refreshedProfile));
+      // For now, just reload from localStorage
+      const savedProfile = localStorage.getItem('flappypi-profile');
+      if (savedProfile) {
+        const parsedProfile = JSON.parse(savedProfile);
+        if (parsedProfile.pi_user_id === user.uid) {
+          setProfile(parsedProfile);
+        }
       }
     } catch (error) {
       console.error('Error refreshing profile:', error);
@@ -105,19 +107,17 @@ export const useUserProfile = (): UseUserProfileReturn => {
     }
   };
 
-  // Initialize profile when user becomes available
+  // Initialize profile when Pi user becomes available
   useEffect(() => {
-    if (user && session && !profile) {
+    if (user && !profile) {
       // Try to load from localStorage first
       const savedProfile = localStorage.getItem('flappypi-profile');
       if (savedProfile) {
         try {
           const parsedProfile = JSON.parse(savedProfile);
           // Verify this profile belongs to the current user
-          if (parsedProfile.pi_user_id === user.id) {
+          if (parsedProfile.pi_user_id === user.uid) {
             setProfile(parsedProfile);
-            // Refresh from database in background
-            refreshProfile();
             return;
           }
         } catch (error) {
@@ -125,14 +125,14 @@ export const useUserProfile = (): UseUserProfileReturn => {
         }
       }
       
-      // Initialize new profile or load from database
+      // Initialize new profile
       initializeProfile();
     } else if (!user) {
       // Clear profile when user logs out
       setProfile(null);
       localStorage.removeItem('flappypi-profile');
     }
-  }, [user, session]);
+  }, [user]);
 
   return {
     profile,
