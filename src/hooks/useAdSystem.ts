@@ -1,237 +1,98 @@
 
-import { useState, useEffect } from 'react';
-import { useUserProfile } from '@/hooks/useUserProfile';
+import { useState, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { gameBackendService } from '@/services/gameBackendService';
-import { usePiPayments } from '@/hooks/usePiPayments';
-
-interface AdSystemState {
-  gameCount: number;
-  adFreeUntil: string | null;
-  showMandatoryAd: boolean;
-  canContinueWithoutAd: boolean;
-  lastAdTime: number | null;
-}
 
 export const useAdSystem = () => {
-  const [adSystemState, setAdSystemState] = useState<AdSystemState>({
-    gameCount: 0,
-    adFreeUntil: null,
-    showMandatoryAd: false,
-    canContinueWithoutAd: false,
-    lastAdTime: null
-  });
-  const [piPaymentSuccessful, setPiPaymentSuccessful] = useState(false);
-  const { profile, updateProfile } = useUserProfile();
+  const [gameCount, setGameCount] = useState(0);
+  const [isAdFree, setIsAdFree] = useState(false);
+  const [adFreeExpiresAt, setAdFreeExpiresAt] = useState<string | null>(null);
   const { toast } = useToast();
-  const { purchaseAdFreeSubscription } = usePiPayments();
 
-  // Load ad system state from localStorage
+  // Load ad-free status from localStorage
   useEffect(() => {
-    const savedState = localStorage.getItem('flappypi-ad-system');
-    if (savedState) {
+    const adFreeData = localStorage.getItem('flappypi-adfree');
+    if (adFreeData) {
       try {
-        const parsedState = JSON.parse(savedState);
-        setAdSystemState(parsedState);
-      } catch (error) {
-        console.error('Error parsing ad system state:', error);
-      }
-    }
-    
-    // Check for Pi payment ad-free status
-    const adFreeStatus = localStorage.getItem('flappypi-ad-free');
-    if (adFreeStatus) {
-      try {
-        const { active, expiresAt } = JSON.parse(adFreeStatus);
-        if (active && new Date(expiresAt) > new Date()) {
-          setAdSystemState(prev => ({
-            ...prev,
-            adFreeUntil: expiresAt,
-            showMandatoryAd: false,
-            canContinueWithoutAd: true
-          }));
+        const data = JSON.parse(adFreeData);
+        const expiryDate = new Date(data.expiresAt);
+        if (expiryDate > new Date()) {
+          setIsAdFree(true);
+          setAdFreeExpiresAt(data.expiresAt);
         } else {
-          localStorage.removeItem('flappypi-ad-free');
+          localStorage.removeItem('flappypi-adfree');
         }
       } catch (error) {
-        console.error('Error parsing ad-free status:', error);
+        localStorage.removeItem('flappypi-adfree');
       }
     }
-  }, [piPaymentSuccessful]);
 
-  // Save ad system state to localStorage
-  const saveAdSystemState = (newState: AdSystemState) => {
-    setAdSystemState(newState);
-    localStorage.setItem('flappypi-ad-system', JSON.stringify(newState));
-  };
-
-  // Check if user has ad-free subscription
-  const isAdFree = () => {
-    if (!adSystemState.adFreeUntil) return false;
-    return new Date() < new Date(adSystemState.adFreeUntil);
-  };
-
-  // Check if cooldown period has passed (3 minutes)
-  const isCooldownPassed = () => {
-    if (!adSystemState.lastAdTime) return true;
-    const timeDiff = Date.now() - adSystemState.lastAdTime;
-    return timeDiff > 180000; // 3 minutes
-  };
-
-  // Increment game count and check for mandatory ads
-  const incrementGameCount = () => {
-    if (isAdFree()) return;
-
-    const newGameCount = adSystemState.gameCount + 1;
-    // Changed from every 2 games to every 3 games
-    const shouldShowAd = newGameCount % 3 === 0 && isCooldownPassed();
-
-    saveAdSystemState({
-      ...adSystemState,
-      gameCount: newGameCount,
-      showMandatoryAd: shouldShowAd,
-      canContinueWithoutAd: isAdFree()
-    });
-  };
-
-  // Reset game count after ad is watched
-  const resetAdCounter = () => {
-    saveAdSystemState({
-      ...adSystemState,
-      showMandatoryAd: false,
-      lastAdTime: Date.now() // Update last ad time
-    });
-  };
-
-  // Purchase ad-free subscription using Pi Network
-  const purchaseAdFreeWithPi = async (): Promise<boolean> => {
-    try {
-      const result = await purchaseAdFreeSubscription();
-      
-      if (result.success) {
-        // Set ad-free period for 1 month
-        const adFreeUntil = new Date();
-        adFreeUntil.setMonth(adFreeUntil.getMonth() + 1);
-        
-        saveAdSystemState({
-          ...adSystemState,
-          adFreeUntil: adFreeUntil.toISOString(),
-          showMandatoryAd: false,
-          canContinueWithoutAd: true
-        });
-        
-        setPiPaymentSuccessful(true); // Trigger effect to reload status
-
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Pi payment failed:', error);
-      return false;
+    // Load game count
+    const savedCount = localStorage.getItem('flappypi-game-count');
+    if (savedCount) {
+      setGameCount(parseInt(savedCount));
     }
-  };
+  }, []);
 
-  // Legacy coin-based purchase (fallback)
-  const purchaseAdFree = async (coins = 500): Promise<boolean> => {
-    if (!profile) {
-      toast({
-        title: "Error",
-        description: "User profile not available",
-        variant: "destructive"
-      });
-      return false;
-    }
+  const incrementGameCount = useCallback(() => {
+    const newCount = gameCount + 1;
+    setGameCount(newCount);
+    localStorage.setItem('flappypi-game-count', newCount.toString());
+    console.log(`Game count incremented to: ${newCount}`);
+  }, [gameCount]);
 
-    try {
-      console.log(`Initiating coin-based ad-free subscription - ${coins} coins`);
-      
-      const result = await gameBackendService.makePurchase(
-        profile.pi_user_id,
-        'power_up',
-        'ad_free_month',
-        coins,
-        `coin_tx_adfree_${Date.now()}`
-      );
+  const resetAdCounter = useCallback(() => {
+    setGameCount(0);
+    localStorage.setItem('flappypi-game-count', '0');
+    console.log('Ad counter reset');
+  }, []);
 
-      if (result.success) {
-        // Set ad-free period for 1 month
-        const adFreeUntil = new Date();
-        adFreeUntil.setMonth(adFreeUntil.getMonth() + 1);
+  // Show mandatory ad every 3 games (not if user has ad-free)
+  const shouldShowMandatoryAd = !isAdFree && gameCount > 0 && gameCount % 3 === 0;
+
+  const purchaseAdFree = useCallback(async () => {
+    toast({
+      title: "Processing Pi Payment",
+      description: "Purchasing ad-free subscription..."
+    });
+
+    // Simulate Pi Network payment
+    return new Promise<boolean>((resolve) => {
+      setTimeout(() => {
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + 30);
         
-        saveAdSystemState({
-          ...adSystemState,
-          adFreeUntil: adFreeUntil.toISOString(),
-          showMandatoryAd: false,
-          canContinueWithoutAd: true
-        });
+        const adFreeData = {
+          expiresAt: expiryDate.toISOString()
+        };
+        
+        localStorage.setItem('flappypi-adfree', JSON.stringify(adFreeData));
+        setIsAdFree(true);
+        setAdFreeExpiresAt(expiryDate.toISOString());
         
         toast({
-          title: "🌟 Pi Premium Activated! 🎉",
-          description: "No more ads for 1 month! Enjoy unlimited gameplay!"
+          title: "🎉 Ad-Free Activated!",
+          description: "You now have 30 days of ad-free gaming!"
         });
         
-        return true;
-      } else {
-        toast({
-          title: "Purchase Failed",
-          description: result.error || "Failed to purchase ad-free subscription",
-          variant: "destructive"
-        });
-        return false;
-      }
-    } catch (error) {
-      console.error('Error processing coin payment:', error);
-      
-      // Fallback to local storage for demo purposes
-      const adFreeUntil = new Date();
-      adFreeUntil.setMonth(adFreeUntil.getMonth() + 1);
-      
-      saveAdSystemState({
-        ...adSystemState,
-        adFreeUntil: adFreeUntil.toISOString(),
-        showMandatoryAd: false,
-        canContinueWithoutAd: true
-      });
-      
-      toast({
-        title: "🌟 Pi Premium Activated! 🎉",
-        description: "No more ads for 1 month! Enjoy unlimited gameplay! (Demo mode)"
-      });
-      
-      return true;
-    }
-  };
+        resolve(true);
+      }, 2000);
+    });
+  }, [toast]);
 
-  // Check if user should see mandatory ad on game over
-  const shouldShowMandatoryAd = () => {
-    return adSystemState.showMandatoryAd && !isAdFree();
-  };
+  const purchaseAdFreeWithPi = useCallback(async () => {
+    // Enhanced Pi Network integration would go here
+    return await purchaseAdFree();
+  }, [purchaseAdFree]);
 
-  // Check if user can continue without watching ad (ad-free subscription)
-  const canContinueWithoutAd = () => {
-    return isAdFree();
-  };
-
-  // Get ad-free time remaining
-  const getAdFreeTimeRemaining = () => {
-    if (!adSystemState.adFreeUntil) return null;
-    
-    const remaining = new Date(adSystemState.adFreeUntil).getTime() - new Date().getTime();
-    if (remaining <= 0) return null;
-    
-    const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
-    return { days, hours };
-  };
+  const adFreeTimeRemaining = adFreeExpiresAt 
+    ? Math.max(0, Math.ceil((new Date(adFreeExpiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
 
   return {
-    gameCount: adSystemState.gameCount,
-    isAdFree: isAdFree(),
-    shouldShowMandatoryAd: shouldShowMandatoryAd(),
-    canContinueWithoutAd: canContinueWithoutAd(),
-    adFreeTimeRemaining: getAdFreeTimeRemaining(),
+    gameCount,
+    isAdFree,
+    shouldShowMandatoryAd,
+    adFreeTimeRemaining,
     incrementGameCount,
     resetAdCounter,
     purchaseAdFree,

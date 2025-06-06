@@ -9,6 +9,7 @@ interface UseBackgroundMusicProps {
 export const useBackgroundMusic = ({ musicEnabled, gameState }: UseBackgroundMusicProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isMobileAudioUnlocked, setIsMobileAudioUnlocked] = useState(false);
+  const [volume, setVolume] = useState(0.3);
 
   // Function to unlock audio on mobile
   const unlockAudio = () => {
@@ -18,8 +19,9 @@ export const useBackgroundMusic = ({ musicEnabled, gameState }: UseBackgroundMus
         playPromise.then(() => {
           audioRef.current?.pause();
           setIsMobileAudioUnlocked(true);
+          console.log('Mobile audio unlocked');
         }).catch(() => {
-          // Audio play failed, will try again on next user interaction
+          console.log('Audio unlock failed, will try again');
         });
       }
     }
@@ -30,8 +32,13 @@ export const useBackgroundMusic = ({ musicEnabled, gameState }: UseBackgroundMus
     if (!audioRef.current) {
       audioRef.current = new Audio('/sounds/background/Flappy Pi Main Theme Song.mp3');
       audioRef.current.loop = true;
-      audioRef.current.volume = 0.3;
+      audioRef.current.volume = volume;
       audioRef.current.preload = 'auto';
+
+      // Handle loading errors
+      audioRef.current.addEventListener('error', () => {
+        console.warn('Background music failed to load');
+      });
     }
 
     const audio = audioRef.current;
@@ -44,11 +51,13 @@ export const useBackgroundMusic = ({ musicEnabled, gameState }: UseBackgroundMus
     // Add listeners for common user interactions
     document.addEventListener('touchstart', handleUserInteraction, { once: true });
     document.addEventListener('click', handleUserInteraction, { once: true });
+    document.addEventListener('keydown', handleUserInteraction, { once: true });
 
+    // Play/pause based on settings and game state
     if (musicEnabled && (gameState === 'playing' || gameState === 'menu')) {
       if (isMobileAudioUnlocked || !('ontouchstart' in window)) {
-        audio.play().catch(error => {
-          console.log('Audio play failed:', error);
+        audio.play().catch(() => {
+          console.log('Audio play failed - user interaction required');
         });
       }
     } else {
@@ -58,11 +67,28 @@ export const useBackgroundMusic = ({ musicEnabled, gameState }: UseBackgroundMus
     return () => {
       document.removeEventListener('touchstart', handleUserInteraction);
       document.removeEventListener('click', handleUserInteraction);
-      if (audio) {
-        audio.pause();
-      }
+      document.removeEventListener('keydown', handleUserInteraction);
     };
-  }, [musicEnabled, gameState, isMobileAudioUnlocked]);
+  }, [musicEnabled, gameState, isMobileAudioUnlocked, volume]);
+
+  const setMusicVolume = (newVolume: number) => {
+    setVolume(newVolume);
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume;
+    }
+  };
+
+  const toggleMusic = () => {
+    if (audioRef.current) {
+      if (audioRef.current.paused) {
+        audioRef.current.play().catch(() => {
+          console.log('Failed to resume music');
+        });
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  };
 
   useEffect(() => {
     return () => {
@@ -72,4 +98,10 @@ export const useBackgroundMusic = ({ musicEnabled, gameState }: UseBackgroundMus
       }
     };
   }, []);
+
+  return {
+    setMusicVolume,
+    toggleMusic,
+    isUnlocked: isMobileAudioUnlocked
+  };
 };
