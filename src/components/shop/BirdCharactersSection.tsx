@@ -19,6 +19,8 @@ interface BirdCharactersSectionProps {
   hasAnySubscription: boolean;
   eliteSubscription: {
     isActive: boolean;
+    expiresAt: string | null;
+    daysRemaining: number;
   };
   isOwned: (skinId: string) => boolean;
   setSelectedBirdSkin: (skinId: string) => void;
