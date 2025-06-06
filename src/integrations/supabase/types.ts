@@ -274,6 +274,16 @@ export type Database = {
             }
         Returns: Json
       }
+      complete_game_session_secure: {
+        Args: {
+          p_game_mode: Database["public"]["Enums"]["game_mode"]
+          p_final_score: number
+          p_level_reached: number
+          p_coins_earned: number
+          p_session_duration?: number
+        }
+        Returns: Json
+      }
       make_purchase: {
         Args:
           | {
@@ -289,6 +299,15 @@ export type Database = {
               p_cost_coins: number
               p_pi_transaction_id?: string
             }
+        Returns: Json
+      }
+      make_purchase_secure: {
+        Args: {
+          p_item_type: Database["public"]["Enums"]["item_type"]
+          p_item_id: string
+          p_cost_coins: number
+          p_pi_transaction_id?: string
+        }
         Returns: Json
       }
       update_user_score: {

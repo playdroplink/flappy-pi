@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { gameBackendService } from '@/services/gameBackendService';
+import { secureGameBackendService } from '@/services/secureGameBackendService';
 
 // Secure version of game data hook with server-side validation
 export const useSecureGameData = () => {
@@ -61,8 +61,7 @@ export const useSecureGameData = () => {
 
     try {
       // Use the secure backend function
-      const result = await gameBackendService.completeGameSession(
-        profile.pi_user_id,
+      const result = await secureGameBackendService.completeGameSession(
         gameMode,
         score,
         level,
