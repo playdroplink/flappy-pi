@@ -108,6 +108,7 @@ class PiNetworkService {
     try {
       await this.initialize();
       
+      // Use proper Pi SDK authentication with scopes and incomplete payment handler
       this.currentUser = await window.Pi!.authenticate([
         'payments',
         'username'

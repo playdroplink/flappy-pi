@@ -15,14 +15,14 @@ interface PiAuthResult {
 class PiAuthService {
   async authenticateWithPi(): Promise<PiAuthResult> {
     try {
-      // Step 1: Authenticate with Pi Network
+      // Step 1: Authenticate with Pi Network using proper Pi SDK flow
       const piUser = await piNetworkService.authenticate();
       
       if (!piUser) {
         return { success: false, error: 'Pi Network authentication failed' };
       }
 
-      // Step 2: Send Pi user data to our backend for Supabase authentication
+      // Step 2: Send Pi user data to our backend for verification and Supabase authentication
       const response = await fetch(`https://fwfefplvruawsbspwpxh.supabase.co/functions/v1/pi-auth`, {
         method: 'POST',
         headers: {
@@ -30,9 +30,9 @@ class PiAuthService {
           'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3ZmVmcGx2cnVhd3Nic3B3cHhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNDYzMjgsImV4cCI6MjA2NDcyMjMyOH0.q2g4YZeUpmOOmK2LO7KKb-B8ZTpsoxJ9b1H_Wf11_LM`
         },
         body: JSON.stringify({
+          accessToken: piUser.accessToken,
           piUserId: piUser.uid,
-          username: piUser.username,
-          accessToken: piUser.accessToken
+          username: piUser.username
         })
       });
 
@@ -42,28 +42,16 @@ class PiAuthService {
         return { success: false, error: result.error || 'Authentication failed' };
       }
 
-      // Step 3: If we got a session URL, use it to authenticate with Supabase
-      if (result.session_url) {
-        // Extract tokens from the session URL or handle the redirect
-        // For now, we'll try to sign in with the Pi user ID as email
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email: `${piUser.uid}@pi.network`,
-          password: piUser.uid // Using uid as password - this is a simplified approach
+      // Step 3: Set the Supabase session with the tokens returned from backend
+      if (result.access_token && result.refresh_token) {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: result.access_token,
+          refresh_token: result.refresh_token
         });
 
-        if (authError) {
-          // If password auth fails, try magic link approach
-          console.log('Password auth failed, using alternative approach');
-          
-          // Create a custom session using the user data from our backend
-          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-            access_token: result.access_token || '',
-            refresh_token: result.refresh_token || ''
-          });
-
-          if (sessionError) {
-            return { success: false, error: 'Failed to establish Supabase session' };
-          }
+        if (sessionError) {
+          console.error('Failed to set Supabase session:', sessionError);
+          return { success: false, error: 'Failed to establish session' };
         }
       }
 

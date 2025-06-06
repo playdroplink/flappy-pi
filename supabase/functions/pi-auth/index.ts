@@ -13,34 +13,65 @@ serve(async (req) => {
   }
 
   try {
-    const { piUserId, username, accessToken } = await req.json()
+    const { accessToken, piUserId, username } = await req.json()
 
-    if (!piUserId || !username) {
+    if (!accessToken || !piUserId || !username) {
       return new Response(
-        JSON.stringify({ error: 'Pi User ID and username are required' }),
+        JSON.stringify({ error: 'Access token, Pi User ID and username are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Initialize Supabase Admin client
+    // Step 1: Verify the Pi access token with Pi Network API
+    console.log('Verifying Pi access token...')
+    const piVerifyResponse = await fetch('https://api.minepi.com/v2/me', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    })
+
+    if (!piVerifyResponse.ok) {
+      console.error('Pi API verification failed:', piVerifyResponse.status)
+      return new Response(
+        JSON.stringify({ error: 'Invalid Pi Network access token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const piUserData = await piVerifyResponse.json()
+
+    // Step 2: Verify that the UID matches (security check)
+    if (piUserData.uid !== piUserId) {
+      console.error('UID mismatch:', piUserData.uid, 'vs', piUserId)
+      return new Response(
+        JSON.stringify({ error: 'Invalid user verification' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('Pi user verified successfully:', piUserData.username)
+
+    // Step 3: Initialize Supabase Admin client
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Check if user already exists in Supabase
+    // Step 4: Check if user already exists in Supabase
     const { data: existingUser } = await supabaseAdmin.auth.admin.getUserById(piUserId)
 
     let user
     if (existingUser.user) {
-      // User exists, update their metadata if needed
+      // User exists, update their metadata
       const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
         piUserId,
         {
           user_metadata: {
-            username,
+            username: piUserData.username,
             pi_access_token: accessToken,
-            last_login: new Date().toISOString()
+            last_login: new Date().toISOString(),
+            verified_pi_user: true
           }
         }
       )
@@ -55,16 +86,17 @@ serve(async (req) => {
       
       user = updatedUser.user
     } else {
-      // Create new user in Supabase
+      // Create new user in Supabase with verified Pi data
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         id: piUserId,
-        email: `${piUserId}@pi.network`, // Fake email using Pi user ID
+        email: `${piUserId}@pi.network`, // Using Pi UID as fake email
         email_confirm: true,
         user_metadata: {
-          username,
+          username: piUserData.username,
           pi_access_token: accessToken,
           provider: 'pi_network',
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          verified_pi_user: true
         }
       })
 
@@ -79,12 +111,12 @@ serve(async (req) => {
       user = newUser.user
     }
 
-    // Generate access token for the user
+    // Step 5: Generate session tokens for the frontend
     const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'magiclink',
       email: `${piUserId}@pi.network`,
       options: {
-        redirectTo: `${req.headers.get('origin') || 'http://localhost:3000'}/auth/callback`
+        redirectTo: `${req.headers.get('origin') || 'http://localhost:3000'}/`
       }
     })
 
@@ -96,19 +128,21 @@ serve(async (req) => {
       )
     }
 
-    // Create a custom session for immediate use
-    const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
+    // Step 6: Create access and refresh tokens for immediate use
+    const { data: tokenData, error: tokenError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'signup',
       email: `${piUserId}@pi.network`
     })
 
-    if (signInError) {
-      console.error('Error signing in user:', signInError)
+    if (tokenError) {
+      console.error('Error generating tokens:', tokenError)
       return new Response(
-        JSON.stringify({ error: 'Failed to sign in user' }),
+        JSON.stringify({ error: 'Failed to generate tokens' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('Pi authentication successful for user:', piUserData.username)
 
     return new Response(
       JSON.stringify({
@@ -118,6 +152,8 @@ serve(async (req) => {
           email: user?.email,
           username: user?.user_metadata?.username
         },
+        access_token: tokenData.properties?.access_token,
+        refresh_token: tokenData.properties?.refresh_token,
         session_url: sessionData.properties?.action_link
       }),
       { 
