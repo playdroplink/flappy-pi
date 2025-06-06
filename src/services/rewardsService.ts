@@ -41,7 +41,7 @@ class RewardsService {
 
       // Fix TypeScript error by safely casting the result
       if (data && typeof data === 'object' && 'success' in data) {
-        return data as DailyRewardResult;
+        return data as unknown as DailyRewardResult;
       }
 
       return { success: false, error: 'Invalid response format' };
@@ -71,7 +71,7 @@ class RewardsService {
 
       // Fix TypeScript error by safely casting the result
       if (data && typeof data === 'object' && 'success' in data) {
-        return data as AdRewardResult;
+        return data as unknown as AdRewardResult;
       }
 
       return null;
