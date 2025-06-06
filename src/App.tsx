@@ -7,6 +7,11 @@ import GamePage from './pages/GamePage';
 import ShopPage from './pages/ShopPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import SettingsPage from './pages/SettingsPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
+import ContactPage from './pages/ContactPage';
+import HelpPage from './pages/HelpPage';
+import Index from './pages/Index';
 import { loadPiSdk } from './services/piSdkLoader';
 import { piNetworkService } from './services/piNetworkService';
 
@@ -30,11 +35,17 @@ function App() {
     <>
       <Router>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<Index />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/play" element={<GamePage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/help" element={<HelpPage />} />
+          <Route path="/account" element={<SettingsPage />} />
         </Routes>
       </Router>
       <Toaster />

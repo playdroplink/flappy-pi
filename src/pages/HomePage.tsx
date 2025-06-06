@@ -194,7 +194,7 @@ const HomePage: React.FC = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => handleNavigation('/account')}
+              onClick={() => handleNavigation('/settings')}
               className="flex flex-col items-center space-y-1 text-gray-600 hover:text-gray-800 h-auto py-2 px-1 rounded-lg"
             >
               <Settings className="h-4 w-4" />
