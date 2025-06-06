@@ -3,28 +3,39 @@ import React from 'react';
 
 const BackgroundElements: React.FC = () => {
   return (
-    <div className="absolute inset-0 pointer-events-none">
-      {/* Floating clouds */}
-      {[...Array(5)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute bg-white/10 rounded-full animate-pulse"
-          style={{
-            width: `${40 + i * 10}px`,
-            height: `${20 + i * 5}px`,
-            left: `${10 + i * 20}%`,
-            top: `${20 + i * 15}%`,
-            animationDelay: `${i * 1.2}s`,
-            animationDuration: '4s'
-          }}
-        />
-      ))}
-      
-      {/* Geometric shapes */}
-      <div className="absolute top-20 right-10 w-16 h-16 bg-white/10 rounded-full animate-bounce" style={{ animationDelay: '1s' }} />
-      <div className="absolute bottom-32 left-8 w-12 h-12 bg-white/10 rotate-45 animate-pulse" style={{ animationDelay: '2s' }} />
-      <div className="absolute top-1/3 right-1/4 w-8 h-8 bg-white/10 rounded-full animate-ping" style={{ animationDelay: '3s' }} />
-    </div>
+    <>
+      {/* Animated clouds */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 text-white/30 text-6xl animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}>
+          ☁️
+        </div>
+        <div className="absolute top-32 right-16 text-white/30 text-4xl animate-bounce" style={{ animationDelay: '1s', animationDuration: '4s' }}>
+          ☁️
+        </div>
+        <div className="absolute top-64 left-20 text-white/30 text-5xl animate-bounce" style={{ animationDelay: '2s', animationDuration: '3.5s' }}>
+          ☁️
+        </div>
+        <div className="absolute bottom-40 right-8 text-white/30 text-3xl animate-bounce" style={{ animationDelay: '0.5s', animationDuration: '4.5s' }}>
+          ☁️
+        </div>
+      </div>
+
+      {/* Floating coins */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-40 right-20 text-yellow-300/50 text-2xl animate-pulse" style={{ animationDelay: '0s' }}>
+          🪙
+        </div>
+        <div className="absolute top-80 left-16 text-yellow-300/50 text-2xl animate-pulse" style={{ animationDelay: '1s' }}>
+          🪙
+        </div>
+        <div className="absolute bottom-60 right-32 text-yellow-300/50 text-2xl animate-pulse" style={{ animationDelay: '2s' }}>
+          🪙
+        </div>
+      </div>
+
+      {/* Gradient overlay for better text readability */}
+      <div className="absolute inset-0 bg-black/10 pointer-events-none" />
+    </>
   );
 };
 

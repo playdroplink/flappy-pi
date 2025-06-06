@@ -14,6 +14,7 @@ interface AudioSystem {
   isAudioUnlocked: boolean;
   isMusicPlaying: boolean;
   unlockAudio: () => void;
+  initializeGameSounds: () => void;
 }
 
 export const useCompleteAudioSystem = (): AudioSystem => {
@@ -23,29 +24,39 @@ export const useCompleteAudioSystem = (): AudioSystem => {
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [musicVolume, setMusicVolumeState] = useState(0.3);
   const [sfxVolume, setSfxVolumeState] = useState(0.6);
+  const isInitialized = useRef(false);
 
-  // Initialize all audio files
-  const initializeAudio = useCallback(() => {
-    console.log('🎵 Initializing complete audio system...');
+  // Production-ready audio initialization with comprehensive fallbacks
+  const initializeGameSounds = useCallback(() => {
+    if (isInitialized.current) return;
     
-    // Sound effects with multiple format fallbacks
+    console.log('🎵 Initializing production audio system...');
+    
+    // Sound effects with comprehensive fallback system
     const soundEffects = [
-      { key: 'wing', path: '/assets/audio/sfx_wing' },
-      { key: 'point', path: '/assets/audio/sfx_point' },
-      { key: 'hit', path: '/assets/audio/sfx_hit' },
-      { key: 'die', path: '/assets/audio/sfx_die' },
-      { key: 'swoosh', path: '/assets/audio/sfx_swooshing' },
-      { key: 'heart', path: '/assets/audio/sfx_heart' }
+      { key: 'wing', path: '/sounds/sfx/wing' },
+      { key: 'point', path: '/sounds/sfx/point' },
+      { key: 'hit', path: '/sounds/sfx/hit' },
+      { key: 'die', path: '/sounds/sfx/die' },
+      { key: 'swoosh', path: '/sounds/sfx/swoosh' },
+      { key: 'heart', path: '/sounds/sfx/heart' }
     ];
 
     soundEffects.forEach(({ key, path }) => {
       const audio = new Audio();
+      audio.preload = 'auto';
+      audio.volume = sfxVolume;
+      
+      // Try multiple formats for maximum compatibility
       const formats = ['wav', 'mp3', 'ogg'];
       let formatIndex = 0;
 
       const tryNextFormat = () => {
         if (formatIndex >= formats.length) {
-          console.warn(`Failed to load sound: ${key}`);
+          console.warn(`⚠️ Failed to load sound: ${key} - creating silent fallback`);
+          // Create working silent audio element
+          audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+          audioRefs.current[key] = audio;
           return;
         }
 
@@ -53,8 +64,6 @@ export const useCompleteAudioSystem = (): AudioSystem => {
         audio.src = `${path}.${format}`;
         
         audio.addEventListener('loadeddata', () => {
-          audio.preload = 'auto';
-          audio.volume = sfxVolume;
           audioRefs.current[key] = audio;
           console.log(`✅ Sound loaded: ${key} (${format})`);
         }, { once: true });
@@ -65,30 +74,40 @@ export const useCompleteAudioSystem = (): AudioSystem => {
           tryNextFormat();
         }, { once: true });
 
+        // Set timeout to try next format if current takes too long
+        setTimeout(() => {
+          if (!audioRefs.current[key]) {
+            formatIndex++;
+            tryNextFormat();
+          }
+        }, 3000);
+
         audio.load();
       };
 
       tryNextFormat();
     });
 
-    // Background music
+    // Background music with fallback
     if (!backgroundMusic.current) {
       backgroundMusic.current = new Audio();
-      const musicFormats = ['mp3', 'ogg'];
+      backgroundMusic.current.loop = true;
+      backgroundMusic.current.volume = musicVolume;
+      
+      const musicFormats = ['mp3', 'ogg', 'wav'];
       let musicFormatIndex = 0;
 
       const tryNextMusicFormat = () => {
         if (musicFormatIndex >= musicFormats.length) {
-          console.warn('Failed to load background music');
+          console.warn('⚠️ Failed to load background music - creating silent fallback');
+          backgroundMusic.current!.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
           return;
         }
 
         const format = musicFormats[musicFormatIndex];
-        backgroundMusic.current!.src = `/sounds/background/Flappy Pi Main Theme Song.${format}`;
+        backgroundMusic.current!.src = `/sounds/music/background.${format}`;
         
         backgroundMusic.current!.addEventListener('loadeddata', () => {
-          backgroundMusic.current!.loop = true;
-          backgroundMusic.current!.volume = musicVolume;
           console.log(`✅ Background music loaded (${format})`);
         }, { once: true });
 
@@ -103,96 +122,109 @@ export const useCompleteAudioSystem = (): AudioSystem => {
 
       tryNextMusicFormat();
     }
-  }, [musicVolume, sfxVolume]);
 
-  // Audio unlock function
-  const unlockAudio = useCallback(() => {
-    if (isAudioUnlocked) return;
+    isInitialized.current = true;
+  }, [sfxVolume, musicVolume]);
 
-    console.log('🔓 Attempting to unlock audio...');
+  // Mobile-optimized audio unlock
+  const unlockAudio = useCallback(async () => {
+    console.log('🔓 Attempting audio unlock for mobile...');
     
-    // Create and play silent audio to unlock
-    const silentAudio = new Audio();
-    silentAudio.src = 'data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAABOW';
-    silentAudio.volume = 0.01;
-    
-    const playPromise = silentAudio.play();
-    if (playPromise !== undefined) {
-      playPromise.then(() => {
-        silentAudio.pause();
-        silentAudio.currentTime = 0;
-        setIsAudioUnlocked(true);
-        console.log('✅ Audio unlocked successfully');
-        
-        // Start background music if enabled
-        const musicEnabled = localStorage.getItem('flappypi-music') !== 'false';
-        if (musicEnabled && backgroundMusic.current) {
-          const musicPlayPromise = backgroundMusic.current.play();
-          if (musicPlayPromise !== undefined) {
-            musicPlayPromise.then(() => {
-              setIsMusicPlaying(true);
-              console.log('🎵 Background music started');
-            }).catch(error => {
-              console.log('Background music failed to start:', error);
-            });
+    try {
+      // Create a short silent audio to unlock the audio context
+      const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+      silentAudio.volume = 0.1;
+      
+      await silentAudio.play();
+      silentAudio.pause();
+      
+      setIsAudioUnlocked(true);
+      console.log('✅ Audio successfully unlocked');
+      
+      // Try to unlock all existing audio elements
+      Object.values(audioRefs.current).forEach(async (audio) => {
+        try {
+          if (audio.paused) {
+            const originalVolume = audio.volume;
+            audio.volume = 0.01;
+            await audio.play();
+            audio.pause();
+            audio.currentTime = 0;
+            audio.volume = originalVolume;
           }
+        } catch (error) {
+          // Ignore individual audio unlock failures
         }
-      }).catch(error => {
-        console.log('Audio unlock failed:', error);
       });
+      
+    } catch (error) {
+      console.log('❌ Audio unlock failed:', error);
+    }
+  }, []);
+
+  // Auto-unlock audio on first user interaction
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      if (!isAudioUnlocked) {
+        unlockAudio();
+      }
+    };
+
+    // Listen for multiple interaction types
+    const events = ['touchstart', 'touchend', 'click', 'keydown'];
+    events.forEach(event => {
+      document.addEventListener(event, handleFirstInteraction, { once: true, passive: true });
+    });
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, handleFirstInteraction);
+      });
+    };
+  }, [unlockAudio, isAudioUnlocked]);
+
+  // Safe audio playback with error handling
+  const playSafeAudio = useCallback((key: string, volume = 0.6) => {
+    try {
+      const audio = audioRefs.current[key];
+      if (audio && isAudioUnlocked) {
+        // Clone for overlapping sounds
+        const audioClone = audio.cloneNode() as HTMLAudioElement;
+        audioClone.volume = Math.min(volume, 1);
+        audioClone.currentTime = 0;
+        
+        const playPromise = audioClone.play();
+        if (playPromise) {
+          playPromise.catch((error) => {
+            console.log(`🔇 Sound playback failed for ${key}:`, error.message);
+          });
+        }
+      }
+    } catch (error) {
+      console.log(`🔇 Error playing sound ${key}:`, error);
     }
   }, [isAudioUnlocked]);
 
-  // Play sound effect
-  const playSound = useCallback((key: string, customVolume?: number) => {
-    if (!isAudioUnlocked) {
-      console.log('Audio not unlocked, attempting unlock...');
-      unlockAudio();
-      return;
-    }
-
-    const audio = audioRefs.current[key];
-    if (!audio) {
-      console.warn(`Sound not found: ${key}`);
-      return;
-    }
-
-    try {
-      const audioClone = audio.cloneNode() as HTMLAudioElement;
-      audioClone.volume = customVolume !== undefined ? customVolume : sfxVolume;
-      audioClone.currentTime = 0;
-      
-      const playPromise = audioClone.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          console.log(`Failed to play sound: ${key}`, error);
-        });
-      }
-    } catch (error) {
-      console.warn(`Error playing sound ${key}:`, error);
-    }
-  }, [isAudioUnlocked, sfxVolume, unlockAudio]);
-
   // Background music controls
   const toggleBackgroundMusic = useCallback(() => {
-    if (!backgroundMusic.current || !isAudioUnlocked) return;
-
-    if (isMusicPlaying) {
-      backgroundMusic.current.pause();
-      setIsMusicPlaying(false);
-      localStorage.setItem('flappypi-music', 'false');
-      console.log('🔇 Background music paused');
-    } else {
-      const playPromise = backgroundMusic.current.play();
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          setIsMusicPlaying(true);
-          localStorage.setItem('flappypi-music', 'true');
-          console.log('🎵 Background music resumed');
-        }).catch(error => {
-          console.log('Failed to resume background music:', error);
-        });
+    try {
+      if (!backgroundMusic.current || !isAudioUnlocked) return;
+      
+      if (isMusicPlaying) {
+        backgroundMusic.current.pause();
+        setIsMusicPlaying(false);
+      } else {
+        const playPromise = backgroundMusic.current.play();
+        if (playPromise) {
+          playPromise.then(() => {
+            setIsMusicPlaying(true);
+          }).catch((error) => {
+            console.log('🔇 Background music playback failed:', error.message);
+          });
+        }
       }
+    } catch (error) {
+      console.log('🔇 Error toggling background music:', error);
     }
   }, [isMusicPlaying, isAudioUnlocked]);
 
@@ -201,7 +233,6 @@ export const useCompleteAudioSystem = (): AudioSystem => {
     if (backgroundMusic.current) {
       backgroundMusic.current.volume = volume;
     }
-    localStorage.setItem('flappypi-music-volume', volume.toString());
   }, []);
 
   const setSfxVolume = useCallback((volume: number) => {
@@ -209,61 +240,24 @@ export const useCompleteAudioSystem = (): AudioSystem => {
     Object.values(audioRefs.current).forEach(audio => {
       audio.volume = volume;
     });
-    localStorage.setItem('flappypi-sfx-volume', volume.toString());
   }, []);
 
-  // Initialize audio system
-  useEffect(() => {
-    initializeAudio();
-    
-    // Load saved volume settings
-    const savedMusicVolume = localStorage.getItem('flappypi-music-volume');
-    const savedSfxVolume = localStorage.getItem('flappypi-sfx-volume');
-    
-    if (savedMusicVolume) {
-      setMusicVolume(parseFloat(savedMusicVolume));
-    }
-    if (savedSfxVolume) {
-      setSfxVolume(parseFloat(savedSfxVolume));
-    }
-
-    // Add event listeners for user interaction
-    const handleFirstInteraction = () => {
-      unlockAudio();
-    };
-
-    document.addEventListener('touchstart', handleFirstInteraction, { once: true });
-    document.addEventListener('click', handleFirstInteraction, { once: true });
-    document.addEventListener('keydown', handleFirstInteraction, { once: true });
-
-    return () => {
-      document.removeEventListener('touchstart', handleFirstInteraction);
-      document.removeEventListener('click', handleFirstInteraction);
-      document.removeEventListener('keydown', handleFirstInteraction);
-    };
-  }, [initializeAudio, unlockAudio, setMusicVolume, setSfxVolume]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      Object.values(audioRefs.current).forEach(audio => {
-        audio.pause();
-        audio.src = '';
-      });
-      if (backgroundMusic.current) {
-        backgroundMusic.current.pause();
-        backgroundMusic.current.src = '';
-      }
-    };
-  }, []);
+  // Production-ready sound effect functions
+  const playWingFlap = useCallback(() => playSafeAudio('wing', 0.4), [playSafeAudio]);
+  const playPoint = useCallback(() => playSafeAudio('point', 0.7), [playSafeAudio]);
+  const playHit = useCallback(() => playSafeAudio('hit', 0.8), [playSafeAudio]);
+  const playDie = useCallback(() => playSafeAudio('die', 0.7), [playSafeAudio]);
+  const playSwoosh = useCallback(() => playSafeAudio('swoosh', 0.5), [playSafeAudio]);
+  const playHeartPickup = useCallback(() => playSafeAudio('heart', 0.6), [playSafeAudio]);
 
   return {
-    playWingFlap: () => playSound('wing', 0.4),
-    playPoint: () => playSound('point', 0.7),
-    playHit: () => playSound('hit', 0.8),
-    playDie: () => playSound('die', 0.7),
-    playSwoosh: () => playSound('swoosh', 0.5),
-    playHeartPickup: () => playSound('heart', 0.6),
+    initializeGameSounds,
+    playWingFlap,
+    playPoint,
+    playHit,
+    playDie,
+    playSwoosh,
+    playHeartPickup,
     toggleBackgroundMusic,
     setMusicVolume,
     setSfxVolume,
