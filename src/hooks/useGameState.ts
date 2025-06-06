@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -110,10 +111,7 @@ export const useGameState = () => {
     setGameState('menu'); // Set to menu first
     setShowWelcome(false);
     
-    // Auto-enter fullscreen only on mobile devices
-    if (!isFullscreen && isMobile) {
-      enterFullscreen();
-    }
+    // No auto-fullscreen for mobile games - let users play in browser
     
     // Use a longer delay to ensure complete state reset
     setTimeout(() => {
