@@ -13,6 +13,7 @@ import ContactModal from './ContactModal';
 import HelpModal from './HelpModal';
 import PrivacyModal from './PrivacyModal';
 import TermsModal from './TermsModal';
+import PurchaseHistoryModal from './PurchaseHistoryModal';
 import { ScrollArea } from './ui/scroll-area';
 import { useState } from 'react';
 
@@ -53,6 +54,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const [showTerms, setShowTerms] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
 
   const handlePiPremiumUpgrade = () => {
     // This could open the shop or a dedicated Pi Premium modal
@@ -75,6 +77,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     setShowHelp(true);
   };
 
+  const handleOpenPurchaseHistory = () => {
+    setShowPurchaseHistory(true);
+  };
+
   return (
     <>
       <div className="fixed inset-0 w-full h-full flex flex-col">
@@ -93,6 +99,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 coins={coins}
                 musicEnabled={musicEnabled}
                 onToggleMusic={onToggleMusic}
+                onOpenPurchaseHistory={handleOpenPurchaseHistory}
               />
 
               {/* Pi Premium Perks */}
@@ -132,6 +139,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
       <ContactModal isOpen={showContact} onClose={() => setShowContact(false)} />
       <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+      <PurchaseHistoryModal isOpen={showPurchaseHistory} onClose={() => setShowPurchaseHistory(false)} />
     </>
   );
 };
