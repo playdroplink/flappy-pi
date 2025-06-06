@@ -1,3 +1,4 @@
+
 import { useAudioManager } from './useAudioManager';
 
 interface UseEnhancedSoundEffectsProps {
@@ -15,7 +16,7 @@ export const useEnhancedSoundEffects = ({
     ...audioManager,
     // Keep the same interface as the original hook
     initializeGameSounds: () => {
-      console.log('Enhanced sound system initialized');
+      console.log('Enhanced sound system initialized - audio unlocked:', audioManager.audioUnlocked);
     },
     toggleMute: () => {
       // This could be enhanced to actually mute all sounds

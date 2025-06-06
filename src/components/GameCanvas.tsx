@@ -3,7 +3,7 @@ import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
 import { useGameRenderer } from '../hooks/useGameRenderer';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
-import { useSoundEffects } from '../hooks/useSoundEffects';
+import { useAudioManager } from '../hooks/useAudioManager';
 import { useCanvasSetup } from '../hooks/useCanvasSetup';
 import { useGameInputHandlers } from '../hooks/useGameInputHandlers';
 import { useGameLoopManager } from '../hooks/useGameLoopManager';
@@ -42,7 +42,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   useBackgroundMusic({ musicEnabled, gameState });
   
-  const { initializeGameSounds, playWingFlap, playPoint, playHit, playDie } = useSoundEffects();
+  // Use the fixed audio manager instead of multiple sound systems
+  const { playWingFlap, playPoint, playHit, playDie, audioUnlocked } = useAudioManager({ 
+    musicEnabled, 
+    gameState 
+  });
 
   const { gameStateRef, resetGame, continueGame, jump, checkCollisions } = useGameLoop({
     gameState,
@@ -119,16 +123,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     resetVisuals
   });
 
+  // Show audio unlock status in console for debugging
   useEffect(() => {
-    console.log('Initializing game sounds');
-    initializeGameSounds();
-  }, [initializeGameSounds]);
-
-  useEffect(() => {
-    if (onContinueGameRef) {
-      onContinueGameRef(continueGame);
-    }
-  }, [continueGame, onContinueGameRef]);
+    console.log('Audio unlocked status:', audioUnlocked);
+  }, [audioUnlocked]);
 
   // Detect when game transitions from 'gameOver' to 'playing' to ensure proper reset
   useEffect(() => {
