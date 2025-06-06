@@ -268,5 +268,10 @@ export const Analytics = {
   // Retention tracking
   checkRetention: () => {
     analyticsService.trackRetention();
+  },
+
+  // Generic track method
+  track: (eventName: string, properties?: EventProperties) => {
+    analyticsService.track(eventName, properties);
   }
 };

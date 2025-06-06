@@ -52,9 +52,11 @@ const Index = () => {
     }
   }, [gameState.gameState, gameState.gameMode]);
 
-  // Track game completion
-  const handleGameOver = (finalScore: number, level: number, sessionDuration: number) => {
-    Analytics.gameCompleted(finalScore, level, gameState.gameMode, sessionDuration);
+  // Track game completion - fix the function signature
+  const handleGameOver = (finalScore: number) => {
+    // Calculate session duration (you might want to track this more precisely)
+    const sessionDuration = 60; // Default to 60 seconds for now
+    Analytics.gameCompleted(finalScore, gameState.level, gameState.gameMode, sessionDuration);
     gameEvents.handleGameOver(finalScore);
   };
 

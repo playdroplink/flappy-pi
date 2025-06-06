@@ -33,6 +33,45 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_events: {
+        Row: {
+          client_ip: string | null
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          pi_user_id: string | null
+          referrer: string | null
+          timestamp: string
+          url: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          client_ip?: string | null
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          pi_user_id?: string | null
+          referrer?: string | null
+          timestamp?: string
+          url?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          client_ip?: string | null
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          pi_user_id?: string | null
+          referrer?: string | null
+          timestamp?: string
+          url?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       daily_rewards: {
         Row: {
           created_at: string | null
