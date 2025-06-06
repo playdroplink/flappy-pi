@@ -1,5 +1,6 @@
 
-import { useCallback, useRef } from 'react';
+import { useRef, useCallback } from 'react';
+import { useAdSystem } from '@/hooks/useAdSystem';
 
 interface UseCollisionHandlerProps {
   reviveUsed: boolean;
@@ -22,51 +23,52 @@ export const useCollisionHandler = ({
   setShowMandatoryAd,
   onGameOver
 }: UseCollisionHandlerProps) => {
-  const collisionLockRef = useRef(false);
-  const lastCollisionTimeRef = useRef(0);
-  const processingRef = useRef(false);
+  const adSystem = useAdSystem();
+  const collisionHandledRef = useRef(false);
 
   const handleCollision = useCallback(() => {
-    const now = Date.now();
-    
-    // Prevent multiple collision triggers
-    if (collisionLockRef.current || processingRef.current || (now - lastCollisionTimeRef.current) < 1000) {
-      console.log('⚠️ Collision ignored - too recent or already processing');
+    // Prevent multiple collision handling
+    if (collisionHandledRef.current) {
+      console.log('Collision already handled, ignoring');
       return;
     }
-
-    collisionLockRef.current = true;
-    processingRef.current = true;
-    lastCollisionTimeRef.current = now;
     
-    console.log('💥 Collision detected - processing game over');
-
-    try {
-      // Direct game over without ads or delays
-      setTimeout(() => {
-        try {
-          onGameOver(score);
-        } catch (error) {
-          console.error('❌ Game over handler error:', error);
-        } finally {
-          processingRef.current = false;
-        }
-      }, 150);
-    } catch (error) {
-      console.error('❌ Collision handler error:', error);
-      processingRef.current = false;
+    collisionHandledRef.current = true;
+    console.log('Collision detected - checking ad system');
+    
+    // Reset collision flag after delay to allow new games
+    setTimeout(() => {
+      collisionHandledRef.current = false;
+    }, 1000);
+    
+    // Check if user can continue without ad (Premium subscription)
+    if (adSystem.canContinueWithoutAd && !reviveUsed) {
+      console.log('User has Premium - allowing continue without ad');
+      setIsPausedForRevive(true);
+      setGameState('paused');
+      setShowContinueButton(true);
+      setAdWatched(false);
+      return;
     }
-  }, [score, onGameOver]);
+    
+    // Check if this is a mandatory ad game over
+    if (adSystem.shouldShowMandatoryAd) {
+      console.log('Showing mandatory ad');
+      setShowMandatoryAd(true);
+      setGameState('paused');
+      return;
+    }
+    
+    // Normal revive flow (optional ad)
+    if (!reviveUsed) {
+      setIsPausedForRevive(true);
+      setGameState('paused');
+      setAdWatched(false);
+      setShowContinueButton(false);
+    } else {
+      onGameOver(score);
+    }
+  }, [adSystem.canContinueWithoutAd, adSystem.shouldShowMandatoryAd, reviveUsed, score, setGameState, setIsPausedForRevive, setShowContinueButton, setAdWatched, setShowMandatoryAd, onGameOver]);
 
-  const resetCollisionLock = useCallback(() => {
-    console.log('🔓 Resetting collision lock for fresh start');
-    collisionLockRef.current = false;
-    processingRef.current = false;
-    lastCollisionTimeRef.current = 0;
-  }, []);
-
-  return {
-    handleCollision,
-    resetCollisionLock
-  };
+  return { handleCollision };
 };

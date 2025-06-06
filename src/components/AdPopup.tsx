@@ -61,14 +61,6 @@ const AdPopup: React.FC<AdPopupProps> = ({ isOpen, onClose, onWatchAd, adType })
           icon: '❤️',
           emoji: '⚡'
         };
-      default:
-        return {
-          title: 'Watch Ad',
-          subtitle: 'Watch a Pi Ad to earn rewards!',
-          reward: 'Reward',
-          icon: '🎁',
-          emoji: '🎬'
-        };
     }
   };
 

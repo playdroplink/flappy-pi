@@ -89,9 +89,11 @@ export const useAdSystem = () => {
           try {
             // Record purchase in backend
             const result = await gameBackendService.makePurchase(
-              "power_up" as const,
+              profile.pi_user_id,
+              'power_up',
               'ad_free_month',
-              10
+              0, // Pi payments don't deduct coins
+              `pi_tx_adfree_${Date.now()}` // Mock Pi transaction ID
             );
 
             if (result.success) {

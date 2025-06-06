@@ -4,48 +4,51 @@ import { useToast } from '@/hooks/use-toast';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { gameBackendService } from '@/services/gameBackendService';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { usePiAuth } from '@/hooks/usePiAuth';
+import { useAdSystem } from '@/hooks/useAdSystem';
 
 interface UseGameOverHandlerProps {
-  level: number;
   coins: number;
   highScore: number;
+  level: number;
   setGameState: (state: 'menu' | 'playing' | 'gameOver' | 'paused') => void;
   setScore: (score: number) => void;
+  setLives: (lives: number) => void;
+  setLevel: (level: number) => void;
+  setHighScore: (score: number) => void;
+  setCoins: (coins: number) => void;
   setIsPausedForRevive: (paused: boolean) => void;
   setShowContinueButton: (show: boolean) => void;
   setAdWatched: (watched: boolean) => void;
   setShowMandatoryAd: (show: boolean) => void;
-  setCoins: (coins: number) => void;
-  setHighScore: (score: number) => void;
-  setLives: (lives: number) => void;
-  setLevel: (level: number) => void;
   setReviveUsed: (used: boolean) => void;
 }
 
 export const useGameOverHandler = ({
-  level,
   coins,
   highScore,
+  level,
   setGameState,
   setScore,
+  setLives,
+  setLevel,
+  setHighScore,
+  setCoins,
   setIsPausedForRevive,
   setShowContinueButton,
   setAdWatched,
   setShowMandatoryAd,
-  setCoins,
-  setHighScore,
-  setLives,
-  setLevel,
   setReviveUsed
 }: UseGameOverHandlerProps) => {
   const { toast } = useToast();
   const { submitScore } = useLeaderboard();
   const { profile, refreshProfile } = useUserProfile();
-  const { user } = usePiAuth();
+  const adSystem = useAdSystem();
 
   const handleGameOver = useCallback(async (finalScore: number) => {
     console.log('Game over with final score:', finalScore);
+    
+    // Increment game count for ad system
+    adSystem.incrementGameCount();
     
     setGameState('gameOver');
     setScore(finalScore);
@@ -54,26 +57,22 @@ export const useGameOverHandler = ({
     setAdWatched(false);
     setShowMandatoryAd(false);
     
-    if (!user || !profile) {
-      console.warn('No authenticated Pi user or profile available for game over handling');
+    if (!profile) {
+      console.warn('No user profile available for game over handling');
       return;
     }
     
     try {
-      // Calculate session duration (estimate based on score)
-      const estimatedDuration = Math.max(finalScore * 2, 30); // 2 seconds per point minimum 30 seconds
-      
       // Complete game session in backend
       const sessionResult = await gameBackendService.completeGameSession(
+        profile.pi_user_id,
         'classic',
         finalScore,
         level,
-        Math.floor(finalScore / 3) + (level * 2),
-        estimatedDuration
+        Math.floor(finalScore / 3) + (level * 2)
       );
       
       if (sessionResult) {
-        // Update local state with backend results
         setCoins(sessionResult.total_coins);
         localStorage.setItem('flappypi-coins', sessionResult.total_coins.toString());
         
@@ -91,7 +90,6 @@ export const useGameOverHandler = ({
           });
         }
         
-        // Refresh user profile to get updated data
         await refreshProfile();
       }
     } catch (error) {
@@ -112,10 +110,10 @@ export const useGameOverHandler = ({
       }
     }
 
-    // Submit score to leaderboard if it's a decent score (> 0)
-    if (finalScore > 0 && user && profile) {
+    // Submit score to leaderboard
+    if (finalScore > 0 && profile) {
       try {
-        await submitScore(user.uid, profile.username, finalScore);
+        await submitScore(profile.pi_user_id, profile.username, finalScore);
       } catch (error) {
         console.error('Failed to submit score:', error);
       }
@@ -125,9 +123,7 @@ export const useGameOverHandler = ({
     setLives(1);
     setLevel(1);
     setReviveUsed(false);
-  }, [setGameState, setScore, setIsPausedForRevive, setShowContinueButton, setAdWatched, setShowMandatoryAd, user, profile, level, setCoins, setHighScore, toast, refreshProfile, coins, highScore, submitScore, setLives, setLevel, setReviveUsed]);
+  }, [adSystem, setGameState, setScore, setIsPausedForRevive, setShowContinueButton, setAdWatched, setShowMandatoryAd, profile, level, setCoins, coins, setHighScore, highScore, toast, refreshProfile, submitScore, setLives, setLevel, setReviveUsed]);
 
-  return {
-    handleGameOver
-  };
+  return { handleGameOver };
 };

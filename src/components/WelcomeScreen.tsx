@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -32,7 +33,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onToggleMusic
 }) => {
   // Add background music
-  useBackgroundMusic(musicEnabled);
+  useBackgroundMusic({ musicEnabled, gameState: 'menu' });
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-sky-400 via-cyan-400 to-blue-500 flex flex-col relative overflow-hidden">
@@ -69,7 +70,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <img 
                 src="/lovable-uploads/8d2aed26-e6ed-4f65-9613-6ec708c96c50.png" 
                 alt="Flappy Pi Character" 
-                className="w-full h-full object-contain animate-bounce"
+                className="w-full h-full object-contain animate-bounce drop-shadow-2xl"
               />
             </div>
           </div>
@@ -91,7 +92,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-800">{coins}</div>
-                <div className="text-sm text-gray-600">Flappy Coins</div>
+                <div className="text-sm text-gray-600">Pi Coins</div>
               </div>
             </div>
             <Button

@@ -57,22 +57,29 @@ export const useGameState = () => {
   }, [profile]);
 
   const startGame = (mode: GameMode) => {
-    console.log('Starting new game with mode:', mode, '- Resetting all states');
+    console.log('Starting new game with mode:', mode);
+    
+    // Reset all game state completely
     setGameMode(mode);
-    setGameState('playing');
     setScore(0);
     setLevel(1);
     setLives(1);
     setShowWelcome(false);
+    
+    // Small delay to ensure state is reset before starting
+    setTimeout(() => {
+      setGameState('playing');
+      console.log('Game state set to playing');
+    }, 100);
   };
 
   const backToMenu = () => {
-    console.log('Going back to menu - Resetting game state');
+    console.log('Returning to menu - resetting game state');
     setGameState('menu');
-    setShowWelcome(true);
     setScore(0);
     setLevel(1);
     setLives(1);
+    setShowWelcome(true);
   };
 
   const handleScoreUpdate = (newScore: number) => {
@@ -95,7 +102,7 @@ export const useGameState = () => {
     localStorage.setItem('flappypi-skin', skin);
     
     // Update in backend if profile exists
-    if (profile && updateProfile) {
+    if (profile) {
       await updateProfile({ selected_bird_skin: skin });
     }
   };
@@ -106,7 +113,7 @@ export const useGameState = () => {
     localStorage.setItem('flappypi-music', enabled.toString());
     
     // Update in backend if profile exists
-    if (profile && updateProfile) {
+    if (profile) {
       await updateProfile({ music_enabled: enabled });
     }
   };
@@ -123,15 +130,15 @@ export const useGameState = () => {
     selectedBirdSkin,
     coins,
     musicEnabled,
-    profile, // Expose user profile
+    profile,
     setGameState,
     setScore,
     setLevel,
     setLives,
     setHighScore,
-    setSelectedBirdSkin: updateBirdSkin, // Use the async version
+    setSelectedBirdSkin: updateBirdSkin,
     setCoins,
-    setMusicEnabled: updateMusicEnabled, // Use the async version
+    setMusicEnabled: updateMusicEnabled,
     startGame,
     backToMenu,
     handleScoreUpdate,

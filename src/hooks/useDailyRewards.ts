@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { gameBackendService, DailyRewardResult } from '@/services/gameBackendService';
 import { useToast } from '@/hooks/use-toast';
-import { usePiAuth } from '@/hooks/usePiAuth';
 
 interface DailyRewardStatus {
   reward_day: number;
@@ -14,23 +13,21 @@ interface DailyRewardStatus {
 interface UseDailyRewardsReturn {
   rewardStatus: DailyRewardStatus | null;
   loading: boolean;
-  canClaim: boolean;
   claimReward: () => Promise<DailyRewardResult | null>;
   refreshStatus: () => Promise<void>;
 }
 
-export const useDailyRewards = (): UseDailyRewardsReturn => {
+export const useDailyRewards = (piUserId?: string): UseDailyRewardsReturn => {
   const [rewardStatus, setRewardStatus] = useState<DailyRewardStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { user } = usePiAuth();
 
   const refreshStatus = async () => {
-    if (!user) return;
+    if (!piUserId) return;
     
     setLoading(true);
     try {
-      const status = await gameBackendService.getDailyRewardStatus();
+      const status = await gameBackendService.getDailyRewardStatus(piUserId);
       
       if (status) {
         const today = new Date().toISOString().split('T')[0];
@@ -41,6 +38,7 @@ export const useDailyRewards = (): UseDailyRewardsReturn => {
           can_claim: canClaim
         });
       } else {
+        // No reward record exists, user can claim day 1
         setRewardStatus({
           reward_day: 1,
           last_claimed_date: null,
@@ -56,11 +54,11 @@ export const useDailyRewards = (): UseDailyRewardsReturn => {
   };
 
   const claimReward = async (): Promise<DailyRewardResult | null> => {
-    if (!user || !rewardStatus?.can_claim) return null;
+    if (!piUserId || !rewardStatus?.can_claim) return null;
     
     setLoading(true);
     try {
-      const result = await gameBackendService.claimDailyReward();
+      const result = await gameBackendService.claimDailyReward(piUserId);
       
       if (result.success) {
         toast({
@@ -68,6 +66,7 @@ export const useDailyRewards = (): UseDailyRewardsReturn => {
           description: `You earned ${result.reward_amount} coins! Day ${result.current_day} of 7`,
         });
         
+        // Refresh status after claiming
         await refreshStatus();
       } else {
         toast({
@@ -92,15 +91,14 @@ export const useDailyRewards = (): UseDailyRewardsReturn => {
   };
 
   useEffect(() => {
-    if (user) {
+    if (piUserId) {
       refreshStatus();
     }
-  }, [user]);
+  }, [piUserId]);
 
   return {
     rewardStatus,
     loading,
-    canClaim: rewardStatus?.can_claim || false,
     claimReward,
     refreshStatus
   };

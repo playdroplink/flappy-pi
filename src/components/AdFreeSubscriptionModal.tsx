@@ -9,17 +9,18 @@ interface AdFreeSubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPurchase: () => Promise<boolean>;
-  timeRemaining: { days: number; hours: number } | null;
+  isAdFree: boolean;
+  adFreeTimeRemaining: { days: number; hours: number } | null;
 }
 
 const AdFreeSubscriptionModal: React.FC<AdFreeSubscriptionModalProps> = ({
   isOpen,
   onClose,
   onPurchase,
-  timeRemaining
+  isAdFree,
+  adFreeTimeRemaining
 }) => {
   const [isPurchasing, setIsPurchasing] = React.useState(false);
-  const isAdFree = timeRemaining !== null;
 
   const handlePurchase = async () => {
     setIsPurchasing(true);
@@ -65,14 +66,14 @@ const AdFreeSubscriptionModal: React.FC<AdFreeSubscriptionModalProps> = ({
                 You're enjoying ad-free gaming right now!
               </p>
               
-              {timeRemaining && (
+              {adFreeTimeRemaining && (
                 <div className="bg-white/10 rounded-lg p-3 border border-white/20">
                   <div className="flex items-center justify-center space-x-2 mb-1">
                     <Calendar className="h-4 w-4 text-yellow-300" />
                     <span className="font-semibold text-sm">Time Remaining</span>
                   </div>
                   <p className="text-white text-lg font-bold">
-                    {timeRemaining.days}d {timeRemaining.hours}h
+                    {adFreeTimeRemaining.days}d {adFreeTimeRemaining.hours}h
                   </p>
                 </div>
               )}

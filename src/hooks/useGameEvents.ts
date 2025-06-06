@@ -1,8 +1,9 @@
 
-import { useCallback, useState, useRef } from 'react';
+import { useState } from 'react';
+import { useAdSystem } from '@/hooks/useAdSystem';
 import { useCollisionHandler } from '@/hooks/useCollisionHandler';
 import { useGameOverHandler } from '@/hooks/useGameOverHandler';
-import { useAdRewardHandler } from '@/hooks/useAdRewardHandler';
+import { useAdHandler } from '@/hooks/useAdHandler';
 import { useContinueGame } from '@/hooks/useContinueGame';
 
 interface UseGameEventsProps {
@@ -32,6 +33,7 @@ export const useGameEvents = ({
   setCoins,
   continueGame
 }: UseGameEventsProps) => {
+  const adSystem = useAdSystem();
   
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [isPausedForRevive, setIsPausedForRevive] = useState(false);
@@ -40,98 +42,60 @@ export const useGameEvents = ({
   const [showMandatoryAd, setShowMandatoryAd] = useState(false);
   const [showAdFreeModal, setShowAdFreeModal] = useState(false);
 
-  // Create a simple collision lock mechanism
-  const collisionLockRef = useRef(false);
-  
-  const resetCollisionLock = useCallback(() => {
-    collisionLockRef.current = false;
-  }, []);
-
   const { handleGameOver } = useGameOverHandler({
-    level,
     coins,
     highScore,
+    level,
     setGameState,
     setScore,
+    setLives,
+    setLevel,
+    setHighScore,
+    setCoins,
     setIsPausedForRevive,
     setShowContinueButton,
     setAdWatched,
     setShowMandatoryAd,
-    setCoins,
-    setHighScore,
-    setLives,
-    setLevel,
     setReviveUsed
   });
 
-  const handleCollision = useCallback(() => {
-    if (collisionLockRef.current) return;
-    collisionLockRef.current = true;
-    
-    console.log('💥 Collision detected - processing');
-    
-    if (!reviveUsed) {
-      console.log('🎯 First collision - offering revive');
-      setIsPausedForRevive(true);
-      setShowContinueButton(false);
-      setAdWatched(false);
-      setShowMandatoryAd(false);
-      setGameState('paused');
-    } else {
-      console.log('🔚 Second collision - game over');
-      handleGameOver(score);
-    }
-  }, [reviveUsed, score, handleGameOver, setGameState]);
+  const { handleCollision } = useCollisionHandler({
+    reviveUsed,
+    score,
+    setGameState,
+    setIsPausedForRevive,
+    setShowContinueButton,
+    setAdWatched,
+    setShowMandatoryAd,
+    onGameOver: handleGameOver
+  });
 
-  const { handleAdWatch } = useAdRewardHandler({
+  const { handleAdWatch, handleMandatoryAdWatch } = useAdHandler({
     coins,
     adWatched,
     isPausedForRevive,
+    setCoins,
+    setLives,
     setShowContinueButton,
     setAdWatched,
-    setCoins,
-    setLives
+    setShowMandatoryAd,
+    onGameOver: handleGameOver,
+    score
   });
 
-  const { handleContinueClick } = useContinueGame({
+  const { handleContinueClick, handleCoinEarned } = useContinueGame({
     continueGame,
+    setGameState,
     setShowContinueButton,
     setReviveUsed,
     setIsPausedForRevive,
-    setAdWatched,
-    setGameState,
-    resetCollisionLock
+    setAdWatched
   });
-
-  const handleCoinEarned = useCallback((coinAmount: number) => {
-    const newCoins = coins + coinAmount;
-    setCoins(newCoins);
-    localStorage.setItem('flappypi-coins', newCoins.toString());
-  }, [coins, setCoins]);
-
-  const handleMandatoryAdWatch = useCallback(() => {
-    console.log('Mandatory ad watched - going to game over');
-    resetCollisionLock();
-    setShowMandatoryAd(false);
-    setIsPausedForRevive(false);
-    handleGameOver(score);
-  }, [handleGameOver, score, resetCollisionLock]);
-
-  const resetGameEventStates = useCallback(() => {
-    console.log('🔄 Complete reset of all game event states for fresh start');
-    resetCollisionLock();
-    setShowContinueButton(false);
-    setIsPausedForRevive(false);
-    setReviveUsed(false);
-    setAdWatched(false);
-    setShowMandatoryAd(false);
-    setShowAdFreeModal(false);
-  }, [resetCollisionLock]);
 
   return {
     handleCollision,
     handleGameOver,
-    handleCoinEarned,
+    handleCoinEarned: (coinAmount: number) => handleCoinEarned(coinAmount, coins, setCoins),
     handleAdWatch,
     showContinueButton,
     handleContinueClick,
@@ -139,15 +103,8 @@ export const useGameEvents = ({
     reviveUsed,
     showMandatoryAd,
     showAdFreeModal,
-    adSystem: { 
-      isAdFree: true,
-      purchaseAdFree: () => Promise.resolve(true),
-      adFreeTimeRemaining: null,
-      resetAdCounter: () => {},
-      incrementGameCount: () => {}
-    },
+    adSystem,
     handleMandatoryAdWatch,
-    setShowAdFreeModal,
-    resetGameEventStates
+    setShowAdFreeModal
   };
 };

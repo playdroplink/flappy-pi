@@ -7,9 +7,6 @@ import PrivacyModal from './PrivacyModal';
 import TermsModal from './TermsModal';
 import ContactModal from './ContactModal';
 import HelpModal from './HelpModal';
-import DailyRewards from './DailyRewards';
-import MandatoryAdModal from './MandatoryAdModal';
-import AdFreeSubscriptionModal from './AdFreeSubscriptionModal';
 
 interface GameModalsProps {
   showShop: boolean;
@@ -20,9 +17,6 @@ interface GameModalsProps {
   showTerms: boolean;
   showContact: boolean;
   showHelp: boolean;
-  showDailyRewards: boolean;
-  showMandatoryAd: boolean;
-  showAdFreeModal: boolean;
   adType: 'continue' | 'coins' | 'life';
   coins: number;
   score: number;
@@ -38,32 +32,9 @@ interface GameModalsProps {
   setShowTerms: (show: boolean) => void;
   setShowContact: (show: boolean) => void;
   setShowHelp: (show: boolean) => void;
-  setShowDailyRewards: (show: boolean) => void;
   setCoins: (coins: number) => void;
   setSelectedBirdSkin: (skin: string) => void;
   onWatchAd: (adType: 'continue' | 'coins' | 'life') => void;
-  onNewGame: () => void;
-  onBackToMenu: () => void;
-  onCloseLeaderboard: () => void;
-  onCloseShop: () => void;
-  onCloseHelp: () => void;
-  onClosePrivacy: () => void;
-  onCloseTerms: () => void;
-  onCloseContact: () => void;
-  onCloseShareScore: () => void;
-  onCloseDailyRewards: () => void;
-  onSkinSelect: (skin: string) => void;
-  onPurchase: () => void;
-  onWatchMandatoryAd: () => void;
-  onCloseAdFreeModal: () => void;
-  onClaimDailyReward: () => Promise<any>;
-  adSystem: {
-    isAdFree: boolean;
-    purchaseAdFree: () => Promise<boolean>;
-    adFreeTimeRemaining: { days: number; hours: number } | null;
-    resetAdCounter: () => void;
-    incrementGameCount: () => void;
-  };
 }
 
 const GameModals: React.FC<GameModalsProps> = ({
@@ -75,9 +46,6 @@ const GameModals: React.FC<GameModalsProps> = ({
   showTerms,
   showContact,
   showHelp,
-  showDailyRewards,
-  showMandatoryAd,
-  showAdFreeModal,
   adType,
   coins,
   score,
@@ -93,26 +61,9 @@ const GameModals: React.FC<GameModalsProps> = ({
   setShowTerms,
   setShowContact,
   setShowHelp,
-  setShowDailyRewards,
   setCoins,
   setSelectedBirdSkin,
-  onWatchAd,
-  onNewGame,
-  onBackToMenu,
-  onCloseLeaderboard,
-  onCloseShop,
-  onCloseHelp,
-  onClosePrivacy,
-  onCloseTerms,
-  onCloseContact,
-  onCloseShareScore,
-  onCloseDailyRewards,
-  onSkinSelect,
-  onPurchase,
-  onWatchMandatoryAd,
-  onCloseAdFreeModal,
-  onClaimDailyReward,
-  adSystem
+  onWatchAd
 }) => {
   return (
     <>
@@ -120,11 +71,9 @@ const GameModals: React.FC<GameModalsProps> = ({
         isOpen={showShop}
         onClose={() => setShowShop(false)}
         coins={coins}
-        selectedSkin={selectedBirdSkin}
-        onSkinSelect={setSelectedBirdSkin}
-        onPurchase={onPurchase}
         setCoins={setCoins}
-        onWatchAd={onWatchAd}
+        selectedBirdSkin={selectedBirdSkin}
+        setSelectedBirdSkin={setSelectedBirdSkin}
       />
 
       <LeaderboardModal 
@@ -166,26 +115,6 @@ const GameModals: React.FC<GameModalsProps> = ({
       <HelpModal
         isOpen={showHelp}
         onClose={() => setShowHelp(false)}
-      />
-
-      <DailyRewards
-        isOpen={showDailyRewards}
-        onClose={() => setShowDailyRewards(false)}
-        onClaimReward={onClaimDailyReward}
-      />
-
-      <MandatoryAdModal
-        isOpen={showMandatoryAd}
-        onWatchAd={onWatchMandatoryAd}
-        onUpgradeToPremium={adSystem.purchaseAdFree}
-        canUpgrade={!adSystem.isAdFree}
-      />
-
-      <AdFreeSubscriptionModal
-        isOpen={showAdFreeModal}
-        onClose={onCloseAdFreeModal}
-        onPurchase={adSystem.purchaseAdFree}
-        timeRemaining={adSystem.adFreeTimeRemaining}
       />
     </>
   );
