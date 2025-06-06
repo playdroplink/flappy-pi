@@ -243,7 +243,11 @@ const ShopModal: React.FC<ShopModalProps> = ({
             birdSkins={birdSkins}
             selectedBirdSkin={selectedBirdSkin}
             hasAnySubscription={false}
-            eliteSubscription={{ isActive: false, expiresAt: null, daysRemaining: 0 }}
+            eliteSubscription={{ 
+              isActive: false, 
+              expiresAt: null, 
+              daysRemaining: 0 
+            }}
             isOwned={isOwned}
             setSelectedBirdSkin={setSelectedBirdSkin}
             handlePiPayment={handlePiPayment}
