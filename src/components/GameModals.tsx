@@ -85,11 +85,6 @@ const GameModals: React.FC<GameModalsProps> = ({
     }
   };
 
-  const handleShareScore = () => {
-    shareScore(score, level);
-    setShowShareScore(false);
-  };
-
   return (
     <>
       <ShopModal 
@@ -123,7 +118,6 @@ const GameModals: React.FC<GameModalsProps> = ({
       <ShareScoreModal
         isOpen={showShareScore}
         onClose={() => setShowShareScore(false)}
-        onShare={handleShareScore}
         score={score}
         level={level}
         highScore={highScore}

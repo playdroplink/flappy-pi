@@ -66,6 +66,7 @@ const Index = () => {
           showTerms={modals.showTerms}
           showContact={modals.showContact}
           showHelp={modals.showHelp}
+          showMandatoryAd={gameEvents.showMandatoryAd}
           adType={modals.adType}
           coins={gameState.coins}
           score={gameState.score}
@@ -81,9 +82,11 @@ const Index = () => {
           setShowTerms={modals.setShowTerms}
           setShowContact={modals.setShowContact}
           setShowHelp={modals.setShowHelp}
+          setShowMandatoryAd={gameEvents.setShowMandatoryAd}
           setCoins={gameState.setCoins}
           setSelectedBirdSkin={gameState.setSelectedBirdSkin}
           onWatchAd={gameEvents.handleAdWatch}
+          onMandatoryAdWatch={gameEvents.handleMandatoryAdWatch}
         />
       </>
     );
@@ -152,6 +155,7 @@ const Index = () => {
         showTerms={modals.showTerms}
         showContact={modals.showContact}
         showHelp={modals.showHelp}
+        showMandatoryAd={gameEvents.showMandatoryAd}
         adType={modals.adType}
         coins={gameState.coins}
         score={gameState.score}
@@ -167,9 +171,11 @@ const Index = () => {
         setShowTerms={modals.setShowTerms}
         setShowContact={modals.setShowContact}
         setShowHelp={modals.setShowHelp}
+        setShowMandatoryAd={gameEvents.setShowMandatoryAd}
         setCoins={gameState.setCoins}
         setSelectedBirdSkin={gameState.setSelectedBirdSkin}
         onWatchAd={gameEvents.handleAdWatch}
+        onMandatoryAdWatch={gameEvents.handleMandatoryAdWatch}
       />
     </div>
   );

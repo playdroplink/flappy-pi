@@ -130,7 +130,7 @@ export const usePiPayments = () => {
         price,
         `Flappy Pi - ${skinId} Bird Skin`,
         {
-          item_type: 'cosmetic',
+          item_type: 'bird_skin',
           item_id: skinId,
           category: 'bird_skin'
         }
@@ -140,7 +140,7 @@ export const usePiPayments = () => {
       if (profile) {
         const result = await gameBackendService.makePurchase(
           profile.pi_user_id,
-          'cosmetic',
+          'bird_skin',
           skinId,
           0, // Pi payments don't deduct coins
           paymentId
