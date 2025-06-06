@@ -191,12 +191,17 @@ class SecureGameBackendService {
     }
   }
 
-  // Log suspicious activity
+  // Log suspicious activity using analytics_events table
   private async logSuspiciousActivity(activityType: string, data: any): Promise<void> {
     try {
-      await supabase.rpc('log_security_event', {
-        p_event_type: `suspicious_${activityType}`,
-        p_event_data: data
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('analytics_events').insert({
+        pi_user_id: user?.id || null,
+        event_type: `suspicious_${activityType}`,
+        event_data: data,
+        timestamp: new Date().toISOString(),
+        url: window.location.href,
+        user_agent: navigator.userAgent
       });
     } catch (error) {
       console.warn('Failed to log suspicious activity:', error);
