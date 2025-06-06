@@ -28,7 +28,20 @@ class PaymentHistoryService {
         return [];
       }
 
-      return data || [];
+      // Transform the data to match our interface types
+      return (data || []).map((item: any): PaymentHistoryItem => ({
+        id: item.id,
+        payment_type: item.payment_type as 'pi_payment' | 'coin_purchase',
+        item_name: item.item_name,
+        item_description: item.item_description,
+        amount_pi: item.amount_pi || 0,
+        amount_coins: item.amount_coins || 0,
+        pi_transaction_id: item.pi_transaction_id,
+        payment_status: item.payment_status as 'pending' | 'approved' | 'completed' | 'failed' | 'cancelled',
+        metadata: item.metadata,
+        created_at: item.created_at,
+        completed_at: item.completed_at
+      }));
     } catch (error) {
       console.error('Error in getUserPaymentHistory:', error);
       return [];
