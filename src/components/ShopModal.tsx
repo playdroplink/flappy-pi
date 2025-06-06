@@ -22,12 +22,61 @@ interface ShopModalProps {
 }
 
 const BIRD_SKINS = [
-  { id: 'default', name: 'Classic Bird', cost: 0, description: 'The original flappy bird', color: 'bg-yellow-400', unlocked: true },
-  { id: 'red', name: 'Fire Bird', cost: 50, description: 'Burns through obstacles', color: 'bg-red-500', unlocked: false },
-  { id: 'blue', name: 'Ice Bird', cost: 75, description: 'Cool and collected', color: 'bg-blue-500', unlocked: false },
-  { id: 'green', name: 'Nature Bird', cost: 100, description: 'One with the environment', color: 'bg-green-500', unlocked: false },
-  { id: 'purple', name: 'Mystic Bird', cost: 150, description: 'Magical powers within', color: 'bg-purple-500', unlocked: false },
-  { id: 'golden', name: 'Golden Bird', cost: 300, description: 'The ultimate prestige', color: 'bg-yellow-600', unlocked: false, premium: true },
+  { 
+    id: 'default', 
+    name: 'Classic Bird', 
+    piPrice: 0,
+    coinPrice: 0, 
+    priceType: 'free' as const,
+    image: '/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png',
+    owned: true
+  },
+  { 
+    id: 'red', 
+    name: 'Fire Bird', 
+    piPrice: 1,
+    coinPrice: 50, 
+    priceType: 'premium' as const,
+    image: '/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png',
+    owned: false
+  },
+  { 
+    id: 'blue', 
+    name: 'Ice Bird', 
+    piPrice: 2,
+    coinPrice: 75, 
+    priceType: 'premium' as const,
+    image: '/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png',
+    owned: false
+  },
+  { 
+    id: 'green', 
+    name: 'Nature Bird', 
+    piPrice: 3,
+    coinPrice: 100, 
+    priceType: 'premium' as const,
+    image: '/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png',
+    owned: false
+  },
+  { 
+    id: 'purple', 
+    name: 'Mystic Bird', 
+    piPrice: 5,
+    coinPrice: 150, 
+    priceType: 'premium' as const,
+    image: '/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png',
+    owned: false
+  },
+  { 
+    id: 'golden', 
+    name: 'Golden Bird', 
+    piPrice: 10,
+    coinPrice: 300, 
+    priceType: 'elite' as const,
+    image: '/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png',
+    owned: false,
+    eliteOnly: true
+  },
 ];
 
 const POWER_UPS = [
@@ -194,11 +243,12 @@ const ShopModal: React.FC<ShopModalProps> = ({
                 <BirdSkinCard
                   key={skin.id}
                   skin={skin}
-                  isSelected={selectedSkin === skin.id}
+                  selectedBirdSkin={selectedSkin}
+                  coins={coins}
                   isOwned={ownedSkins.includes(skin.id)}
-                  canAfford={coins >= skin.cost}
-                  onSelect={() => ownedSkins.includes(skin.id) && onSkinSelect(skin.id)}
-                  onPurchase={() => handleSkinPurchase(skin.id, skin.cost)}
+                  onSelectSkin={() => ownedSkins.includes(skin.id) && onSkinSelect(skin.id)}
+                  onPiPayment={() => handleSkinPurchase(skin.id, skin.piPrice)}
+                  onCoinPurchase={() => handleSkinPurchase(skin.id, skin.coinPrice)}
                 />
               ))}
             </div>

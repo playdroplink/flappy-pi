@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ShopModal from './ShopModal';
 import LeaderboardModal from './LeaderboardModal';
@@ -121,9 +120,11 @@ const GameModals: React.FC<GameModalsProps> = ({
         isOpen={showShop}
         onClose={() => setShowShop(false)}
         coins={coins}
+        selectedSkin={selectedBirdSkin}
+        onSkinSelect={setSelectedBirdSkin}
+        onPurchase={onPurchase}
         setCoins={setCoins}
-        selectedBirdSkin={selectedBirdSkin}
-        setSelectedBirdSkin={setSelectedBirdSkin}
+        onWatchAd={onWatchAd}
       />
 
       <LeaderboardModal 
