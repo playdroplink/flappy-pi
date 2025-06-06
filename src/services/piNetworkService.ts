@@ -47,6 +47,7 @@ declare global {
       }) => void;
       openShareDialog: (title: string, message: string) => void;
     };
+    piAccessToken?: string;
   }
 }
 
@@ -88,6 +89,20 @@ class PiNetworkService {
     }
   }
 
+  private onIncompletePaymentFound = (payment: PiPayment): void => {
+    console.log('Incomplete payment found:', payment);
+    const paymentId = payment.identifier;
+    const txid = payment.transaction?.txid;
+
+    // Handle incomplete payment - try to complete it
+    if (txid) {
+      this.completePayment(paymentId, txid);
+    } else {
+      // Cancel incomplete payment if no transaction ID
+      console.log('Cancelling incomplete payment without txid:', paymentId);
+    }
+  };
+
   async authenticate(): Promise<PiUser | null> {
     try {
       await this.initialize();
@@ -95,28 +110,18 @@ class PiNetworkService {
       this.currentUser = await window.Pi!.authenticate([
         'payments',
         'username'
-      ], (payment) => {
-        console.log('Incomplete payment found:', payment);
-        // Handle incomplete payment
-        this.handleIncompletePayment(payment);
-      });
+      ], this.onIncompletePaymentFound);
+
+      // Store access token globally for backend calls
+      if (this.currentUser?.accessToken) {
+        window.piAccessToken = this.currentUser.accessToken;
+      }
 
       console.log('Pi user authenticated:', this.currentUser);
       return this.currentUser;
     } catch (error) {
       console.error('Pi authentication failed:', error);
       return null;
-    }
-  }
-
-  private handleIncompletePayment(payment: PiPayment): void {
-    // Get the callback for this payment if it exists
-    const callback = this.paymentCallbacks.get(payment.identifier);
-    if (callback) {
-      callback(payment);
-      this.paymentCallbacks.delete(payment.identifier);
-    } else {
-      console.log('No callback found for incomplete payment:', payment.identifier);
     }
   }
 
@@ -147,16 +152,29 @@ class PiNetworkService {
 
       console.log('Creating payment with data:', paymentData);
 
-      window.Pi.createPayment(paymentData, {
+      const paymentCallbacks = {
         onReadyForServerApproval: (paymentId: string) => {
           console.log('Payment ready for server approval:', paymentId);
-          // In a real app, you would call your backend to approve the payment
-          // For now, we'll just resolve the promise with the payment ID
-          resolve(paymentId);
+          this.approvePayment(paymentId)
+            .then(() => {
+              console.log('Payment approved successfully:', paymentId);
+            })
+            .catch((error) => {
+              console.error('Payment approval failed:', error);
+              reject(error);
+            });
         },
         onReadyForServerCompletion: (paymentId: string, txid: string) => {
           console.log('Payment ready for server completion:', paymentId, txid);
-          // This will be handled by the backend in a real implementation
+          this.completePayment(paymentId, txid)
+            .then(() => {
+              console.log('Payment completed successfully:', paymentId);
+              resolve(paymentId);
+            })
+            .catch((error) => {
+              console.error('Payment completion failed:', error);
+              reject(error);
+            });
         },
         onCancel: (paymentId: string) => {
           console.log('Payment cancelled by user:', paymentId);
@@ -166,13 +184,90 @@ class PiNetworkService {
           console.error('Payment error:', error, payment);
           reject(error);
         }
-      });
+      };
+
+      window.Pi.createPayment(paymentData, paymentCallbacks);
     });
   }
 
-  // Register a callback for a specific payment
-  registerPaymentCallback(paymentId: string, callback: Function): void {
-    this.paymentCallbacks.set(paymentId, callback);
+  private async approvePayment(paymentId: string): Promise<void> {
+    try {
+      // In a real implementation, this would call your backend
+      // For demo purposes, we'll simulate the approval
+      console.log('Simulating payment approval for:', paymentId);
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // In production, you would make this call:
+      /*
+      const response = await fetch('/api/payments/approve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${window.piAccessToken}`
+        },
+        body: JSON.stringify({ paymentId })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Payment approval failed');
+      }
+      */
+      
+      console.log('Payment approval simulated successfully');
+    } catch (error) {
+      console.error('Payment approval error:', error);
+      throw error;
+    }
+  }
+
+  private async completePayment(paymentId: string, txid: string): Promise<void> {
+    try {
+      // In a real implementation, this would call your backend
+      // For demo purposes, we'll simulate the completion
+      console.log('Simulating payment completion for:', paymentId, txid);
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // In production, you would make this call:
+      /*
+      const response = await fetch('/api/payments/complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${window.piAccessToken}`
+        },
+        body: JSON.stringify({ paymentId, txid })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Payment completion failed');
+      }
+      */
+      
+      console.log('Payment completion simulated successfully');
+    } catch (error) {
+      console.error('Payment completion error:', error);
+      throw error;
+    }
+  }
+
+  // Convenience methods for common Flappy Pi purchases
+  async purchasePremiumSubscription(): Promise<string> {
+    return this.createPayment(15, "Unlock Pi Premium", { type: "subscription" });
+  }
+
+  async purchaseBirdSkin(skinId: string, skinName: string): Promise<string> {
+    return this.createPayment(2, `Unlock ${skinName} Bird Skin`, { 
+      type: "skin", 
+      itemId: skinId 
+    });
+  }
+
+  async purchaseAdRemoval(): Promise<string> {
+    return this.createPayment(5, "Remove All Ads Forever", { type: "no-ads" });
   }
 
   shareScore(score: number, level: number): void {
