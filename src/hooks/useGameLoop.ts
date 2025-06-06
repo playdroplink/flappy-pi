@@ -1,4 +1,3 @@
-
 import { useRef, useCallback } from 'react';
 
 interface Bird {
@@ -13,10 +12,11 @@ interface Pipe {
   topHeight: number;
   bottomY: number;
   passed: boolean;
-  scored: boolean; // Add scored flag
+  scored: boolean;
   isMoving?: boolean;
   verticalDirection?: number;
   moveSpeed?: number;
+  width?: number;
 }
 
 interface Cloud {
@@ -132,7 +132,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     
     // Check pipe collisions with more forgiving detection
     for (const pipe of pipes) {
-      const pipeWidth = pipe.width || 80;
+      const pipeWidth = pipe.width || 80; // Use pipe.width or default to 80
       const pipeLeft = pipe.x + 5; // Small margin on pipe edges
       const pipeRight = pipe.x + pipeWidth - 5;
       
