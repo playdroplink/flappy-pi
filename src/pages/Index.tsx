@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import SplashScreen from '../components/SplashScreen';
 import WelcomeScreen from '../components/WelcomeScreen';
 import GameCanvas from '../components/GameCanvas';
@@ -8,6 +8,7 @@ import GameModals from '../components/GameModals';
 import GameContinueOverlay from '../components/GameContinueOverlay';
 import MandatoryAdModal from '../components/MandatoryAdModal';
 import AdFreeSubscriptionModal from '../components/AdFreeSubscriptionModal';
+import TutorialModal from '../components/TutorialModal';
 import { useGameState } from '../hooks/useGameState';
 import { useGameEvents } from '../hooks/useGameEvents';
 import { useModals } from '../hooks/useModals';
@@ -15,6 +16,7 @@ import { useModals } from '../hooks/useModals';
 const Index = () => {
   const gameState = useGameState();
   const modals = useModals();
+  const [showTutorial, setShowTutorial] = useState(false);
   
   // Create a ref to store the continue game function
   const continueGameRef = React.useRef<(() => void) | null>(null);
@@ -52,9 +54,16 @@ const Index = () => {
           onOpenTerms={() => modals.setShowTerms(true)}
           onOpenContact={() => modals.setShowContact(true)}
           onOpenHelp={() => modals.setShowHelp(true)}
+          onOpenTutorial={() => setShowTutorial(true)}
           coins={gameState.coins}
           musicEnabled={gameState.musicEnabled}
           onToggleMusic={gameState.setMusicEnabled}
+        />
+
+        <TutorialModal
+          isOpen={showTutorial}
+          onClose={() => setShowTutorial(false)}
+          onStartGame={() => gameState.startGame('classic')}
         />
         
         <GameModals

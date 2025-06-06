@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Play, ShoppingCart, Trophy, Coins, Volume2, VolumeX, Shield, FileText, HelpCircle, Mail } from 'lucide-react';
+import { Play, ShoppingCart, Trophy, Coins, Volume2, VolumeX, Shield, FileText, HelpCircle, Mail, BookOpen } from 'lucide-react';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 
 type GameMode = 'classic' | 'endless' | 'challenge';
@@ -15,6 +15,7 @@ interface WelcomeScreenProps {
   onOpenTerms: () => void;
   onOpenContact: () => void;
   onOpenHelp: () => void;
+  onOpenTutorial: () => void;
   coins: number;
   musicEnabled: boolean;
   onToggleMusic: (enabled: boolean) => void;
@@ -28,6 +29,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onOpenTerms,
   onOpenContact,
   onOpenHelp,
+  onOpenTutorial,
   coins,
   musicEnabled,
   onToggleMusic
@@ -105,6 +107,17 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             </Button>
           </div>
         </Card>
+
+        {/* New Player Tutorial Button */}
+        <div className="w-full mb-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          <Button 
+            onClick={onOpenTutorial}
+            className="w-full h-14 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold text-lg shadow-xl transform hover:scale-105 transition-all duration-200 border-0 rounded-xl"
+          >
+            <BookOpen className="mr-3 h-6 w-6" />
+            How to Play Tutorial
+          </Button>
+        </div>
 
         {/* Game Modes */}
         <div className="w-full space-y-3 mb-6 animate-fade-in" style={{ animationDelay: '0.4s' }}>
