@@ -1,6 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { piNetworkService } from './piNetworkService';
+import { Analytics } from '@/services/analyticsService';
 
 interface PiAuthResult {
   success: boolean;
@@ -55,6 +55,9 @@ class PiAuthService {
         }
       }
 
+      // Track successful authentication
+      Analytics.userSignedIn(piUser.uid, piUser.username);
+
       return {
         success: true,
         user: result.user
@@ -70,6 +73,7 @@ class PiAuthService {
   }
 
   async signOut(): Promise<void> {
+    Analytics.userSignedOut();
     await supabase.auth.signOut();
   }
 

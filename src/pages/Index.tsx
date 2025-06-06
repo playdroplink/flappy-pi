@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SplashScreen from '../components/SplashScreen';
 import WelcomeScreen from '../components/WelcomeScreen';
 import GameCanvas from '../components/GameCanvas';
@@ -13,11 +13,16 @@ import RevivePrompt from '../components/RevivePrompt';
 import { useGameState } from '../hooks/useGameState';
 import { useGameEvents } from '../hooks/useGameEvents';
 import { useModals } from '../hooks/useModals';
+import { useAnalytics } from '../hooks/useAnalytics';
+import { Analytics } from '@/services/analyticsService';
 
 const Index = () => {
   const gameState = useGameState();
   const modals = useModals();
   const [showTutorial, setShowTutorial] = useState(false);
+  
+  // Initialize analytics tracking
+  useAnalytics();
   
   // Create a ref to store the continue game function
   const continueGameRef = React.useRef<(() => void) | null>(null);
@@ -40,6 +45,19 @@ const Index = () => {
     }
   });
 
+  // Track game events
+  useEffect(() => {
+    if (gameState.gameState === 'playing') {
+      Analytics.gameStarted(gameState.gameMode);
+    }
+  }, [gameState.gameState, gameState.gameMode]);
+
+  // Track game completion
+  const handleGameOver = (finalScore: number, level: number, sessionDuration: number) => {
+    Analytics.gameCompleted(finalScore, level, gameState.gameMode, sessionDuration);
+    gameEvents.handleGameOver(finalScore);
+  };
+
   if (gameState.showSplash) {
     return <SplashScreen />;
   }
@@ -52,13 +70,22 @@ const Index = () => {
             // Store difficulty choice before starting game
             gameState.startGame(mode);
           }}
-          onOpenShop={() => modals.setShowShop(true)}
-          onOpenLeaderboard={() => modals.setShowLeaderboard(true)}
+          onOpenShop={() => {
+            Analytics.track('shop_button_clicked');
+            modals.setShowShop(true);
+          }}
+          onOpenLeaderboard={() => {
+            Analytics.track('leaderboard_button_clicked');
+            modals.setShowLeaderboard(true);
+          }}
           onOpenPrivacy={() => modals.setShowPrivacy(true)}
           onOpenTerms={() => modals.setShowTerms(true)}
           onOpenContact={() => modals.setShowContact(true)}
           onOpenHelp={() => modals.setShowHelp(true)}
-          onOpenTutorial={() => setShowTutorial(true)}
+          onOpenTutorial={() => {
+            Analytics.track('tutorial_opened');
+            setShowTutorial(true);
+          }}
           coins={gameState.coins}
           musicEnabled={gameState.musicEnabled}
           onToggleMusic={gameState.setMusicEnabled}
@@ -112,7 +139,7 @@ const Index = () => {
         gameMode={gameState.gameMode}
         level={gameState.level}
         onCollision={gameEvents.handleCollision}
-        onGameOver={gameEvents.handleGameOver}
+        onGameOver={handleGameOver}
         onScoreUpdate={gameState.handleScoreUpdate}
         onCoinEarned={gameEvents.handleCoinEarned}
         birdSkin={gameState.selectedBirdSkin}

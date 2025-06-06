@@ -3,6 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { piNetworkService } from '@/services/piNetworkService';
 import { gameBackendService } from '@/services/gameBackendService';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { Analytics } from '@/services/analyticsService';
 
 interface PaymentResult {
   success: boolean;
@@ -74,6 +75,9 @@ export const usePiPayments = () => {
     try {
       setIsProcessing(true);
       
+      // Track payment initiation
+      Analytics.paymentInitiated(15, 'subscription', 'ad_free');
+      
       const paymentId = await piNetworkService.purchasePremiumSubscription();
 
       // Update local storage for immediate UI feedback
@@ -86,6 +90,9 @@ export const usePiPayments = () => {
         paymentId
       }));
       
+      // Track successful payment
+      Analytics.paymentCompleted(15, 'subscription', 'ad_free', paymentId);
+      
       toast({
         title: "Premium Subscription Activated! 🎉",
         description: "Enjoy 30 days of ad-free gaming with Pi payment!"
@@ -95,6 +102,9 @@ export const usePiPayments = () => {
     } catch (error) {
       console.error('Pi payment error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Payment failed';
+      
+      // Track failed payment
+      Analytics.paymentFailed(15, 'subscription', errorMessage);
       
       toast({
         title: "Payment Error",
@@ -119,6 +129,9 @@ export const usePiPayments = () => {
     try {
       setIsProcessing(true);
       
+      // Track payment initiation
+      Analytics.paymentInitiated(price, 'bird_skin', skinId);
+      
       const paymentId = await piNetworkService.purchaseBirdSkin(skinId, `${skinId} Bird Skin`);
 
       // Update local storage for immediate UI feedback
@@ -127,6 +140,9 @@ export const usePiPayments = () => {
         ownedSkins.push(skinId);
         localStorage.setItem('flappypi-owned-skins', JSON.stringify(ownedSkins));
       }
+      
+      // Track successful payment
+      Analytics.paymentCompleted(price, 'bird_skin', skinId, paymentId);
       
       toast({
         title: "Bird Skin Purchased! 🐦",
@@ -137,6 +153,9 @@ export const usePiPayments = () => {
     } catch (error) {
       console.error('Pi payment error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Payment failed';
+      
+      // Track failed payment
+      Analytics.paymentFailed(price, 'bird_skin', errorMessage);
       
       toast({
         title: "Payment Error",
@@ -161,6 +180,9 @@ export const usePiPayments = () => {
     try {
       setIsProcessing(true);
       
+      // Track payment initiation
+      Analytics.paymentInitiated(10, 'ad_removal', 'permanent');
+      
       const paymentId = await piNetworkService.purchaseAdRemoval();
 
       // Update local storage for immediate UI feedback
@@ -169,6 +191,9 @@ export const usePiPayments = () => {
         paymentId,
         purchasedAt: new Date().toISOString()
       }));
+      
+      // Track successful payment
+      Analytics.paymentCompleted(10, 'ad_removal', 'permanent', paymentId);
       
       toast({
         title: "Ads Removed Forever! 🎉",
@@ -179,6 +204,9 @@ export const usePiPayments = () => {
     } catch (error) {
       console.error('Pi payment error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Payment failed';
+      
+      // Track failed payment
+      Analytics.paymentFailed(10, 'ad_removal', errorMessage);
       
       toast({
         title: "Payment Error",

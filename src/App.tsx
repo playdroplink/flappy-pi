@@ -16,6 +16,7 @@ import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import NotFound from './pages/NotFound';
 import PaymentHistoryPage from './pages/PaymentHistoryPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ function App() {
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/payment-history" element={<PaymentHistoryPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
