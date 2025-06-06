@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,6 +14,9 @@ import ShopInfoSection from './shop/ShopInfoSection';
 import AdFreeSubscriptionSection from './shop/AdFreeSubscriptionSection';
 import AllSkinsSubscriptionSection from './shop/AllSkinsSubscriptionSection';
 import EliteSubscriptionSection from './shop/EliteSubscriptionSection';
+import { useAdSystem } from '@/hooks/useAdSystem';
+import { useShopSubscriptions } from '@/hooks/useShopSubscriptions';
+import { useGameSettings } from '@/hooks/useGameSettings';
 
 interface ShopModalProps {
   open: boolean;
@@ -22,22 +26,152 @@ interface ShopModalProps {
 const ShopModal: React.FC<ShopModalProps> = ({ open, onClose }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const adSystem = useAdSystem();
+  const { allSkinsSubscription, eliteSubscription, checkSubscriptions } = useShopSubscriptions();
+  const { selectedBirdSkin, setSelectedBirdSkin } = useGameSettings();
+  const [coins, setCoins] = useState(0);
 
-  const handleBack = () => {
-    navigate('/');
+  // Mock bird skins data
+  const birdSkins = [
+    {
+      id: 'default',
+      name: 'Classic Bird',
+      piPrice: 0,
+      coinPrice: 0,
+      priceType: 'free' as const,
+      image: '/lovable-uploads/3a780914-6faf-4deb-81ab-ce1f4b059984.png',
+      owned: true
+    },
+    {
+      id: 'red',
+      name: 'Red Cardinal',
+      piPrice: 10,
+      coinPrice: 10000,
+      priceType: 'premium' as const,
+      image: '/lovable-uploads/5a55528e-3d0c-4cd3-91d9-6b8cff953b06.png',
+      owned: false
+    },
+    {
+      id: 'blue',
+      name: 'Blue Jay',
+      piPrice: 10,
+      coinPrice: 10000,
+      priceType: 'premium' as const,
+      image: '/lovable-uploads/616a87a7-bd9c-414f-a05b-09c6f7a38ef9.png',
+      owned: false
+    },
+    {
+      id: 'elite-gold',
+      name: 'Golden Phoenix',
+      piPrice: 20,
+      coinPrice: 20000,
+      priceType: 'elite' as const,
+      image: '/lovable-uploads/8ad9f53d-d0aa-4231-9042-d1890a6f997f.png',
+      owned: false,
+      eliteOnly: true
+    }
+  ];
+
+  useEffect(() => {
+    checkSubscriptions();
+    // Load coins from localStorage
+    const savedCoins = localStorage.getItem('flappypi-coins');
+    if (savedCoins) {
+      setCoins(parseInt(savedCoins));
+    }
+  }, []);
+
+  const isOwned = (skinId: string) => {
+    const skin = birdSkins.find(s => s.id === skinId);
+    return skin?.owned || false;
   };
 
-  const handlePurchase = async (item: any) => {
+  const hasAnySubscription = allSkinsSubscription.isActive || eliteSubscription.isActive;
+
+  const handlePiPayment = async (skin: any) => {
     toast({
       title: "Processing Pi Payment",
-      description: `Processing payment for ${item.name}...`
+      description: `Processing payment for ${skin.name}...`
     });
 
     // Simulate Pi Network payment processing
     setTimeout(() => {
       toast({
         title: "Purchase Successful! 🎉",
-        description: `Successfully purchased ${item.name}!`
+        description: `Successfully purchased ${skin.name}!`
+      });
+    }, 2000);
+  };
+
+  const handleCoinPurchase = async (skin: any) => {
+    if (coins >= skin.coinPrice) {
+      setCoins(coins - skin.coinPrice);
+      localStorage.setItem('flappypi-coins', (coins - skin.coinPrice).toString());
+      toast({
+        title: "Purchase Successful! 🎉",
+        description: `Successfully purchased ${skin.name} with coins!`
+      });
+    } else {
+      toast({
+        title: "Not Enough Coins",
+        description: `You need ${skin.coinPrice - coins} more coins to purchase ${skin.name}`,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handlePurchaseAdFree = async () => {
+    const success = await adSystem.purchaseAdFreeWithPi();
+    if (success) {
+      toast({
+        title: "Ad-Free Subscription Active!",
+        description: "You now have 30 days of ad-free gaming."
+      });
+    }
+  };
+
+  const handleAllSkinsSubscription = async () => {
+    toast({
+      title: "Processing Pi Payment",
+      description: "Processing All Skins subscription..."
+    });
+
+    setTimeout(() => {
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+      
+      localStorage.setItem('flappypi-all-skins-subscription', JSON.stringify({
+        expiresAt: expiryDate.toISOString()
+      }));
+      
+      checkSubscriptions();
+      
+      toast({
+        title: "All Skins Unlocked! 🎨",
+        description: "You now have access to all standard skins for 30 days!"
+      });
+    }, 2000);
+  };
+
+  const handleEliteSubscription = async () => {
+    toast({
+      title: "Processing Pi Payment",
+      description: "Processing Elite subscription..."
+    });
+
+    setTimeout(() => {
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+      
+      localStorage.setItem('flappypi-elite-subscription', JSON.stringify({
+        expiresAt: expiryDate.toISOString()
+      }));
+      
+      checkSubscriptions();
+      
+      toast({
+        title: "Elite Membership Activated! 👑",
+        description: "Welcome to Elite status with exclusive content!"
       });
     }, 2000);
   };
@@ -48,22 +182,62 @@ const ShopModal: React.FC<ShopModalProps> = ({ open, onClose }) => {
         <ScrollArea className="h-[85vh] w-full">
           <div className="p-6">
             {/* Header */}
-            <ShopHeader onClose={onClose} />
+            <ShopHeader coins={coins} onClose={onClose} />
 
             {/* Bird Characters Section */}
-            <BirdCharactersSection />
+            <BirdCharactersSection
+              birdSkins={birdSkins}
+              selectedBirdSkin={selectedBirdSkin}
+              hasAnySubscription={hasAnySubscription}
+              eliteSubscription={eliteSubscription}
+              isOwned={isOwned}
+              setSelectedBirdSkin={setSelectedBirdSkin}
+              handlePiPayment={handlePiPayment}
+              handleCoinPurchase={handleCoinPurchase}
+              coins={coins}
+            />
 
             {/* Shop Info Section */}
             <ShopInfoSection />
 
             {/* Ad-Free Subscription Section */}
-            <AdFreeSubscriptionSection />
+            <AdFreeSubscriptionSection
+              adSystem={adSystem}
+              handlePurchaseAdFree={handlePurchaseAdFree}
+            />
 
             {/* All Skins Subscription Section */}
-            <AllSkinsSubscriptionSection />
+            <AllSkinsSubscriptionSection
+              allSkinsSubscription={allSkinsSubscription}
+              eliteSubscription={eliteSubscription}
+              handleAllSkinsSubscription={handleAllSkinsSubscription}
+            />
 
             {/* Elite Subscription Section */}
-            <EliteSubscriptionSection />
+            <EliteSubscriptionSection
+              eliteSubscription={eliteSubscription}
+              handleEliteSubscription={handleEliteSubscription}
+            />
+
+            {/* Subscription Plans Page Link */}
+            <div className="mt-6 p-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg border border-purple-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-gray-800">Explore More Plans</h4>
+                  <p className="text-sm text-gray-600">Check out all subscription options</p>
+                </div>
+                <Button
+                  onClick={() => {
+                    onClose();
+                    navigate('/subscription-plans');
+                  }}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  View Plans
+                </Button>
+              </div>
+            </div>
           </div>
         </ScrollArea>
       </DialogContent>

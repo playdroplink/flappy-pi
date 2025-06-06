@@ -88,12 +88,8 @@ const GameModals: React.FC<GameModalsProps> = ({
   return (
     <>
       <ShopModal 
-        isOpen={showShop}
+        open={showShop}
         onClose={() => setShowShop(false)}
-        coins={coins}
-        setCoins={setCoins}
-        selectedBirdSkin={selectedBirdSkin}
-        setSelectedBirdSkin={setSelectedBirdSkin}
       />
 
       <LeaderboardModal 
