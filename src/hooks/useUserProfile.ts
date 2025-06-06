@@ -1,18 +1,25 @@
 
 import { useState, useEffect } from 'react';
 import { gameBackendService, UserProfile } from '@/services/gameBackendService';
+import { purchaseStateService, PurchaseState } from '@/services/purchaseStateService';
 import { useToast } from '@/hooks/use-toast';
 
 interface UseUserProfileReturn {
   profile: UserProfile | null;
+  purchaseState: PurchaseState | null;
   loading: boolean;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   refreshProfile: () => Promise<void>;
+  refreshPurchaseState: () => Promise<void>;
   initializeProfile: (piUserId: string, username: string) => Promise<void>;
+  hasPremium: boolean;
+  isAdFree: boolean;
+  ownedSkins: string[];
 }
 
 export const useUserProfile = (): UseUserProfileReturn => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [purchaseState, setPurchaseState] = useState<PurchaseState | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -25,6 +32,20 @@ export const useUserProfile = (): UseUserProfileReturn => {
       piUserId: `pi_user_${randomId}`,
       username: `${randomUsername}_${randomId.substr(0, 4)}`
     };
+  };
+
+  const refreshPurchaseState = async () => {
+    if (!profile?.pi_user_id) return;
+
+    try {
+      const state = await purchaseStateService.getPurchaseState(profile.pi_user_id);
+      setPurchaseState(state);
+      
+      // Update localStorage for immediate UI feedback
+      localStorage.setItem('flappypi-purchase-state', JSON.stringify(state));
+    } catch (error) {
+      console.error('Error refreshing purchase state:', error);
+    }
   };
 
   const initializeProfile = async (piUserId?: string, username?: string) => {
@@ -54,6 +75,9 @@ export const useUserProfile = (): UseUserProfileReturn => {
       // Store in localStorage for persistence
       if (existingProfile) {
         localStorage.setItem('flappypi-profile', JSON.stringify(existingProfile));
+        
+        // Load purchase state
+        await refreshPurchaseState();
       }
     } catch (error) {
       console.error('Error initializing profile:', error);
@@ -102,6 +126,9 @@ export const useUserProfile = (): UseUserProfileReturn => {
       if (refreshedProfile) {
         setProfile(refreshedProfile);
         localStorage.setItem('flappypi-profile', JSON.stringify(refreshedProfile));
+        
+        // Also refresh purchase state
+        await refreshPurchaseState();
       }
     } catch (error) {
       console.error('Error refreshing profile:', error);
@@ -113,10 +140,23 @@ export const useUserProfile = (): UseUserProfileReturn => {
   // Load profile from localStorage on mount
   useEffect(() => {
     const savedProfile = localStorage.getItem('flappypi-profile');
+    const savedPurchaseState = localStorage.getItem('flappypi-purchase-state');
+    
     if (savedProfile) {
       try {
         const parsedProfile = JSON.parse(savedProfile);
         setProfile(parsedProfile);
+        
+        // Load cached purchase state if available
+        if (savedPurchaseState) {
+          try {
+            const parsedPurchaseState = JSON.parse(savedPurchaseState);
+            setPurchaseState(parsedPurchaseState);
+          } catch (error) {
+            console.error('Error parsing saved purchase state:', error);
+          }
+        }
+        
         // Refresh from database in background
         refreshProfile();
       } catch (error) {
@@ -130,11 +170,21 @@ export const useUserProfile = (): UseUserProfileReturn => {
     }
   }, []);
 
+  // Computed properties for easier access
+  const hasPremium = purchaseState?.hasPremium || false;
+  const isAdFree = purchaseState?.isAdFree || false;
+  const ownedSkins = purchaseState?.ownedSkins || ['default'];
+
   return {
     profile,
+    purchaseState,
     loading,
     updateProfile,
     refreshProfile,
-    initializeProfile
+    refreshPurchaseState,
+    initializeProfile,
+    hasPremium,
+    isAdFree,
+    ownedSkins
   };
 };

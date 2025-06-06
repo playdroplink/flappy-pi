@@ -155,33 +155,42 @@ export type Database = {
       }
       user_profiles: {
         Row: {
+          ad_free_permanent: boolean | null
           avatar_url: string | null
           created_at: string | null
           id: string
           music_enabled: boolean | null
+          owned_skins: Json | null
           pi_user_id: string
+          premium_expires_at: string | null
           selected_bird_skin: string | null
           total_coins: number | null
           updated_at: string | null
           username: string
         }
         Insert: {
+          ad_free_permanent?: boolean | null
           avatar_url?: string | null
           created_at?: string | null
           id?: string
           music_enabled?: boolean | null
+          owned_skins?: Json | null
           pi_user_id: string
+          premium_expires_at?: string | null
           selected_bird_skin?: string | null
           total_coins?: number | null
           updated_at?: string | null
           username: string
         }
         Update: {
+          ad_free_permanent?: boolean | null
           avatar_url?: string | null
           created_at?: string | null
           id?: string
           music_enabled?: boolean | null
+          owned_skins?: Json | null
           pi_user_id?: string
+          premium_expires_at?: string | null
           selected_bird_skin?: string | null
           total_coins?: number | null
           updated_at?: string | null
@@ -313,6 +322,14 @@ export type Database = {
       update_user_score: {
         Args: { p_pi_user_id: string; p_username: string; p_score: number }
         Returns: undefined
+      }
+      user_has_active_premium: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
+      user_owns_skin: {
+        Args: { user_id: string; skin_id: string }
+        Returns: boolean
       }
       watch_ad_reward: {
         Args: {

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 
@@ -168,6 +167,110 @@ class GameBackendService {
     } catch (error) {
       console.error('Error in getUserProfile:', error);
       return null;
+    }
+  }
+
+  // Get user profile with purchase state
+  async getUserProfileWithPurchases(piUserId: string): Promise<(UserProfile & { purchaseState?: any }) | null> {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*, premium_expires_at, ad_free_permanent, owned_skins')
+        .eq('pi_user_id', piUserId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+        console.error('Error fetching user profile with purchases:', error);
+        return null;
+      }
+
+      if (!data) return null;
+
+      // Calculate purchase state
+      const now = new Date();
+      const premiumExpiresAt = data.premium_expires_at ? new Date(data.premium_expires_at) : null;
+      const hasPremium = premiumExpiresAt ? premiumExpiresAt > now : false;
+
+      return {
+        ...data,
+        purchaseState: {
+          hasPremium,
+          isAdFree: data.ad_free_permanent || hasPremium,
+          ownedSkins: data.owned_skins || ['default'],
+          premiumExpiresAt: data.premium_expires_at
+        }
+      } as UserProfile & { purchaseState: any };
+    } catch (error) {
+      console.error('Error in getUserProfileWithPurchases:', error);
+      return null;
+    }
+  }
+
+  // Check user's premium status
+  async checkUserPremiumStatus(piUserId: string): Promise<{ hasPremium: boolean; expiresAt: string | null }> {
+    try {
+      const { data, error } = await supabase
+        .rpc('user_has_active_premium', { user_id: piUserId });
+
+      if (error) {
+        console.error('Error checking premium status:', error);
+        return { hasPremium: false, expiresAt: null };
+      }
+
+      // Get expiration date
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('premium_expires_at')
+        .eq('pi_user_id', piUserId)
+        .single();
+
+      return {
+        hasPremium: data || false,
+        expiresAt: profile?.premium_expires_at || null
+      };
+    } catch (error) {
+      console.error('Error in checkUserPremiumStatus:', error);
+      return { hasPremium: false, expiresAt: null };
+    }
+  }
+
+  // Check if user owns a skin
+  async checkSkinOwnership(piUserId: string, skinId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .rpc('user_owns_skin', { user_id: piUserId, skin_id: skinId });
+
+      if (error) {
+        console.error('Error checking skin ownership:', error);
+        return skinId === 'default';
+      }
+
+      return data || skinId === 'default';
+    } catch (error) {
+      console.error('Error in checkSkinOwnership:', error);
+      return skinId === 'default';
+    }
+  }
+
+  // Get user's purchase history
+  async getUserPurchases(piUserId: string, limit: number = 20): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from('purchases')
+        .select('*')
+        .eq('pi_user_id', piUserId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error('Error fetching user purchases:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error in getUserPurchases:', error);
+      return [];
     }
   }
 

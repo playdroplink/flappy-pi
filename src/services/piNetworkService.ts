@@ -51,6 +51,7 @@ declare global {
 }
 
 import { loadPiSdk, detectEnvironment } from './piSdkLoader';
+import { purchaseStateService, PurchaseUpdate } from './purchaseStateService';
 
 class PiNetworkService {
   private isInitialized = false;
@@ -234,6 +235,11 @@ class PiNetworkService {
         throw new Error(`Payment completion failed: ${result.error}`);
       }
       
+      // Update purchase state in Supabase after successful payment
+      if (this.currentUser && metadata) {
+        await this.updatePurchaseStateFromMetadata(metadata, txid);
+      }
+      
       console.log('Payment completion successful:', result);
     } catch (error) {
       console.error('Payment completion error:', error);
@@ -241,20 +247,85 @@ class PiNetworkService {
     }
   }
 
-  // Convenience methods for common Flappy Pi purchases
+  private async updatePurchaseStateFromMetadata(metadata: any, txid: string): Promise<void> {
+    if (!this.currentUser) return;
+
+    try {
+      const purchaseUpdate: PurchaseUpdate = this.determinePurchaseType(metadata);
+      await purchaseStateService.updatePurchaseState(
+        this.currentUser.uid,
+        purchaseUpdate,
+        txid
+      );
+    } catch (error) {
+      console.error('Error updating purchase state:', error);
+    }
+  }
+
+  private determinePurchaseType(metadata: any): PurchaseUpdate {
+    const type = metadata.type;
+    
+    switch (type) {
+      case 'subscription':
+        return { itemType: 'premium', duration: 30 };
+      case 'elite':
+        return { itemType: 'elite', duration: 30 };
+      case 'no-ads':
+        return { itemType: 'ad_free', permanent: true };
+      case 'skin':
+        return { itemType: 'skin', itemId: metadata.itemId };
+      case 'all-skins':
+        return { itemType: 'premium', duration: 30 }; // All skins access via premium
+      default:
+        console.warn('Unknown purchase type:', type);
+        return { itemType: 'premium', duration: 30 };
+    }
+  }
+
+  // Enhanced convenience methods with purchase state integration
   async purchasePremiumSubscription(): Promise<string> {
-    return this.createPayment(15, "Unlock Pi Premium", { type: "subscription" });
+    const paymentId = await this.createPayment(15, "Unlock Pi Premium", { type: "subscription" });
+    return paymentId;
+  }
+
+  async purchaseEliteSubscription(): Promise<string> {
+    const paymentId = await this.createPayment(20, "Unlock Elite Pack", { type: "elite" });
+    return paymentId;
   }
 
   async purchaseBirdSkin(skinId: string, skinName: string): Promise<string> {
-    return this.createPayment(2, `Unlock ${skinName} Bird Skin`, { 
+    const paymentId = await this.createPayment(2, `Unlock ${skinName} Bird Skin`, { 
       type: "skin", 
       itemId: skinId 
     });
+    return paymentId;
   }
 
   async purchaseAdRemoval(): Promise<string> {
-    return this.createPayment(5, "Remove All Ads Forever", { type: "no-ads" });
+    const paymentId = await this.createPayment(10, "Remove All Ads Forever", { type: "no-ads" });
+    return paymentId;
+  }
+
+  async purchaseAllSkins(): Promise<string> {
+    const paymentId = await this.createPayment(15, "Unlock All Standard Skins", { type: "all-skins" });
+    return paymentId;
+  }
+
+  // Get user's purchase state
+  async getUserPurchaseState() {
+    if (!this.currentUser) return null;
+    return purchaseStateService.getCachedState(this.currentUser.uid);
+  }
+
+  // Check specific ownership
+  async userOwnsSkin(skinId: string): Promise<boolean> {
+    if (!this.currentUser) return skinId === 'default';
+    return purchaseStateService.userOwnsSkin(this.currentUser.uid, skinId);
+  }
+
+  async userHasPremium(): Promise<boolean> {
+    if (!this.currentUser) return false;
+    return purchaseStateService.userHasActivePremium(this.currentUser.uid);
   }
 
   shareScore(score: number, level: number): void {
