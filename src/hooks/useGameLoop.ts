@@ -60,18 +60,20 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
 
   const resetGame = useCallback((canvasHeight: number) => {
     console.log('COMPLETE GAME RESET - Clearing all state and resetting bird');
-    const safeY = Math.max(150, canvasHeight / 3);
     
-    // Complete state reset with proper bird positioning
+    // Calculate safe vertical position based on canvas height
+    const safeY = Math.max(150, canvasHeight / 2);
+    
+    // Complete state reset with proper bird positioning and physics
     gameStateRef.current = {
       bird: { 
         x: 80, 
         y: safeY, 
         velocity: 0, // Reset velocity completely
-        rotation: 0 // Reset tilt/angle
+        rotation: 0  // Reset rotation/tilt angle
       },
-      pipes: [], // Clear all pipes
-      clouds: [], // Clear all clouds
+      pipes: [],     // Clear all pipes
+      clouds: [],    // Clear all clouds
       frameCount: 0,
       score: 0,
       lastPipeSpawn: 0,
@@ -82,7 +84,8 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     
     // Reset score display
     onScoreUpdate(0);
-    console.log('Game completely reset - bird positioned at safe location, waiting for tap to start');
+    
+    console.log('Game completely reset - bird positioned at center, waiting for tap to start');
   }, [onScoreUpdate]);
 
   const startGame = useCallback(() => {
@@ -99,26 +102,27 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   const continueGame = useCallback(() => {
     console.log('Continuing game after revive');
     const canvas = document.querySelector('canvas');
-    const safeY = canvas ? Math.max(150, canvas.height / 3) : 200;
+    const safeY = canvas ? canvas.height / 2 : 200; // Position in vertical center
     
     // Reset bird to safe position with small upward velocity
     gameStateRef.current.bird = {
       x: 80,
       y: safeY,
-      velocity: -5,
-      rotation: 0
+      velocity: 0,    // Start with zero velocity until player taps
+      rotation: 0     // Reset rotation completely
     };
     
     gameStateRef.current.gameOver = false;
-    gameStateRef.current.gameStarted = true;
+    gameStateRef.current.gameStarted = false; // Wait for tap before applying physics
     
     // Remove pipes that are too close to bird
     gameStateRef.current.pipes = gameStateRef.current.pipes.filter(pipe => 
       pipe.x > gameStateRef.current.bird.x + 300
     );
+    
     gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 200;
     
-    console.log('Continue complete - bird respawned at safe position');
+    console.log('Continue complete - bird respawned at center position, waiting for tap');
   }, []);
 
   const jump = useCallback(() => {

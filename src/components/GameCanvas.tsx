@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
@@ -52,6 +53,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     },
     onScoreUpdate
   });
+
+  // Track the last game state to detect state changes
+  const lastGameStateRef = React.useRef(gameState);
 
   const { updateGame, resetGameWithLives, livesSystem, heartsSystem, flashTimer } = useGamePhysics({
     gameStateRef,
@@ -111,6 +115,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       onContinueGameRef(continueGame);
     }
   }, [continueGame, onContinueGameRef]);
+
+  // Detect when game transitions from 'gameOver' to 'playing' to ensure proper reset
+  useEffect(() => {
+    if (lastGameStateRef.current === 'gameOver' && gameState === 'playing') {
+      console.log('Detected restart from game over to playing - ensuring proper bird reset');
+      const canvas = canvasRef.current;
+      if (canvas) {
+        resetGame(canvas.height);
+        resetGameWithLives();
+        if (resetVisuals) resetVisuals();
+      }
+    }
+    lastGameStateRef.current = gameState;
+  }, [gameState, resetGame, resetGameWithLives, resetVisuals, canvasRef]);
 
   return (
     <canvas
