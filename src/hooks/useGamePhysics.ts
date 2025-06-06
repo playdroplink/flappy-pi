@@ -1,3 +1,4 @@
+
 import { useCallback, useRef } from 'react';
 import { getDifficultyByUserChoice, getScoreMultiplier } from '../utils/gameDifficulty';
 
@@ -42,10 +43,22 @@ export const useGamePhysics = ({
     
     const difficulty = getDifficultyOptimized(state.score);
     const scoreMultiplier = getScoreMultiplier(gameMode);
-    const GRAVITY = 0.4; // Slightly stronger gravity
+    const GRAVITY = 0.4;
     const PIPE_WIDTH = difficulty.pipeWidth;
     const PIPE_GAP = difficulty.pipeGap;
-    const PIPE_SPACING = 400; // Much more spacing between pipes
+    const PIPE_SPACING = 400;
+
+    // If game hasn't started, just do gentle floating animation
+    if (!state.gameStarted) {
+      // Gentle floating animation for bird
+      const floatOffset = Math.sin(state.frameCount * 0.08) * 0.8;
+      state.bird.y += floatOffset;
+      state.bird.velocity = 0; // No velocity when not started
+      state.bird.rotation = 0; // Keep bird level
+      
+      state.frameCount++;
+      return; // Don't process anything else until game starts
+    }
 
     // Apply wind effect if enabled
     let horizontalForce = 0;
@@ -53,7 +66,7 @@ export const useGamePhysics = ({
       horizontalForce = Math.sin(state.frameCount * 0.02) * difficulty.windStrength;
     }
 
-    // Update bird physics
+    // Update bird physics - only when game has started
     state.bird.velocity += GRAVITY;
     state.bird.y += state.bird.velocity;
     state.bird.x += horizontalForce;
@@ -66,15 +79,15 @@ export const useGamePhysics = ({
       state.bird.x = Math.max(60, Math.min(state.bird.x, canvas.width - 200));
     }
 
-    // Spawn new pipes with much better spacing
-    const spawnThreshold = Math.max(PIPE_SPACING, 300); // Ensure minimum spacing
+    // Spawn new pipes with much better spacing - only after game started
+    const spawnThreshold = Math.max(PIPE_SPACING, 300);
     if (state.frameCount - state.lastPipeSpawn > spawnThreshold) {
-      const minHeight = 120; // Higher minimum height for easier gameplay
-      const maxHeight = canvas.height - PIPE_GAP - minHeight - 100; // More margin
+      const minHeight = 120;
+      const maxHeight = canvas.height - PIPE_GAP - minHeight - 100;
       const pipeHeight = Math.random() * (maxHeight - minHeight) + minHeight;
       
       const newPipe = {
-        x: canvas.width + 50, // Spawn pipes further from screen edge
+        x: canvas.width + 50,
         topHeight: pipeHeight,
         bottomY: pipeHeight + PIPE_GAP,
         passed: false,
@@ -133,7 +146,7 @@ export const useGamePhysics = ({
         onCoinEarned(coinsEarned);
       }
       
-      return pipe.x > -PIPE_WIDTH - 100; // Keep pipes longer for smoother experience
+      return pipe.x > -PIPE_WIDTH - 100;
     });
 
     // Update clouds
@@ -144,7 +157,7 @@ export const useGamePhysics = ({
       });
     }
 
-    // Check collisions
+    // Check collisions - only when game has started
     if (checkCollisions(canvas)) {
       console.log('Collision detected! Game over triggered');
       state.gameOver = true;

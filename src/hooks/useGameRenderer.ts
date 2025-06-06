@@ -71,7 +71,7 @@ export const useGameRenderer = ({
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw animated clouds with shadows
+    // Draw animated clouds with shadows (only if game started or for atmosphere)
     if (difficulty.hasClouds && state.clouds) {
       state.clouds.forEach((cloud: any) => {
         // Cloud shadow
@@ -95,8 +95,8 @@ export const useGameRenderer = ({
       });
     }
 
-    // Draw wind effect if active
-    if (difficulty.hasWind) {
+    // Draw wind effect if active (only when game started)
+    if (difficulty.hasWind && state.gameStarted) {
       ctx.strokeStyle = difficulty.timeOfDay === 'night' ? '#CCCCCC' : '#FFFFFF';
       ctx.lineWidth = 2;
       ctx.globalAlpha = 0.4;
@@ -111,54 +111,56 @@ export const useGameRenderer = ({
       ctx.globalAlpha = 1;
     }
 
-    // Draw pipes with correct dynamic sizing
-    state.pipes.forEach((pipe: any) => {
-      const pipeWidth = pipe.width || difficulty.pipeWidth; // Use correct width
-      
-      // Pipe colors based on time of day
-      let pipeGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + pipeWidth, 0);
-      
-      if (difficulty.timeOfDay === 'evening') {
-        pipeGradient.addColorStop(0, '#4CAF50');
-        pipeGradient.addColorStop(1, '#388E3C');
-      } else if (difficulty.timeOfDay === 'night') {
-        pipeGradient.addColorStop(0, '#2E7D32');
-        pipeGradient.addColorStop(1, '#1B5E20');
-      } else {
-        pipeGradient.addColorStop(0, '#4CAF50');
-        pipeGradient.addColorStop(1, '#388E3C');
-      }
+    // Draw pipes with correct dynamic sizing (only when game started)
+    if (state.gameStarted) {
+      state.pipes.forEach((pipe: any) => {
+        const pipeWidth = pipe.width || difficulty.pipeWidth;
+        
+        // Pipe colors based on time of day
+        let pipeGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + pipeWidth, 0);
+        
+        if (difficulty.timeOfDay === 'evening') {
+          pipeGradient.addColorStop(0, '#4CAF50');
+          pipeGradient.addColorStop(1, '#388E3C');
+        } else if (difficulty.timeOfDay === 'night') {
+          pipeGradient.addColorStop(0, '#2E7D32');
+          pipeGradient.addColorStop(1, '#1B5E20');
+        } else {
+          pipeGradient.addColorStop(0, '#4CAF50');
+          pipeGradient.addColorStop(1, '#388E3C');
+        }
 
-      // Pipe shadows with correct width
-      ctx.fillStyle = 'rgba(0,0,0,0.2)';
-      ctx.fillRect(pipe.x + 2, 2, pipeWidth, pipe.topHeight);
-      ctx.fillRect(pipe.x + 2, pipe.bottomY + 2, pipeWidth, canvas.height - pipe.bottomY);
+        // Pipe shadows with correct width
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.fillRect(pipe.x + 2, 2, pipeWidth, pipe.topHeight);
+        ctx.fillRect(pipe.x + 2, pipe.bottomY + 2, pipeWidth, canvas.height - pipe.bottomY);
 
-      // Add glow effect for moving pipes
-      if (pipe.isMoving) {
-        ctx.shadowColor = '#4CAF50';
-        ctx.shadowBlur = 8;
-      }
+        // Add glow effect for moving pipes
+        if (pipe.isMoving) {
+          ctx.shadowColor = '#4CAF50';
+          ctx.shadowBlur = 8;
+        }
 
-      // Top pipe
-      ctx.fillStyle = pipeGradient;
-      ctx.fillRect(pipe.x, 0, pipeWidth, pipe.topHeight);
+        // Top pipe
+        ctx.fillStyle = pipeGradient;
+        ctx.fillRect(pipe.x, 0, pipeWidth, pipe.topHeight);
 
-      // Bottom pipe  
-      ctx.fillRect(pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
+        // Bottom pipe  
+        ctx.fillRect(pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
 
-      // Pipe caps with enhanced styling and correct width
-      const capGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + pipeWidth, 0);
-      capGradient.addColorStop(0, '#66BB6A');
-      capGradient.addColorStop(1, '#4CAF50');
-      
-      ctx.fillStyle = capGradient;
-      ctx.fillRect(pipe.x - 4, pipe.topHeight - 20, pipeWidth + 8, 20);
-      ctx.fillRect(pipe.x - 4, pipe.bottomY, pipeWidth + 8, 20);
+        // Pipe caps with enhanced styling and correct width
+        const capGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + pipeWidth, 0);
+        capGradient.addColorStop(0, '#66BB6A');
+        capGradient.addColorStop(1, '#4CAF50');
+        
+        ctx.fillStyle = capGradient;
+        ctx.fillRect(pipe.x - 4, pipe.topHeight - 20, pipeWidth + 8, 20);
+        ctx.fillRect(pipe.x - 4, pipe.bottomY, pipeWidth + 8, 20);
 
-      // Reset shadow
-      ctx.shadowBlur = 0;
-    });
+        // Reset shadow
+        ctx.shadowBlur = 0;
+      });
+    }
 
     // Draw bird with precise sprite rendering
     const birdImage = new Image();
@@ -172,8 +174,15 @@ export const useGameRenderer = ({
       ctx.shadowBlur = 12;
     }
     
-    // Subtle flapping animation
-    const flapOffset = Math.sin(state.frameCount * 0.2) * 1.5;
+    // Different animation based on game state
+    let flapOffset = 0;
+    if (state.gameStarted) {
+      // Subtle flapping animation when game is active
+      flapOffset = Math.sin(state.frameCount * 0.2) * 1.5;
+    } else {
+      // Gentle floating animation when waiting
+      flapOffset = Math.sin(state.frameCount * 0.1) * 2;
+    }
     
     ctx.translate(state.bird.x, state.bird.y + flapOffset);
     ctx.rotate(state.bird.rotation * Math.PI / 180);
@@ -182,9 +191,23 @@ export const useGameRenderer = ({
     ctx.drawImage(birdImage, -BIRD_SIZE/2, -BIRD_SIZE/2, BIRD_SIZE, BIRD_SIZE);
     ctx.restore();
 
+    // Show "Tap to Start" message when game hasn't started
+    if (!state.gameStarted && state.initialized) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 24px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('Tap to Start!', canvas.width / 2, canvas.height / 2);
+      
+      ctx.font = '16px Arial';
+      ctx.fillText('Touch the screen or press space to begin flying', canvas.width / 2, canvas.height / 2 + 40);
+    }
+
     // Draw smooth scrolling ground with NO flickering
-    groundOffset.current += 2; // Smooth ground scroll
-    if (groundOffset.current >= 50) groundOffset.current = 0; // Reset to prevent overflow
+    groundOffset.current += state.gameStarted ? 2 : 0.5; // Slower scroll when not started
+    if (groundOffset.current >= 50) groundOffset.current = 0;
     
     const groundGradient = ctx.createLinearGradient(0, canvas.height - GROUND_HEIGHT, 0, canvas.height);
     if (difficulty.timeOfDay === 'evening') {

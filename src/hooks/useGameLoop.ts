@@ -36,6 +36,7 @@ interface GameLoopState {
   lastPipeSpawn: number;
   gameOver: boolean;
   initialized: boolean;
+  gameStarted: boolean; // New flag to control game start
 }
 
 interface UseGameLoopProps {
@@ -53,7 +54,8 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     score: 0,
     lastPipeSpawn: 0,
     gameOver: false,
-    initialized: false
+    initialized: false,
+    gameStarted: false
   });
 
   const resetGame = useCallback((canvasHeight: number) => {
@@ -74,12 +76,21 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       score: 0,
       lastPipeSpawn: 0,
       gameOver: false,
-      initialized: true
+      initialized: true,
+      gameStarted: false // Start with game not started
     };
     
     onScoreUpdate(0);
-    console.log('Game completely reset and ready to play');
+    console.log('Game completely reset and ready to play - waiting for first tap');
   }, [onScoreUpdate, gameState]);
+
+  const startGame = useCallback(() => {
+    if (gameStateRef.current.gameStarted) return;
+    
+    console.log('Starting game - bird will now fall and pipes will spawn');
+    gameStateRef.current.gameStarted = true;
+    gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 120; // Delay first pipe
+  }, []);
 
   const continueGame = useCallback(() => {
     console.log('Continuing game after revive');
@@ -94,6 +105,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     };
     
     gameStateRef.current.gameOver = false;
+    gameStateRef.current.gameStarted = true; // Ensure game is started after continue
     
     // Remove pipes that are too close to bird
     gameStateRef.current.pipes = gameStateRef.current.pipes.filter(pipe => 
@@ -106,15 +118,20 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
 
   const jump = useCallback(() => {
     if (gameState === 'playing' && !gameStateRef.current.gameOver) {
+      // Start game on first jump if not started
+      if (!gameStateRef.current.gameStarted) {
+        startGame();
+      }
+      
       gameStateRef.current.bird.velocity = -8; // Strong jump for better control
       console.log('Bird jumped! Velocity:', gameStateRef.current.bird.velocity);
     }
-  }, [gameState]);
+  }, [gameState, startGame]);
 
   const checkCollisions = useCallback((canvas: HTMLCanvasElement) => {
-    const { bird, pipes, gameOver } = gameStateRef.current;
+    const { bird, pipes, gameOver, gameStarted } = gameStateRef.current;
     
-    if (gameOver || gameState !== 'playing') return false;
+    if (gameOver || gameState !== 'playing' || !gameStarted) return false;
     
     // Much more forgiving bird hitbox - smaller collision area
     const BIRD_SIZE = 16; // Reduced collision size significantly
@@ -167,6 +184,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     resetGame,
     continueGame,
     jump,
-    checkCollisions
+    checkCollisions,
+    startGame
   };
 };
