@@ -394,6 +394,25 @@ const ShopModal: React.FC<ShopModalProps> = ({
 
   const hasAnySubscription = allSkinsSubscription.isActive || eliteSubscription.isActive;
 
+  const handlePurchaseAdFree = async () => {
+    try {
+      const success = await adSystem.purchaseAdFree();
+      if (success) {
+        toast({
+          title: "Premium Activated! 💎",
+          description: "You now have ad-free gaming for 30 days!"
+        });
+      }
+    } catch (error) {
+      console.error('Error purchasing ad-free subscription:', error);
+      toast({
+        title: "Purchase Failed",
+        description: "Failed to process ad-free subscription",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border-gray-300">
@@ -692,7 +711,7 @@ const ShopModal: React.FC<ShopModalProps> = ({
                   </div>
                   
                   <Button
-                    onClick={adSystem.purchaseAdFree}
+                    onClick={handlePurchaseAdFree}
                     className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white border-0 rounded-lg py-3 font-bold"
                   >
                     <Crown className="mr-2 h-5 w-5" />
@@ -725,15 +744,18 @@ const ShopModal: React.FC<ShopModalProps> = ({
               {birdSkins.map((skin) => (
                 <BirdSkinCard
                   key={skin.id}
-                  skin={skin}
-                  selectedBirdSkin={selectedBirdSkin}
-                  coins={coins}
+                  id={skin.id}
+                  name={skin.name}
+                  image={skin.image}
+                  piPrice={skin.piPrice}
+                  coinPrice={skin.coinPrice}
                   isOwned={isOwned(skin.id)}
-                  hasAllSkinsSubscription={hasAnySubscription}
-                  hasEliteSubscription={eliteSubscription.isActive}
-                  onSelectSkin={setSelectedBirdSkin}
-                  onPiPayment={handlePiPayment}
-                  onCoinPurchase={handleCoinPurchase}
+                  isSelected={selectedBirdSkin === skin.id}
+                  canUse={hasAnySubscription || skin.id === 'default' || (skin.eliteOnly ? eliteSubscription.isActive : true)}
+                  onSelect={() => setSelectedBirdSkin(skin.id)}
+                  onPurchase={() => handleCoinPurchase(skin)}
+                  userCoins={coins}
+                  priceType={skin.priceType}
                 />
               ))}
             </div>
