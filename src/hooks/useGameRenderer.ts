@@ -1,13 +1,7 @@
 
-import { useCallback, useRef } from 'react';
-import { getDifficultyByUserChoice } from '../utils/gameDifficulty';
-import { useBackgroundRenderer } from './useBackgroundRenderer';
-import { useCloudsRenderer } from './useCloudsRenderer';
+import { useCallback } from 'react';
 import { useBirdRenderer } from './useBirdRenderer';
 import { usePipesRenderer } from './usePipesRenderer';
-import { useGroundRenderer } from './useGroundRenderer';
-import { useUIRenderer } from './useUIRenderer';
-import { useLevelVisuals } from './useLevelVisuals';
 
 interface UseGameRendererProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
@@ -15,48 +9,17 @@ interface UseGameRendererProps {
   birdSkin: string;
   gameMode: 'classic' | 'endless' | 'challenge';
   userDifficulty?: 'easy' | 'medium' | 'hard';
-  livesSystem?: any;
-  heartsSystem?: any;
-  flashTimer?: React.MutableRefObject<number>;
 }
 
-export const useGameRenderer = ({ 
-  canvasRef, 
-  gameStateRef, 
-  birdSkin, 
+export const useGameRenderer = ({
+  canvasRef,
+  gameStateRef,
+  birdSkin,
   gameMode,
-  userDifficulty = 'medium',
-  livesSystem,
-  heartsSystem,
-  flashTimer
+  userDifficulty = 'medium'
 }: UseGameRendererProps) => {
-  const difficultyCache = useRef<{ score: number; difficulty: any } | null>(null);
-  const lastLevelRef = useRef<number>(1);
-
-  const { renderBackground, resetBackground } = useBackgroundRenderer({ gameMode, userDifficulty });
-  const { renderClouds, renderWindEffect } = useCloudsRenderer();
   const { renderBird } = useBirdRenderer({ birdSkin });
   const { renderPipes } = usePipesRenderer();
-  const { renderGround, renderBuildings, resetGround } = useGroundRenderer();
-  const { renderTapToStart } = useUIRenderer();
-  const { 
-    triggerLevelVisual, 
-    updateParticles, 
-    renderLevelText, 
-    renderParticles, 
-    applyBackgroundEffects,
-    resetEffects 
-  } = useLevelVisuals();
-
-  const getDifficultyOptimized = useCallback((score: number) => {
-    if (difficultyCache.current && difficultyCache.current.score === score) {
-      return difficultyCache.current.difficulty;
-    }
-    
-    const difficulty = getDifficultyByUserChoice(userDifficulty, score, gameMode);
-    difficultyCache.current = { score, difficulty };
-    return difficulty;
-  }, [gameMode, userDifficulty]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -66,123 +29,70 @@ export const useGameRenderer = ({
     if (!ctx) return;
 
     const state = gameStateRef.current;
-    
-    // Check for level up and trigger visual effects
-    const currentLevel = Math.floor(state.score / 5) + 1;
-    if (currentLevel > lastLevelRef.current && state.gameStarted) {
-      triggerLevelVisual(currentLevel, canvas);
-      lastLevelRef.current = currentLevel;
-    }
+    if (!state) return;
 
-    // Update particle systems
-    updateParticles();
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Save context for background effects
-    ctx.save();
-    
-    // Apply background effects (shake, etc.)
-    applyBackgroundEffects(ctx, canvas);
-    
-    // Apply red flash effect if active (for bump effect)
-    if (flashTimer && flashTimer.current > 0) {
-      ctx.save();
-      ctx.globalAlpha = Math.max(0.1, flashTimer.current / 20) * 0.4;
-      ctx.fillStyle = '#ff0000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.restore();
-    }
-    
-    // Render background with proper game started flag
-    const difficulty = renderBackground(ctx, canvas, state.score, state.frameCount, state.gameStarted);
-    
-    // Render clouds and wind effects
-    renderClouds(ctx, state.clouds, difficulty);
-    renderWindEffect(ctx, canvas, difficulty, state.frameCount, state.gameStarted);
-    
-    // Render pipes
-    renderPipes(ctx, canvas, state.pipes, difficulty, state.gameStarted);
-    
-    // Render floating hearts (enhanced system)
-    if (heartsSystem && state.level >= 3) {
-      heartsSystem.renderHearts(ctx);
-    }
-    
-    // Render level visual particles
-    renderParticles(ctx);
-    
-    // Render bird with invulnerability flashing
-    if (livesSystem?.isInvulnerable) {
-      const flickerAlpha = Math.sin(Date.now() * 0.02) * 0.5 + 0.5;
-      ctx.save();
-      ctx.globalAlpha = flickerAlpha;
-      renderBird(ctx, state.bird, state.frameCount, state.gameStarted, difficulty);
-      ctx.restore();
-    } else {
-      renderBird(ctx, state.bird, state.frameCount, state.gameStarted, difficulty);
-    }
-    
-    // Render "Tap to Start" overlay
-    renderTapToStart(ctx, canvas, state.gameStarted, state.initialized, state.frameCount, difficulty);
-    
-    // Render ground and buildings with proper game started flag
-    renderGround(ctx, canvas, difficulty, state.gameStarted);
-    renderBuildings(ctx, canvas, difficulty, state.frameCount);
-    
-    // Render level text overlay
-    renderLevelText(ctx, canvas, currentLevel, state.frameCount);
-    
-    // Render lives UI (enhanced hearts in corner)
-    if (livesSystem) {
-      livesSystem.renderLivesUI(ctx, canvas);
-    }
-    
-    // Show heart collection message at level 3
-    if (state.level === 3 && state.gameStarted && state.frameCount % 240 < 120) {
-      ctx.save();
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-      ctx.fillRect(canvas.width / 2 - 180, canvas.height / 2 - 40, 360, 80);
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 18px Arial';
+    // Draw background gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#87CEEB');
+    gradient.addColorStop(1, '#98D8E8');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw ground
+    ctx.fillStyle = '#8B7355';
+    ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
+
+    // Draw pipes
+    renderPipes(ctx, canvas, state.pipes, { timeOfDay: 'day' }, state.gameStarted);
+
+    // Draw bird
+    renderBird(ctx, state.bird, state.frameCount, state.gameStarted, { timeOfDay: 'day' });
+
+    // Draw score
+    if (state.gameStarted) {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 3;
+      ctx.font = 'bold 48px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText('❤️ Hearts System Activated!', canvas.width / 2, canvas.height / 2 - 10);
-      ctx.font = 'bold 14px Arial';
-      ctx.fillText('Collect hearts for extra lives! Score every 10 points!', canvas.width / 2, canvas.height / 2 + 15);
-      ctx.restore();
+      
+      const scoreText = state.score.toString();
+      const x = canvas.width / 2;
+      const y = 80;
+      
+      ctx.strokeText(scoreText, x, y);
+      ctx.fillText(scoreText, x, y);
     }
 
-    // Restore context after background effects
-    ctx.restore();
-  }, [
-    canvasRef, 
-    gameStateRef, 
-    renderBackground, 
-    renderClouds, 
-    renderWindEffect, 
-    renderPipes, 
-    renderBird, 
-    renderTapToStart, 
-    renderGround, 
-    renderBuildings,
-    livesSystem,
-    heartsSystem,
-    flashTimer,
-    triggerLevelVisual,
-    updateParticles,
-    renderLevelText,
-    renderParticles,
-    applyBackgroundEffects
-  ]);
+    // Draw start message
+    if (!state.gameStarted && !state.gameOver) {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.font = 'bold 24px Arial';
+      ctx.textAlign = 'center';
+      
+      const message = 'Tap to Start';
+      const x = canvas.width / 2;
+      const y = canvas.height / 2 + 80;
+      
+      ctx.strokeText(message, x, y);
+      ctx.fillText(message, x, y);
+    }
+  }, [canvasRef, gameStateRef, renderBird, renderPipes]);
 
-  // Reset visual effects when game resets
   const resetVisuals = useCallback(() => {
-    console.log('🎨 Resetting all visual systems');
-    lastLevelRef.current = 1;
-    difficultyCache.current = null;
-    resetEffects();
-    resetBackground();
-    resetGround();
-    console.log('✅ All visual systems reset complete');
-  }, [resetEffects, resetBackground, resetGround]);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }, [canvasRef]);
 
   return { draw, resetVisuals };
 };

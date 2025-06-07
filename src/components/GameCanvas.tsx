@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
 import { useGameRenderer } from '../hooks/useGameRenderer';
-import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 import { useAudioManager } from '../hooks/useAudioManager';
 import { useCanvasSetup } from '../hooks/useCanvasSetup';
 import { useGameInputHandlers } from '../hooks/useGameInputHandlers';
@@ -38,48 +37,34 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 }) => {
   const { canvasRef } = useCanvasSetup();
   
-  // Create a ref to store the continue game function
-  const continueGameRef = React.useRef<(() => void) | null>(null);
-
-  useBackgroundMusic({ musicEnabled, gameState });
-  
-  // Use the fixed audio manager instead of multiple sound systems
-  const { playWingFlap, playPoint, playHit, playDie, audioUnlocked } = useAudioManager({ 
+  const { playWingFlap, playPoint, playHit, audioUnlocked } = useAudioManager({ 
     musicEnabled, 
     gameState 
   });
 
-  const { gameStateRef, resetGame, continueGame, jump, checkCollisions } = useGameLoop({
+  const { gameStateRef, resetGame, jump, checkCollisions } = useGameLoop({
     gameState,
     onCollision: () => {
-      console.log('Collision detected in GameCanvas');
+      console.log('Collision detected');
       playHit();
       onCollision();
     },
     onScoreUpdate: (score) => {
-      console.log('Score updated in GameCanvas:', score);
+      console.log('Score updated:', score);
       onScoreUpdate(score);
     }
   });
 
-  // Track the last game state to detect state changes
-  const lastGameStateRef = React.useRef(gameState);
-
-  const { updateGame, resetGameWithLives, livesSystem, heartsSystem, flashTimer, redFlashTimer } = useGamePhysics({
+  const { updateGame, resetGameWithLives } = useGamePhysics({
     gameStateRef,
     onScoreUpdate: (score) => {
-      console.log('Physics score update:', score);
       playPoint();
       onScoreUpdate(score);
     },
-    onCoinEarned: (coins) => {
-      console.log('Coins earned:', coins);
-      onCoinEarned(coins);
-    },
+    onCoinEarned,
     checkCollisions,
     onCollision: () => {
-      console.log('Physics collision detected');
-      playDie();
+      playHit();
       onCollision();
     },
     gameMode,
@@ -91,16 +76,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     gameStateRef, 
     birdSkin,
     gameMode,
-    userDifficulty,
-    livesSystem,
-    heartsSystem,
-    flashTimer: redFlashTimer // Use red flash timer for bump effects
+    userDifficulty
   });
 
   useGameInputHandlers({
     gameState,
     jump: () => {
-      console.log('Jump triggered');
       jump();
       playWingFlap();
     },
@@ -113,7 +94,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     updateGame,
     draw,
     resetGame: (canvasHeight: number) => {
-      console.log('Resetting game with canvas height:', canvasHeight);
       resetGame(canvasHeight);
       resetGameWithLives();
       if (resetVisuals) {
@@ -124,25 +104,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     resetVisuals
   });
 
-  // Show audio unlock status in console for debugging
+  // Log audio status for debugging
   useEffect(() => {
-    console.log('Audio unlocked status:', audioUnlocked);
+    console.log('Audio unlocked:', audioUnlocked);
   }, [audioUnlocked]);
-
-  // Detect when game transitions from 'gameOver' to 'playing' to ensure proper reset
-  useEffect(() => {
-    console.log('Game state changed from', lastGameStateRef.current, 'to', gameState);
-    if (lastGameStateRef.current === 'gameOver' && gameState === 'playing') {
-      console.log('Detected restart from game over to playing - ensuring proper bird reset');
-      const canvas = canvasRef.current;
-      if (canvas) {
-        resetGame(canvas.height);
-        resetGameWithLives();
-        if (resetVisuals) resetVisuals();
-      }
-    }
-    lastGameStateRef.current = gameState;
-  }, [gameState, resetGame, resetGameWithLives, resetVisuals, canvasRef]);
 
   return (
     <canvas

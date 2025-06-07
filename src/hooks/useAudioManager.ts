@@ -1,8 +1,5 @@
 
-import { useRef, useEffect } from 'react';
-import { useAudioContext } from './useAudioContext';
-import { useAudioLoader } from './useAudioLoader';
-import { useAudioPlayback } from './useAudioPlayback';
+import { useRef, useEffect, useCallback, useState } from 'react';
 
 interface UseAudioManagerProps {
   musicEnabled: boolean;
@@ -11,69 +8,111 @@ interface UseAudioManagerProps {
 
 export const useAudioManager = ({ musicEnabled, gameState }: UseAudioManagerProps) => {
   const backgroundMusic = useRef<HTMLAudioElement | null>(null);
-  const { audioUnlocked } = useAudioContext();
-  const { preloadAudio } = useAudioLoader();
-  const audioPlayback = useAudioPlayback({ audioUnlocked });
+  const soundEffects = useRef<{ [key: string]: HTMLAudioElement }>({});
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
 
-  // Initialize background music with format fallbacks
-  const initializeBackgroundMusic = () => {
-    if (backgroundMusic.current) return;
+  // Initialize all audio files
+  const initializeAudio = useCallback(() => {
+    // Initialize background music
+    if (!backgroundMusic.current) {
+      backgroundMusic.current = new Audio('/sounds/background/Flappy Pi Main Theme Song.mp3');
+      backgroundMusic.current.loop = true;
+      backgroundMusic.current.volume = 0.3;
+      backgroundMusic.current.preload = 'auto';
+    }
 
-    backgroundMusic.current = new Audio();
-    const formats = ['mp3', 'ogg'];
-    let formatIndex = 0;
-
-    const tryNextFormat = () => {
-      if (formatIndex >= formats.length) {
-        console.warn('Failed to load background music');
-        return;
-      }
-
-      const format = formats[formatIndex];
-      backgroundMusic.current!.src = `/sounds/background/Flappy Pi Main Theme Song.${format}`;
-      
-      backgroundMusic.current!.addEventListener('loadeddata', () => {
-        backgroundMusic.current!.loop = true;
-        backgroundMusic.current!.volume = 0.3;
-        console.log(`Background music loaded (${format})`);
-      }, { once: true });
-
-      backgroundMusic.current!.addEventListener('error', () => {
-        formatIndex++;
-        tryNextFormat();
-      }, { once: true });
-
-      backgroundMusic.current!.load();
+    // Initialize sound effects using the actual GitHub assets
+    const soundFiles = {
+      wing: '/assets/audio/sfx_wing.wav',
+      point: '/assets/audio/sfx_point.wav',
+      hit: '/assets/audio/sfx_hit.wav',
+      die: '/assets/audio/sfx_die.wav',
+      swoosh: '/assets/audio/sfx_swooshing.wav'
     };
 
-    tryNextFormat();
-  };
+    Object.entries(soundFiles).forEach(([key, path]) => {
+      if (!soundEffects.current[key]) {
+        const audio = new Audio(path);
+        audio.preload = 'auto';
+        audio.volume = 0.6;
+        soundEffects.current[key] = audio;
+      }
+    });
+  }, []);
 
-  // Initialize all game sounds
-  useEffect(() => {
-    console.log('Initializing audio manager...');
+  // Unlock audio on first user interaction
+  const unlockAudio = useCallback(() => {
+    if (audioUnlocked) return;
+
+    // Play and immediately pause a silent audio to unlock
+    const testAudio = new Audio();
+    testAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+    testAudio.volume = 0.01;
     
-    // Preload all game sounds with fallbacks
-    preloadAudio('wing', '/assets/audio/sfx_wing');
-    preloadAudio('point', '/assets/audio/sfx_point');
-    preloadAudio('hit', '/assets/audio/sfx_hit');
-    preloadAudio('die', '/assets/audio/sfx_die');
-    preloadAudio('swoosh', '/assets/audio/sfx_swooshing');
-    preloadAudio('heart', '/assets/audio/sfx_heart');
+    const playPromise = testAudio.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        testAudio.pause();
+        setAudioUnlocked(true);
+        console.log('Audio unlocked successfully');
+      }).catch(() => {
+        console.log('Audio unlock failed');
+      });
+    }
+  }, [audioUnlocked]);
 
-    // Initialize background music
-    initializeBackgroundMusic();
-  }, [preloadAudio]);
+  // Play sound effect
+  const playSound = useCallback((soundKey: string, volume = 0.6) => {
+    if (!audioUnlocked) return;
+    
+    const audio = soundEffects.current[soundKey];
+    if (audio) {
+      try {
+        const audioClone = audio.cloneNode() as HTMLAudioElement;
+        audioClone.volume = volume;
+        audioClone.currentTime = 0;
+        
+        const playPromise = audioClone.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            // Ignore play errors to prevent crashes
+          });
+        }
+      } catch (error) {
+        // Ignore sound errors
+      }
+    }
+  }, [audioUnlocked]);
 
-  // Handle background music with proper unlocking
+  // Initialize audio on mount
+  useEffect(() => {
+    initializeAudio();
+    
+    // Add interaction listeners for audio unlock
+    const handleInteraction = () => {
+      unlockAudio();
+    };
+
+    document.addEventListener('touchstart', handleInteraction, { once: true });
+    document.addEventListener('click', handleInteraction, { once: true });
+    document.addEventListener('keydown', handleInteraction, { once: true });
+
+    return () => {
+      document.removeEventListener('touchstart', handleInteraction);
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+    };
+  }, [initializeAudio, unlockAudio]);
+
+  // Handle background music
   useEffect(() => {
     if (!backgroundMusic.current || !audioUnlocked) return;
 
     if (musicEnabled && (gameState === 'playing' || gameState === 'menu')) {
       const playPromise = backgroundMusic.current.play();
       if (playPromise !== undefined) {
-        playPromise.catch((error) => {
-          console.log('Background music play failed:', error);
+        playPromise.catch(() => {
+          console.log('Background music play failed');
         });
       }
     } else {
@@ -88,11 +127,19 @@ export const useAudioManager = ({ musicEnabled, gameState }: UseAudioManagerProp
         backgroundMusic.current.pause();
         backgroundMusic.current = null;
       }
+      Object.values(soundEffects.current).forEach(audio => {
+        audio.pause();
+      });
+      soundEffects.current = {};
     };
   }, []);
 
   return {
     audioUnlocked,
-    ...audioPlayback
+    playWingFlap: () => playSound('wing', 0.4),
+    playPoint: () => playSound('point', 0.7),
+    playHit: () => playSound('hit', 0.8),
+    playDie: () => playSound('die', 0.7),
+    playSwoosh: () => playSound('swoosh', 0.5)
   };
 };
