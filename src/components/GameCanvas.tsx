@@ -38,12 +38,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 }) => {
   const { canvasRef } = useCanvasSetup();
   
-  // Create a ref to store the continue game function
   const continueGameRef = React.useRef<(() => void) | null>(null);
 
   useBackgroundMusic({ musicEnabled, gameState });
   
-  // Use the fixed audio manager instead of multiple sound systems
   const { playWingFlap, playPoint, playHit, playDie, audioUnlocked } = useAudioManager({ 
     musicEnabled, 
     gameState 
@@ -52,23 +50,22 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const { gameStateRef, resetGame, continueGame, jump, checkCollisions } = useGameLoop({
     gameState,
     onCollision: () => {
-      console.log('Collision detected in GameCanvas');
+      console.log('Collision detected - Flappy Bird standard');
       playHit();
       onCollision();
     },
     onScoreUpdate: (score) => {
-      console.log('Score updated in GameCanvas:', score);
+      console.log('Score updated (Flappy Bird style):', score);
       onScoreUpdate(score);
     }
   });
 
-  // Track the last game state to detect state changes
   const lastGameStateRef = React.useRef(gameState);
 
   const { updateGame, resetGameWithLives, livesSystem, heartsSystem, flashTimer, redFlashTimer } = useGamePhysics({
     gameStateRef,
     onScoreUpdate: (score) => {
-      console.log('Physics score update:', score);
+      console.log('Physics score update (standardized):', score);
       playPoint();
       onScoreUpdate(score);
     },
@@ -78,7 +75,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     },
     checkCollisions,
     onCollision: () => {
-      console.log('Physics collision detected');
+      console.log('Physics collision detected (standardized)');
       playDie();
       onCollision();
     },
@@ -94,13 +91,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     userDifficulty,
     livesSystem,
     heartsSystem,
-    flashTimer: redFlashTimer // Use red flash timer for bump effects
+    flashTimer: redFlashTimer
   });
 
   useGameInputHandlers({
     gameState,
     jump: () => {
-      console.log('Jump triggered');
+      console.log('Jump triggered (Flappy Bird standard)');
       jump();
       playWingFlap();
     },
@@ -113,7 +110,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     updateGame,
     draw,
     resetGame: (canvasHeight: number) => {
-      console.log('Resetting game with canvas height:', canvasHeight);
+      console.log('Resetting game with Flappy Bird standards:', canvasHeight);
       resetGame(canvasHeight);
       resetGameWithLives();
       if (resetVisuals) {
@@ -124,16 +121,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     resetVisuals
   });
 
-  // Show audio unlock status in console for debugging
   useEffect(() => {
-    console.log('Audio unlocked status:', audioUnlocked);
+    console.log('Audio unlocked status (standardized):', audioUnlocked);
   }, [audioUnlocked]);
 
-  // Detect when game transitions from 'gameOver' to 'playing' to ensure proper reset
   useEffect(() => {
     console.log('Game state changed from', lastGameStateRef.current, 'to', gameState);
     if (lastGameStateRef.current === 'gameOver' && gameState === 'playing') {
-      console.log('Detected restart from game over to playing - ensuring proper bird reset');
+      console.log('Detected restart - applying Flappy Bird standard reset');
       const canvas = canvasRef.current;
       if (canvas) {
         resetGame(canvas.height);

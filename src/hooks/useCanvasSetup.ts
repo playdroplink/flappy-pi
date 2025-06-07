@@ -1,5 +1,6 @@
 
 import { useEffect, useRef } from 'react';
+import { FLAPPY_BIRD_CONSTANTS } from '../utils/gameConstants';
 
 export const useCanvasSetup = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -12,16 +13,14 @@ export const useCanvasSetup = () => {
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
       
-      // Detect mobile with more specific criteria
-      const isMobile = windowWidth <= 768 || 'ontouchstart' in window;
+      const isMobile = windowWidth <= FLAPPY_BIRD_CONSTANTS.SCREEN.MOBILE_BREAKPOINT || 'ontouchstart' in window;
       
-      console.log('Resizing canvas:', { windowWidth, windowHeight, isMobile });
+      console.log('Resizing canvas with Flappy Bird standards:', { windowWidth, windowHeight, isMobile });
       
       if (isMobile) {
-        // Full screen on mobile with proper device pixel ratio
+        // Full screen mobile with proper scaling
         const devicePixelRatio = window.devicePixelRatio || 1;
         
-        // Use actual viewport dimensions
         canvas.width = windowWidth * devicePixelRatio;
         canvas.height = windowHeight * devicePixelRatio;
         canvas.style.width = `${windowWidth}px`;
@@ -29,21 +28,19 @@ export const useCanvasSetup = () => {
         canvas.style.left = '0px';
         canvas.style.top = '0px';
         
-        // Scale context for high DPI displays
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.scale(devicePixelRatio, devicePixelRatio);
-          // Set transform origin for proper scaling
           ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
         }
         
-        console.log('Mobile canvas setup:', {
+        console.log('Mobile canvas setup (Flappy Bird optimized):', {
           actualSize: { width: canvas.width, height: canvas.height },
           styleSize: { width: canvas.style.width, height: canvas.style.height },
           devicePixelRatio
         });
       } else {
-        // Optimal Flappy Bird dimensions for desktop
+        // Desktop with Flappy Bird aspect ratio
         const gameWidth = 360;
         const gameHeight = 640;
         const aspectRatio = gameWidth / gameHeight;
@@ -68,15 +65,15 @@ export const useCanvasSetup = () => {
         canvas.style.left = `${(windowWidth - canvasWidth) / 2}px`;
         canvas.style.top = `${(windowHeight - canvasHeight) / 2}px`;
         
-        // Scale context for high DPI displays
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.scale(devicePixelRatio, devicePixelRatio);
         }
         
-        console.log('Desktop canvas setup:', {
+        console.log('Desktop canvas setup (Flappy Bird aspect ratio):', {
           actualSize: { width: canvas.width, height: canvas.height },
           styleSize: { width: canvas.style.width, height: canvas.style.height },
+          aspectRatio,
           devicePixelRatio
         });
       }
@@ -84,13 +81,11 @@ export const useCanvasSetup = () => {
 
     resizeCanvas();
     
-    // Use multiple event listeners for better coverage
     const events = ['resize', 'orientationchange', 'load'];
     events.forEach(event => {
       window.addEventListener(event, resizeCanvas);
     });
     
-    // Use ResizeObserver for more accurate detection if available
     let resizeObserver: ResizeObserver | null = null;
     if (window.ResizeObserver) {
       resizeObserver = new ResizeObserver(resizeCanvas);

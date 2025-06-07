@@ -1,5 +1,5 @@
-
 import { useRef, useCallback } from 'react';
+import { FLAPPY_BIRD_CONSTANTS } from '../utils/gameConstants';
 
 interface Bird {
   x: number;
@@ -64,15 +64,12 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   });
 
   const completeGameReset = useCallback((canvasHeight: number) => {
-    console.log('🔄 COMPLETE GAME RESET - Full cleanup and state reset');
+    console.log('🔄 COMPLETE GAME RESET - Standardized Flappy Bird reset');
     
-    // Calculate safe center position
     const centerY = canvasHeight / 2;
     const safeY = Math.max(100, Math.min(canvasHeight - 100, centerY));
     
-    console.log('Canvas height:', canvasHeight, 'Safe center Y:', safeY);
-    
-    // COMPLETE state reset - create entirely new state object
+    // Reset to standardized initial state
     gameStateRef.current = {
       bird: { 
         x: 80, 
@@ -92,10 +89,8 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       foregroundOffset: 0
     };
     
-    // Reset score display immediately
     onScoreUpdate(0);
-    
-    console.log('✅ Complete game reset - bird at center Y:', safeY, 'all systems clean');
+    console.log('✅ Standardized reset complete - bird at Y:', safeY);
   }, [onScoreUpdate]);
 
   const resetGame = useCallback((canvasHeight: number) => {
@@ -105,22 +100,21 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
   const startGame = useCallback(() => {
     if (gameStateRef.current.gameStarted) return;
     
-    console.log('🚀 Starting game - enabling physics and spawning');
+    console.log('🚀 Starting standardized Flappy Bird game');
     gameStateRef.current.gameStarted = true;
     gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 120;
     
-    // Give bird initial jump with proper velocity reset
-    gameStateRef.current.bird.velocity = -6;
+    // Apply standardized initial jump
+    gameStateRef.current.bird.velocity = FLAPPY_BIRD_CONSTANTS.BIRD.JUMP_VELOCITY;
     
-    console.log('✅ Game started - bird ready for action');
+    console.log('✅ Game started with standard physics');
   }, []);
 
   const continueGame = useCallback(() => {
-    console.log('💫 Continuing game after revive');
+    console.log('💫 Continuing game with standardized respawn');
     const canvas = document.querySelector('canvas');
     if (!canvas) return;
     
-    // Reset bird to center position with clean physics
     const centerY = canvas.height / 2;
     const safeY = Math.max(100, Math.min(canvas.height - 100, centerY));
     
@@ -141,19 +135,18 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     
     gameStateRef.current.lastPipeSpawn = gameStateRef.current.frameCount + 200;
     
-    console.log('✅ Continue complete - bird respawned safely at Y:', safeY);
+    console.log('✅ Standardized continue complete');
   }, []);
 
   const jump = useCallback(() => {
     if (gameState === 'playing' && !gameStateRef.current.gameOver) {
-      // Start game on first jump
       if (!gameStateRef.current.gameStarted) {
         startGame();
       }
       
-      // Apply jump force with velocity reset for clean jump
-      gameStateRef.current.bird.velocity = -8;
-      console.log('🦅 Bird jumped! Clean velocity:', gameStateRef.current.bird.velocity);
+      // Apply standardized jump velocity
+      gameStateRef.current.bird.velocity = FLAPPY_BIRD_CONSTANTS.BIRD.JUMP_VELOCITY;
+      console.log('🦅 Standardized jump! Velocity:', FLAPPY_BIRD_CONSTANTS.BIRD.JUMP_VELOCITY);
     }
   }, [gameState, startGame]);
 
@@ -162,38 +155,40 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     
     if (gameOver || gameState !== 'playing' || !gameStarted) return false;
     
-    // Mobile-responsive bird hitbox - slightly smaller for easier gameplay
-    const isMobile = window.innerWidth <= 768;
-    const BIRD_SIZE = isMobile ? 14 : 16;
-    const hitboxMargin = isMobile ? 8 : 6;
+    // Standardized collision detection
+    const isMobile = window.innerWidth <= FLAPPY_BIRD_CONSTANTS.SCREEN.MOBILE_BREAKPOINT;
+    const hitboxMargin = FLAPPY_BIRD_CONSTANTS.COLLISION.BIRD_HITBOX_MARGIN;
     
-    const birdLeft = bird.x - BIRD_SIZE/2 + hitboxMargin;
-    const birdRight = bird.x + BIRD_SIZE/2 - hitboxMargin;
-    const birdTop = bird.y - BIRD_SIZE/2 + hitboxMargin;
-    const birdBottom = bird.y + BIRD_SIZE/2 - hitboxMargin;
+    const birdLeft = bird.x - FLAPPY_BIRD_CONSTANTS.BIRD.SIZE/2 + hitboxMargin;
+    const birdRight = bird.x + FLAPPY_BIRD_CONSTANTS.BIRD.SIZE/2 - hitboxMargin;
+    const birdTop = bird.y - FLAPPY_BIRD_CONSTANTS.BIRD.SIZE/2 + hitboxMargin;
+    const birdBottom = bird.y + FLAPPY_BIRD_CONSTANTS.BIRD.SIZE/2 - hitboxMargin;
     
-    // Check ceiling collision with proper bounds
+    // Check ceiling collision
     if (birdTop <= 25) {
       console.log('💥 Bird hit ceiling! Y:', bird.y);
       return true;
     }
     
-    // Check ground collision with proper bounds - more forgiving on mobile
-    const groundMargin = isMobile ? 80 : 65;
+    // Check ground collision with standardized margin
+    const groundMargin = isMobile 
+      ? FLAPPY_BIRD_CONSTANTS.COLLISION.GROUND_MARGIN_MOBILE 
+      : FLAPPY_BIRD_CONSTANTS.COLLISION.GROUND_MARGIN_DESKTOP;
+      
     if (birdBottom >= canvas.height - groundMargin) {
       console.log('💥 Bird hit ground! Y:', bird.y, 'Ground at:', canvas.height - groundMargin);
       return true;
     }
     
-    // Check pipe collisions with mobile-responsive hitboxes
+    // Check pipe collisions with standardized hitboxes
     for (const pipe of pipes) {
-      const pipeWidth = pipe.width || (isMobile ? 60 : 80);
-      const pipeMargin = isMobile ? 8 : 6;
+      const pipeWidth = pipe.width || (isMobile ? FLAPPY_BIRD_CONSTANTS.PIPES.WIDTH_MOBILE : FLAPPY_BIRD_CONSTANTS.PIPES.WIDTH_DESKTOP);
+      const pipeMargin = FLAPPY_BIRD_CONSTANTS.COLLISION.PIPE_HITBOX_MARGIN;
       const pipeLeft = pipe.x + pipeMargin;
       const pipeRight = pipe.x + pipeWidth - pipeMargin;
       
       if (birdRight > pipeLeft && birdLeft < pipeRight) {
-        // Top pipe collision - more forgiving on mobile
+        // Top pipe collision
         if (birdTop < pipe.topHeight - pipeMargin) {
           console.log('💥 Bird hit top pipe!', {
             birdTop,
@@ -203,7 +198,7 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
           return true;
         }
         
-        // Bottom pipe collision - more forgiving on mobile
+        // Bottom pipe collision
         if (birdBottom > pipe.bottomY + pipeMargin) {
           console.log('💥 Bird hit bottom pipe!', {
             birdBottom,
