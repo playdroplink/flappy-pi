@@ -31,6 +31,59 @@ export const useGamePhysics = ({
 
   const lastPipeSpawn = useRef(0);
 
+  // Mobile-responsive pipe generation
+  const generateResponsivePipe = useCallback((canvas: HTMLCanvasElement) => {
+    const isMobile = window.innerWidth <= 768;
+    const screenHeight = canvas.height;
+    const screenWidth = canvas.width;
+    
+    console.log('Generating pipe for:', { isMobile, screenHeight, screenWidth });
+    
+    // Responsive gap sizing - larger on mobile for easier gameplay
+    let gapSize: number;
+    if (isMobile) {
+      // Mobile: 30-35% of screen height for gap (more forgiving)
+      gapSize = Math.max(120, screenHeight * 0.32);
+    } else {
+      // Desktop: 25% of screen height
+      gapSize = Math.max(150, screenHeight * 0.25);
+    }
+    
+    // Responsive minimum heights
+    const minPipeHeight = isMobile ? screenHeight * 0.15 : screenHeight * 0.2;
+    const maxPipeHeight = screenHeight - gapSize - minPipeHeight - 100; // Extra margin for ground
+    
+    // Ensure we have valid pipe heights
+    const safeMinHeight = Math.max(50, minPipeHeight);
+    const safeMaxHeight = Math.max(safeMinHeight + 50, maxPipeHeight);
+    
+    // Generate top pipe height with mobile-friendly positioning
+    const topHeight = Math.random() * (safeMaxHeight - safeMinHeight) + safeMinHeight;
+    const bottomY = topHeight + gapSize;
+    
+    // Responsive pipe width
+    const pipeWidth = isMobile ? Math.max(60, screenWidth * 0.15) : 80;
+    
+    console.log('Generated pipe:', {
+      topHeight,
+      bottomY,
+      gapSize,
+      pipeWidth,
+      screenHeight,
+      bottomSpace: screenHeight - bottomY
+    });
+    
+    return {
+      x: screenWidth,
+      topHeight,
+      bottomY,
+      passed: false,
+      scored: false,
+      width: pipeWidth,
+      gapSize // Store for debugging
+    };
+  }, []);
+
   const updateGame = useCallback(() => {
     const canvas = document.querySelector('canvas') as HTMLCanvasElement;
     if (!canvas || !gameStateRef.current?.gameStarted) return;
@@ -51,31 +104,24 @@ export const useGamePhysics = ({
     // Update bird rotation based on velocity
     state.bird.rotation = Math.min(Math.max(state.bird.velocity * 0.1, -0.5), 0.5);
 
-    // Spawn pipes - ensure proper spawn rate
-    const pipeSpawnRate = difficulty.pipeSpawnRate || 120;
+    // Responsive pipe spawn rate - slower on mobile for easier gameplay
+    const isMobile = window.innerWidth <= 768;
+    const basePipeSpawnRate = difficulty.pipeSpawnRate || 120;
+    const pipeSpawnRate = isMobile ? basePipeSpawnRate + 30 : basePipeSpawnRate;
+    
+    // Spawn pipes with responsive sizing
     if (state.frameCount - lastPipeSpawn.current > pipeSpawnRate) {
-      const gapSize = difficulty.pipeGap || 150;
-      const minPipeHeight = 50;
-      const maxPipeHeight = canvas.height - gapSize - 100;
-      const topHeight = Math.random() * (maxPipeHeight - minPipeHeight) + minPipeHeight;
-
-      const newPipe = {
-        x: canvas.width,
-        topHeight,
-        bottomY: topHeight + gapSize,
-        passed: false,
-        scored: false,
-        width: 80
-      };
-
+      const newPipe = generateResponsivePipe(canvas);
       state.pipes.push(newPipe);
       lastPipeSpawn.current = state.frameCount;
       
-      console.log('Pipe spawned at:', newPipe.x, 'topHeight:', newPipe.topHeight, 'bottomY:', newPipe.bottomY);
+      console.log('Pipe spawned:', newPipe);
     }
 
-    // Update pipes
-    const pipeSpeed = difficulty.pipeSpeed || 2;
+    // Update pipes with responsive speed
+    const basePipeSpeed = difficulty.pipeSpeed || 2;
+    const pipeSpeed = isMobile ? Math.max(1.5, basePipeSpeed * 0.8) : basePipeSpeed;
+    
     state.pipes = state.pipes.filter((pipe: any) => {
       pipe.x -= pipeSpeed;
 
@@ -127,7 +173,8 @@ export const useGamePhysics = ({
     checkCollisions,
     onCollision,
     lifeSystem,
-    heartSystem
+    heartSystem,
+    generateResponsivePipe
   ]);
 
   const resetGameWithLives = useCallback(() => {

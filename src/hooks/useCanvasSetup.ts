@@ -12,13 +12,16 @@ export const useCanvasSetup = () => {
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
       
-      // For mobile, use full screen dimensions
-      const isMobile = windowWidth <= 768;
+      // Detect mobile with more specific criteria
+      const isMobile = windowWidth <= 768 || 'ontouchstart' in window;
+      
+      console.log('Resizing canvas:', { windowWidth, windowHeight, isMobile });
       
       if (isMobile) {
         // Full screen on mobile with proper device pixel ratio
         const devicePixelRatio = window.devicePixelRatio || 1;
         
+        // Use actual viewport dimensions
         canvas.width = windowWidth * devicePixelRatio;
         canvas.height = windowHeight * devicePixelRatio;
         canvas.style.width = `${windowWidth}px`;
@@ -30,7 +33,15 @@ export const useCanvasSetup = () => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.scale(devicePixelRatio, devicePixelRatio);
+          // Set transform origin for proper scaling
+          ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
         }
+        
+        console.log('Mobile canvas setup:', {
+          actualSize: { width: canvas.width, height: canvas.height },
+          styleSize: { width: canvas.style.width, height: canvas.style.height },
+          devicePixelRatio
+        });
       } else {
         // Optimal Flappy Bird dimensions for desktop
         const gameWidth = 360;
@@ -62,32 +73,37 @@ export const useCanvasSetup = () => {
         if (ctx) {
           ctx.scale(devicePixelRatio, devicePixelRatio);
         }
+        
+        console.log('Desktop canvas setup:', {
+          actualSize: { width: canvas.width, height: canvas.height },
+          styleSize: { width: canvas.style.width, height: canvas.style.height },
+          devicePixelRatio
+        });
       }
-      
-      console.log('Enhanced canvas resized:', canvas.width, 'x', canvas.height, 'Mobile:', isMobile, 'DPR:', window.devicePixelRatio || 1);
     };
 
     resizeCanvas();
     
     // Use multiple event listeners for better coverage
-    window.addEventListener('resize', resizeCanvas);
-    window.addEventListener('orientationchange', resizeCanvas);
+    const events = ['resize', 'orientationchange', 'load'];
+    events.forEach(event => {
+      window.addEventListener(event, resizeCanvas);
+    });
     
     // Use ResizeObserver for more accurate detection if available
+    let resizeObserver: ResizeObserver | null = null;
     if (window.ResizeObserver) {
-      const resizeObserver = new ResizeObserver(resizeCanvas);
+      resizeObserver = new ResizeObserver(resizeCanvas);
       resizeObserver.observe(document.body);
-      
-      return () => {
-        window.removeEventListener('resize', resizeCanvas);
-        window.removeEventListener('orientationchange', resizeCanvas);
-        resizeObserver.disconnect();
-      };
     }
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
-      window.removeEventListener('orientationchange', resizeCanvas);
+      events.forEach(event => {
+        window.removeEventListener(event, resizeCanvas);
+      });
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
     };
   }, []);
 

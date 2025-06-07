@@ -29,8 +29,8 @@ class SecureAuthService {
         return { success: false, error: 'Pi authentication failed' };
       }
 
-      // Sanitize user data
-      const sanitizedUsername = InputValidation.sanitizeString(piAuth.user.username, 50);
+      // Sanitize user data - use correct PiUser properties
+      const sanitizedUsername = InputValidation.sanitizeString(piAuth.username, 50);
       if (!InputValidation.isValidUserInput(sanitizedUsername)) {
         return { success: false, error: 'Invalid username format' };
       }
@@ -39,7 +39,7 @@ class SecureAuthService {
       const { data, error } = await supabase.functions.invoke('pi-auth', {
         body: {
           accessToken: piAuth.accessToken,
-          piUserId: piAuth.user.uid,
+          piUserId: piAuth.uid,
           username: sanitizedUsername
         }
       });
@@ -63,7 +63,7 @@ class SecureAuthService {
 
         // Log successful authentication
         this.logSecurityEvent('successful_login', {
-          pi_user_id: piAuth.user.uid,
+          pi_user_id: piAuth.uid,
           username: sanitizedUsername
         });
 
@@ -81,13 +81,10 @@ class SecureAuthService {
   // Secure sign out with session cleanup
   async signOut(): Promise<void> {
     try {
-      // Clear Pi SDK session if available
-      if (typeof window !== 'undefined' && window.Pi) {
-        try {
-          await window.Pi.closeSession();
-        } catch (piError) {
-          console.warn('Pi closeSession error:', piError);
-        }
+      // Pi SDK doesn't have closeSession method, so we just clear local data
+      if (typeof window !== 'undefined') {
+        // Clear any Pi-related data from localStorage
+        this.clearSensitiveLocalStorage();
       }
 
       // Sign out from Supabase
@@ -118,12 +115,17 @@ class SecureAuthService {
     });
   }
 
-  // Log security events
+  // Log security events using analytics instead of non-existent function
   private async logSecurityEvent(eventType: string, data: any): Promise<void> {
     try {
-      await supabase.rpc('log_security_event', {
-        p_event_type: eventType,
-        p_event_data: data
+      // Use analytics_events table instead of non-existent log_security_event function
+      await supabase.from('analytics_events').insert({
+        pi_user_id: (await supabase.auth.getUser()).data.user?.id || null,
+        event_type: `security_${eventType}`,
+        event_data: data,
+        timestamp: new Date().toISOString(),
+        url: window.location.href,
+        user_agent: navigator.userAgent
       });
     } catch (error) {
       console.warn('Failed to log security event:', error);

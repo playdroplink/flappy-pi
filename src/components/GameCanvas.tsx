@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGamePhysics } from '../hooks/useGamePhysics';
@@ -142,25 +143,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
     lastGameStateRef.current = gameState;
   }, [gameState, resetGame, resetGameWithLives, resetVisuals, canvasRef]);
-
-  // Ensure canvas is properly sized
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const resizeCanvas = () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        console.log('Canvas resized to:', canvas.width, 'x', canvas.height);
-      };
-      
-      resizeCanvas();
-      window.addEventListener('resize', resizeCanvas);
-      
-      return () => {
-        window.removeEventListener('resize', resizeCanvas);
-      };
-    }
-  }, [canvasRef]);
 
   return (
     <canvas

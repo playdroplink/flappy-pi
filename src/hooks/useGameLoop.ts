@@ -18,6 +18,7 @@ interface Pipe {
   verticalDirection?: number;
   moveSpeed?: number;
   width?: number;
+  gapSize?: number;
 }
 
 interface Cloud {
@@ -161,12 +162,15 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
     
     if (gameOver || gameState !== 'playing' || !gameStarted) return false;
     
-    // Bird hitbox with refined collision detection
-    const BIRD_SIZE = 16;
-    const birdLeft = bird.x - BIRD_SIZE/2 + 6;
-    const birdRight = bird.x + BIRD_SIZE/2 - 6;
-    const birdTop = bird.y - BIRD_SIZE/2 + 6;
-    const birdBottom = bird.y + BIRD_SIZE/2 - 6;
+    // Mobile-responsive bird hitbox - slightly smaller for easier gameplay
+    const isMobile = window.innerWidth <= 768;
+    const BIRD_SIZE = isMobile ? 14 : 16;
+    const hitboxMargin = isMobile ? 8 : 6;
+    
+    const birdLeft = bird.x - BIRD_SIZE/2 + hitboxMargin;
+    const birdRight = bird.x + BIRD_SIZE/2 - hitboxMargin;
+    const birdTop = bird.y - BIRD_SIZE/2 + hitboxMargin;
+    const birdBottom = bird.y + BIRD_SIZE/2 - hitboxMargin;
     
     // Check ceiling collision with proper bounds
     if (birdTop <= 25) {
@@ -174,26 +178,38 @@ export const useGameLoop = ({ gameState, onCollision, onScoreUpdate }: UseGameLo
       return true;
     }
     
-    // Check ground collision with proper bounds
-    if (birdBottom >= canvas.height - 65) {
-      console.log('💥 Bird hit ground! Y:', bird.y);
+    // Check ground collision with proper bounds - more forgiving on mobile
+    const groundMargin = isMobile ? 80 : 65;
+    if (birdBottom >= canvas.height - groundMargin) {
+      console.log('💥 Bird hit ground! Y:', bird.y, 'Ground at:', canvas.height - groundMargin);
       return true;
     }
     
-    // Check pipe collisions with accurate hitboxes
+    // Check pipe collisions with mobile-responsive hitboxes
     for (const pipe of pipes) {
-      const pipeWidth = pipe.width || 80;
-      const pipeLeft = pipe.x + 6;
-      const pipeRight = pipe.x + pipeWidth - 6;
+      const pipeWidth = pipe.width || (isMobile ? 60 : 80);
+      const pipeMargin = isMobile ? 8 : 6;
+      const pipeLeft = pipe.x + pipeMargin;
+      const pipeRight = pipe.x + pipeWidth - pipeMargin;
       
       if (birdRight > pipeLeft && birdLeft < pipeRight) {
-        if (birdTop < pipe.topHeight - 6) {
-          console.log('💥 Bird hit top pipe!');
+        // Top pipe collision - more forgiving on mobile
+        if (birdTop < pipe.topHeight - pipeMargin) {
+          console.log('💥 Bird hit top pipe!', {
+            birdTop,
+            pipeTopHeight: pipe.topHeight,
+            margin: pipeMargin
+          });
           return true;
         }
         
-        if (birdBottom > pipe.bottomY + 6) {
-          console.log('💥 Bird hit bottom pipe!');
+        // Bottom pipe collision - more forgiving on mobile
+        if (birdBottom > pipe.bottomY + pipeMargin) {
+          console.log('💥 Bird hit bottom pipe!', {
+            birdBottom,
+            pipeBottomY: pipe.bottomY,
+            margin: pipeMargin
+          });
           return true;
         }
       }
