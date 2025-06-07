@@ -1,11 +1,11 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
+import { InputValidation } from '@/utils/inputValidation';
 
 type GameMode = Database['public']['Enums']['game_mode'];
 type ItemType = Database['public']['Enums']['item_type'];
 
-// Secure version with proper error handling and validation
 export interface GameSessionResult {
   session_id: string;
   is_high_score: boolean;
@@ -21,7 +21,9 @@ export interface PurchaseResult {
 }
 
 class SecureGameBackendService {
-  // Complete a game session with server-side validation
+  private readonly MAX_REQUESTS_PER_MINUTE = 30;
+
+  // Complete a game session with enhanced security validation
   async completeGameSession(
     gameMode: GameMode,
     finalScore: number,
@@ -30,30 +32,49 @@ class SecureGameBackendService {
     sessionDuration?: number
   ): Promise<GameSessionResult | null> {
     try {
-      // Client-side pre-validation
-      if (finalScore < 0 || finalScore > 1000) {
-        throw new Error('Invalid score range');
+      // Rate limiting check
+      if (!InputValidation.checkRateLimit('game_session', this.MAX_REQUESTS_PER_MINUTE, 60000)) {
+        throw new Error('Rate limit exceeded');
       }
 
-      if (levelReached < 1 || levelReached > 200) {
-        throw new Error('Invalid level range');
+      // Validate session data
+      if (!InputValidation.validateGameSession({
+        score: finalScore,
+        level: levelReached,
+        coins: coinsEarned,
+        duration: sessionDuration
+      })) {
+        throw new Error('Invalid game session data');
       }
 
-      if (coinsEarned < 0 || coinsEarned > 100) {
-        throw new Error('Invalid coins earned');
+      // Validate user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('User must be authenticated');
       }
 
-      // Use the existing complete_game_session function (the secure one we created)
+      // Use the secure database function that includes server-side validation
       const { data, error } = await supabase.rpc('complete_game_session', {
         p_game_mode: gameMode,
         p_final_score: finalScore,
         p_level_reached: levelReached,
         p_coins_earned: coinsEarned,
-        p_session_duration: sessionDuration
+        p_session_duration: sessionDuration || null
       });
 
       if (error) {
         console.error('Game session error:', error.message);
+        
+        // Log suspicious activity if validation fails
+        if (error.message.includes('Invalid game session data')) {
+          await this.logSuspiciousActivity('invalid_game_data', {
+            score: finalScore,
+            level: levelReached,
+            coins: coinsEarned,
+            duration: sessionDuration
+          });
+        }
+        
         return null;
       }
 
@@ -72,19 +93,33 @@ class SecureGameBackendService {
     piTransactionId?: string
   ): Promise<PurchaseResult> {
     try {
-      // Client-side validation
+      // Rate limiting check
+      if (!InputValidation.checkRateLimit('purchase', 10, 60000)) {
+        return { success: false, error: 'Rate limit exceeded' };
+      }
+
+      // Validate user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        return { success: false, error: 'Authentication required' };
+      }
+
+      // Validate purchase data
       if (costCoins < 0 || costCoins > 10000) {
+        await this.logSuspiciousActivity('invalid_purchase_amount', { costCoins, itemType, itemId });
         return { success: false, error: 'Invalid purchase amount' };
       }
 
-      if (!itemId || itemId.trim().length === 0) {
+      // Sanitize item ID
+      const sanitizedItemId = InputValidation.sanitizeString(itemId, 50);
+      if (!InputValidation.isValidUserInput(sanitizedItemId)) {
         return { success: false, error: 'Invalid item ID' };
       }
 
-      // Use the existing make_purchase function (the secure one we created)
+      // Use the secure database function
       const { data, error } = await supabase.rpc('make_purchase', {
         p_item_type: itemType,
-        p_item_id: itemId,
+        p_item_id: sanitizedItemId,
         p_cost_coins: costCoins,
         p_pi_transaction_id: piTransactionId
       });
@@ -104,9 +139,15 @@ class SecureGameBackendService {
   // Get user profile securely
   async getUserProfile(): Promise<any> {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
+        .eq('pi_user_id', session.user.id)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -121,14 +162,22 @@ class SecureGameBackendService {
     }
   }
 
-  // Get leaderboard with proper filtering
+  // Get leaderboard with rate limiting
   async getLeaderboard(limit: number = 10): Promise<any[]> {
     try {
+      // Rate limiting for leaderboard requests
+      if (!InputValidation.checkRateLimit('leaderboard', 20, 60000)) {
+        console.warn('Leaderboard rate limit exceeded');
+        return [];
+      }
+
+      const sanitizedLimit = Math.min(Math.max(1, limit), 50); // Ensure limit is between 1-50
+
       const { data, error } = await supabase
         .from('user_scores')
         .select('pi_user_id, username, highest_score, total_games, updated_at')
         .order('highest_score', { ascending: false })
-        .limit(Math.min(limit, 50)); // Cap at 50 entries max
+        .limit(sanitizedLimit);
 
       if (error) {
         console.error('Error fetching leaderboard:', error.message);
@@ -140,6 +189,25 @@ class SecureGameBackendService {
       console.error('Error in getLeaderboard:', error);
       return [];
     }
+  }
+
+  // Log suspicious activity
+  private async logSuspiciousActivity(activityType: string, data: any): Promise<void> {
+    try {
+      await supabase.rpc('log_security_event', {
+        p_event_type: `suspicious_${activityType}`,
+        p_event_data: data
+      });
+    } catch (error) {
+      console.warn('Failed to log suspicious activity:', error);
+    }
+  }
+
+  // Validate Pi transaction ID format
+  private isValidPiTransactionId(txId: string): boolean {
+    // Pi transaction IDs typically follow a specific format
+    const piTxPattern = /^[a-zA-Z0-9_-]{10,100}$/;
+    return piTxPattern.test(txId);
   }
 }
 
