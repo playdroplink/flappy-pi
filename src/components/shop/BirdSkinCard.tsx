@@ -63,6 +63,7 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
 
   const handlePiSuccess = () => {
     onPurchase();
+    setShowPiModal(false);
   };
 
   return (
@@ -124,6 +125,7 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
                 onClick={onSelect} 
                 variant={isSelected ? "default" : "outline"}
                 className="w-full"
+                size="sm"
               >
                 {isSelected ? (
                   <>
@@ -135,25 +137,29 @@ const BirdSkinCard: React.FC<BirdSkinCardProps> = ({
                 )}
               </Button>
             ) : canUse ? (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-2">
                 <Button 
                   onClick={handlePiPayment}
-                  className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white text-xs py-1 h-9"
+                  className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-medium"
+                  size="sm"
                 >
-                  Buy with Pi
+                  Buy with Pi ({piPrice} Pi)
                 </Button>
                 <Button 
                   onClick={onPurchase}
                   disabled={!canAffordCoins}
-                  className={`w-full text-xs py-1 h-9 ${canAffordCoins ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}
+                  className={`w-full font-medium ${canAffordCoins ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}
+                  size="sm"
                 >
-                  {canAffordCoins ? 'Buy with Coins' : 'Not enough'}
+                  <Coins className="h-3 w-3 mr-2" />
+                  {canAffordCoins ? `Buy with Coins (${coinPrice})` : 'Not enough coins'}
                 </Button>
               </div>
             ) : (
               <Button 
                 disabled 
                 className="w-full bg-gray-200 text-gray-500"
+                size="sm"
               >
                 <Lock className="h-3 w-3 mr-2" />
                 Locked

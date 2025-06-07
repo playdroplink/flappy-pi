@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Crown, Star, Zap, Check, Coins, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Crown, Star, Zap, Check, Coins, ExternalLink, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import ShopHeader from './shop/ShopHeader';
@@ -216,11 +217,30 @@ const ShopModal: React.FC<ShopModalProps> = ({ open, onClose }) => {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] bg-white border shadow-lg rounded-lg overflow-hidden">
-        <ScrollArea className="h-[85vh] w-full">
+      <DialogContent className="max-w-4xl max-h-[90vh] bg-white border shadow-lg rounded-lg overflow-hidden p-0">
+        {/* Custom Header with Close Button */}
+        <div className="flex items-center justify-between p-6 border-b">
+          <DialogTitle className="text-2xl font-bold text-gray-800">Pi Shop</DialogTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <ScrollArea className="h-[75vh] w-full">
           <div className="p-6">
-            {/* Header */}
-            <ShopHeader coins={coins} onClose={onClose} />
+            {/* Coins Display */}
+            <div className="flex items-center justify-center space-x-2 bg-gray-100 rounded-lg p-2 mb-6">
+              <Coins className="h-5 w-5 text-yellow-500" />
+              <span className="font-bold text-gray-800">{coins.toLocaleString()} Game Coins</span>
+            </div>
+            <p className="text-gray-600 text-sm text-center mb-6">
+              Buy with Pi Network or Game Coins
+            </p>
 
             {/* Bird Characters Section */}
             <BirdCharactersSection
