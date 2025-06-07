@@ -131,45 +131,48 @@ const GameUI: React.FC<GameUIProps> = ({
             </div>
           </div>
 
-          <div className="space-y-2 sm:space-y-3">
+          <div className="space-y-3">
             <Button 
               onClick={onStartGame}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold shadow-lg transform hover:scale-105 active:scale-95 transition-all duration-200"
               size={isMobile ? "default" : "lg"}
             >
               <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               Play Again
             </Button>
             
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <Button 
                 onClick={onShowAd}
-                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-xs sm:text-sm"
+                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold shadow-lg transform hover:scale-105 active:scale-95 transition-all duration-200 border-0"
+                size={isMobile ? "sm" : "default"}
               >
                 🔄 Revive
               </Button>
               <Button 
                 onClick={onShareScore}
                 variant="outline"
-                className="flex-1 text-xs sm:text-sm"
+                className="border-2 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400 font-semibold shadow-lg transform hover:scale-105 active:scale-95 transition-all duration-200"
+                size={isMobile ? "sm" : "default"}
               >
                 <Star className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                 Share
               </Button>
             </div>
             
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <Button 
                 onClick={onOpenLeaderboard}
-                variant="outline"
-                className="flex-1 text-white bg-purple-500 hover:bg-purple-600 border-purple-500 text-xs sm:text-sm"
+                className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white font-semibold shadow-lg transform hover:scale-105 active:scale-95 transition-all duration-200 border-0"
+                size={isMobile ? "sm" : "default"}
               >
                 <Trophy className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                 Leaderboard
               </Button>
               <Button 
                 onClick={onOpenShop}
-                className="flex-1 text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-xs sm:text-sm"
+                className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold shadow-lg transform hover:scale-105 active:scale-95 transition-all duration-200 border-0"
+                size={isMobile ? "sm" : "default"}
               >
                 <Menu className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                 Shop
@@ -179,7 +182,8 @@ const GameUI: React.FC<GameUIProps> = ({
             <Button 
               onClick={onBackToMenu}
               variant="ghost"
-              className="w-full text-sm sm:text-base"
+              className="w-full text-gray-600 hover:text-gray-800 hover:bg-gray-100 font-semibold transform hover:scale-105 active:scale-95 transition-all duration-200"
+              size={isMobile ? "sm" : "default"}
             >
               <Home className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               Back to Menu
