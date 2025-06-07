@@ -1,3 +1,4 @@
+import { themes } from "@/types/gameTypes";
 export interface DifficultySettings {
   pipeSpeed: number;
   pipeGap: number;
@@ -13,6 +14,7 @@ export interface DifficultySettings {
   level: number;
   backgroundTheme: string;
 }
+
 
 const baseClassicDifficulty: Omit<DifficultySettings, 'timeOfDay' | 'level' | 'backgroundTheme' | 'hasStars' | 'hasNebulaEffect' | 'backgroundScrollSpeed'> = {
   pipeSpeed: 3,
@@ -61,24 +63,24 @@ export const getBackgroundThemeByLevel = (level: number, gameMode: 'classic' | '
   // Different progression for different game modes
   if (gameMode === 'challenge') {
     // Challenge mode has faster progression
-    if (level >= 15) return 'space';
-    if (level >= 10) return 'night';
-    if (level >= 5) return 'evening';
-    return 'day';
+    if (level >= 15) return themes.space;
+    if (level >= 10) return themes.night;
+    if (level >= 5) return themes.evening;
+    return themes.day;
   } else if (gameMode === 'endless') {
     // Endless mode has gradual progression
-    if (level >= 25) return 'space';
-    if (level >= 18) return 'night';
-    if (level >= 12) return 'evening';
-    if (level >= 6) return 'sunset';
-    return 'day';
+    if (level >= 25) return themes.space;
+    if (level >= 18) return themes.night;
+    if (level >= 12) return themes.evening;
+    if (level >= 6) return themes.sunset;
+    return themes.day;
   } else {
     // Classic mode - balanced progression
-    if (level >= 20) return 'space';
-    if (level >= 15) return 'night';
-    if (level >= 10) return 'evening';
-    if (level >= 5) return 'sunset';
-    return 'day';
+    if (level >= 20) return themes.space;
+    if (level >= 15) return themes.night;                        
+    if (level >= 10) return themes.evening;
+    if (level >= 5) return themes.sunset;
+    return themes.day;
   }
 };
 
@@ -160,9 +162,9 @@ export const getDifficultyByUserChoice = (
     backgroundTheme: theme,
     timeOfDay: theme, // Keep compatibility with existing code
     // Add visual effects based on theme
-    hasStars: theme === 'night' || theme === 'space',
-    hasClouds: theme !== 'space',
-    hasNebulaEffect: theme === 'space',
-    backgroundScrollSpeed: theme === 'space' ? 0.3 : theme === 'night' ? 0.5 : 1.0
+    hasStars: theme === themes.night || theme === themes.space,
+    hasClouds: theme !== themes.space,
+    hasNebulaEffect: theme === themes.space,
+    backgroundScrollSpeed: theme === themes.space ? 0.3 : theme === themes.night ? 0.5 : 1.0
   };
 };

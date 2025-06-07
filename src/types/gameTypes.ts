@@ -54,3 +54,12 @@ export interface AdRewardResult {
   reward_amount: number;
   description: string;
 }
+
+export const themes= {
+  space:"space",
+  night:"night",
+  evening: "evening", 
+  day: "day" ,
+  sunset: "sunset"
+}
+export type Theme = keyof typeof themes;
