@@ -3,7 +3,6 @@ import { useCallback, useRef } from 'react';
 import { getDifficultyByUserChoice } from '../utils/gameDifficulty';
 import { useLifeSystem } from './useLifeSystem';
 import { useHeartSystem } from './useHeartSystem';
-import { FLAPPY_BIRD_CONSTANTS, calculatePipeGap, calculatePipeWidth, calculatePipeSpeed } from '../utils/gameConstants';
 
 interface UseGamePhysicsProps {
   gameStateRef: React.MutableRefObject<any>;
@@ -32,34 +31,46 @@ export const useGamePhysics = ({
 
   const lastPipeSpawn = useRef(0);
 
-  // Standardized pipe generation using Flappy Bird constants
-  const generateStandardPipe = useCallback((canvas: HTMLCanvasElement) => {
+  // Mobile-responsive pipe generation
+  const generateResponsivePipe = useCallback((canvas: HTMLCanvasElement) => {
+    const isMobile = window.innerWidth <= 768;
     const screenHeight = canvas.height;
     const screenWidth = canvas.width;
     
-    // Use standardized gap calculation
-    const gapSize = calculatePipeGap(screenHeight);
-    const pipeWidth = calculatePipeWidth();
+    console.log('Generating pipe for:', { isMobile, screenHeight, screenWidth });
     
-    // Calculate pipe heights with proper margins
-    const minPipeHeight = screenHeight * FLAPPY_BIRD_CONSTANTS.PIPES.MIN_HEIGHT_RATIO;
-    const maxPipeHeight = screenHeight - gapSize - minPipeHeight - FLAPPY_BIRD_CONSTANTS.SCREEN.GROUND_HEIGHT;
+    // Responsive gap sizing - larger on mobile for easier gameplay
+    let gapSize: number;
+    if (isMobile) {
+      // Mobile: 30-35% of screen height for gap (more forgiving)
+      gapSize = Math.max(120, screenHeight * 0.32);
+    } else {
+      // Desktop: 25% of screen height
+      gapSize = Math.max(150, screenHeight * 0.25);
+    }
     
-    // Ensure valid pipe heights
+    // Responsive minimum heights
+    const minPipeHeight = isMobile ? screenHeight * 0.15 : screenHeight * 0.2;
+    const maxPipeHeight = screenHeight - gapSize - minPipeHeight - 100; // Extra margin for ground
+    
+    // Ensure we have valid pipe heights
     const safeMinHeight = Math.max(50, minPipeHeight);
     const safeMaxHeight = Math.max(safeMinHeight + 50, maxPipeHeight);
     
-    // Generate top pipe height
+    // Generate top pipe height with mobile-friendly positioning
     const topHeight = Math.random() * (safeMaxHeight - safeMinHeight) + safeMinHeight;
     const bottomY = topHeight + gapSize;
     
-    console.log('Standard pipe generated:', {
+    // Responsive pipe width
+    const pipeWidth = isMobile ? Math.max(60, screenWidth * 0.15) : 80;
+    
+    console.log('Generated pipe:', {
       topHeight,
       bottomY,
       gapSize,
       pipeWidth,
       screenHeight,
-      isValid: bottomY + 50 < screenHeight - FLAPPY_BIRD_CONSTANTS.SCREEN.GROUND_HEIGHT
+      bottomSpace: screenHeight - bottomY
     });
     
     return {
@@ -69,7 +80,7 @@ export const useGamePhysics = ({
       passed: false,
       scored: false,
       width: pipeWidth,
-      gapSize
+      gapSize // Store for debugging
     };
   }, []);
 
@@ -83,34 +94,33 @@ export const useGamePhysics = ({
     // Update frame count
     state.frameCount++;
 
-    // Update flash timer for visual effects
+    // Update flash timer for red flash effect
     lifeSystem.updateFlashTimer();
 
-    // Apply standardized gravity
-    state.bird.velocity += FLAPPY_BIRD_CONSTANTS.BIRD.GRAVITY;
-    state.bird.velocity = Math.min(state.bird.velocity, FLAPPY_BIRD_CONSTANTS.BIRD.MAX_VELOCITY);
+    // Apply gravity to bird
+    state.bird.velocity += 0.4;
     state.bird.y += state.bird.velocity;
 
-    // Update bird rotation based on velocity (like original Flappy Bird)
-    state.bird.rotation = Math.min(
-      Math.max(state.bird.velocity * FLAPPY_BIRD_CONSTANTS.BIRD.ROTATION_FACTOR, -FLAPPY_BIRD_CONSTANTS.BIRD.MAX_ROTATION),
-      FLAPPY_BIRD_CONSTANTS.BIRD.MAX_ROTATION
-    );
+    // Update bird rotation based on velocity
+    state.bird.rotation = Math.min(Math.max(state.bird.velocity * 0.1, -0.5), 0.5);
 
-    // Standardized pipe spawning
-    const isMobile = window.innerWidth <= FLAPPY_BIRD_CONSTANTS.SCREEN.MOBILE_BREAKPOINT;
-    const pipeSpawnRate = isMobile 
-      ? FLAPPY_BIRD_CONSTANTS.TIMING.PIPE_SPAWN_RATE_MOBILE 
-      : FLAPPY_BIRD_CONSTANTS.TIMING.PIPE_SPAWN_RATE_DESKTOP;
+    // Responsive pipe spawn rate - slower on mobile for easier gameplay
+    const isMobile = window.innerWidth <= 768;
+    const basePipeSpawnRate = difficulty.pipeSpawnRate || 120;
+    const pipeSpawnRate = isMobile ? basePipeSpawnRate + 30 : basePipeSpawnRate;
     
+    // Spawn pipes with responsive sizing
     if (state.frameCount - lastPipeSpawn.current > pipeSpawnRate) {
-      const newPipe = generateStandardPipe(canvas);
+      const newPipe = generateResponsivePipe(canvas);
       state.pipes.push(newPipe);
       lastPipeSpawn.current = state.frameCount;
+      
+      console.log('Pipe spawned:', newPipe);
     }
 
-    // Update pipes with standardized speed
-    const pipeSpeed = calculatePipeSpeed();
+    // Update pipes with responsive speed
+    const basePipeSpeed = difficulty.pipeSpeed || 2;
+    const pipeSpeed = isMobile ? Math.max(1.5, basePipeSpeed * 0.8) : basePipeSpeed;
     
     state.pipes = state.pipes.filter((pipe: any) => {
       pipe.x -= pipeSpeed;
@@ -130,15 +140,18 @@ export const useGamePhysics = ({
       return pipe.x > -pipe.width;
     });
 
-    // Update hearts system
+    // Check for level up and spawn hearts
     const currentLevel = Math.floor(state.score / 5) + 1;
     heartSystem.spawnHeartForLevel(currentLevel, canvas.width, canvas.height);
+
+    // Update hearts
     heartSystem.updateHearts(state.bird, state.gameStarted);
 
-    // Check collisions with standardized detection
+    // Check collisions
     if (checkCollisions(canvas)) {
+      // Try to use a life first
       const lifeUsed = lifeSystem.useLife(() => {
-        // Respawn bird in safe center position
+        // Respawn bird in center
         state.bird.y = canvas.height / 2;
         state.bird.velocity = 0;
         state.bird.rotation = 0;
@@ -146,6 +159,7 @@ export const useGamePhysics = ({
       });
 
       if (!lifeUsed) {
+        // No lives left, trigger game over
         console.log('Game over - no lives remaining');
         onCollision();
       }
@@ -160,11 +174,11 @@ export const useGamePhysics = ({
     onCollision,
     lifeSystem,
     heartSystem,
-    generateStandardPipe
+    generateResponsivePipe
   ]);
 
   const resetGameWithLives = useCallback(() => {
-    console.log('Resetting game physics with standardized values');
+    console.log('Resetting game physics with lives');
     lifeSystem.resetLives();
     heartSystem.resetHearts();
     lastPipeSpawn.current = 0;
