@@ -42,7 +42,7 @@ const GameUI: React.FC<GameUIProps> = ({
   if (gameState === 'playing' && !isPausedForRevive) {
     return (
       <div className="fixed inset-0 pointer-events-none z-10">
-        {/* Flappy Bird Style Header - Centered Score */}
+        {/* Main Score Display - Only this one should show */}
         <div className="absolute top-4 sm:top-8 left-0 right-0 flex justify-center">
           <div className="bg-white/95 rounded-xl px-4 sm:px-6 py-2 sm:py-3 shadow-xl border-2 border-gray-300">
             <div className="text-2xl sm:text-4xl font-black text-gray-800 text-center tracking-tight">
